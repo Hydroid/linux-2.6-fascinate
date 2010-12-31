@@ -1,6 +1,8 @@
 #!/bin/bash
 
-MODELS="fascinate mesmerize showcase"
+# Available options for MODELS are fascinate, mesmerize, or showcase
+
+MODELS="fascinate"
 WORK=`pwd`
 CONTINUE="n"
 
