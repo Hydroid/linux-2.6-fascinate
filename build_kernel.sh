@@ -43,7 +43,7 @@ do
 	TARGET="$MODEL"_"$CONFIG"
 	echo "***** Building : $TARGET *****"
 	make clean mrproper >/dev/null 2>&1
-	rm -f update/*.zip update/kernel_update/zImage "$DATE"_"$TARGET".zip
+	rm -f update/*.zip update/kernel_update/zImage "$DATE"_imnuts_"$CONFIG".zip
 
 	sed -i "s/\/.*_/\/"$MODEL"_/" arch/arm/configs/jt1134_"$CONFIG"_defconfig
 	CMD="make ARCH=arm jt1134_\"$CONFIG\"_defconfig" && doit
@@ -53,8 +53,9 @@ do
 	cp arch/arm/boot/zImage update/kernel_update/zImage
 	cd update
 	zip -r -q kernel_update.zip .
-	mv kernel_update.zip ../"$DATE"_"$TARGET".zip
+	mv kernel_update.zip ../"$DATE"_imnuts_"$CONFIG".zip
 	cd ..
+	cp "$DATE"_imnuts_"$CONFIG".zip /home/mark/Dropbox/Public/Kernels/"$DATE"_imnuts_"$CONFIG".zip
 	echo -e "***** Successfully compiled: $TARGET *****\n"
 
 	if [ "$RESTORE_GIT" = "y" ]; then
