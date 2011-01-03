@@ -13,6 +13,8 @@ To build non-voodoo lagfix kernels, run build_kernel.sh directly.
 
 If you would like to build both voodoo and non-voodoo lagfix kernels, run './build_kernel.sh A'
 
+To build kernels for AOSP Android, run the 'build_aosp_kernel.sh' script with the same options available in the standard 'build_kernel.sh' script. (ie. to build voodoo, run './build_aosp_kernel.sh V' to build an AOSP voodoo kernel)
+
 If the scripts encounter problems, they will fail and let you know so :) Errors are written to errlog.txt. You can
 find standard output in stdlog.txt. These files are removed if things progress normally.
 
