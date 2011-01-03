@@ -47,7 +47,7 @@ do
 
 	sed -i "s/\/.*_/\/"$MODEL"_/" arch/arm/configs/jt1134_"$CONFIG"_defconfig
 	CMD="make ARCH=arm jt1134_\"$CONFIG\"_defconfig" && doit
-	CMD="make -j8 CROSS_COMPILE=../arm-2009q3/bin/arm-none-linux-gnueabi- \
+	CMD="make -j6 CROSS_COMPILE=../arm-2009q3/bin/arm-none-linux-gnueabi- \
 		ARCH=arm HOSTCFLAGS=\"-g -O3\"" && doit
 
 	cp arch/arm/boot/zImage update/kernel_update/zImage
@@ -55,7 +55,7 @@ do
 	zip -r -q kernel_update.zip .
 	mv kernel_update.zip ../"$DATE"_imnuts_"$CONFIG".zip
 	cd ..
-	cp "$DATE"_imnuts_"$CONFIG".zip /home/mark/Dropbox/Public/Kernels/"$DATE"_imnuts_"$CONFIG".zip
+	cp "$DATE"_imnuts_"$CONFIG".zip /home/imnuts/Dropbox/Public/Kernels/"$DATE"_imnuts_"$CONFIG".zip
 	echo -e "***** Successfully compiled: $TARGET *****\n"
 
 	if [ "$RESTORE_GIT" = "y" ]; then
