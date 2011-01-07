@@ -45,8 +45,8 @@ do
 	make clean mrproper >/dev/null 2>&1
 	rm -f update/*.zip update/kernel_update/zImage "$DATE"_imnuts_aosp_"$CONFIG".zip
 
-	sed -i "s/\/.*_/\/"$MODEL"_/" arch/arm/configs/jt1134_"$CONFIG"_defconfig
-	CMD="make ARCH=arm jt1134_\"$CONFIG\"_defconfig" && doit
+	sed -i "s/\/.*_/\/"$MODEL"_/" arch/arm/configs/imnuts_"$CONFIG"_defconfig
+	CMD="make ARCH=arm imnuts_\"$CONFIG\"_defconfig" && doit
 	CMD="make -j6 CROSS_COMPILE=../arm-2009q3/bin/arm-none-linux-gnueabi- \
 		ARCH=arm HOSTCFLAGS=\"-g -O3\"" && doit
 
@@ -55,7 +55,7 @@ do
 	zip -r -q kernel_update.zip .
 	mv kernel_update.zip ../"$DATE"_imnuts_aosp_"$CONFIG".zip
 	cd ..
-	cp "$DATE"_imnuts_aosp_"$CONFIG".zip /home/imnuts/Dropbox/Public/Kernels/"$DATE"_imnuts_aosp_sv_"$CONFIG".zip
+	#cp "$DATE"_imnuts_aosp_"$CONFIG".zip /home/imnuts/Dropbox/Public/Kernels/"$DATE"_imnuts_aosp_"$CONFIG".zip
 	echo -e "***** Successfully compiled: $TARGET *****\n"
 
 	if [ "$RESTORE_GIT" = "y" ]; then
