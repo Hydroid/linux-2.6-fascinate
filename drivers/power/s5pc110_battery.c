@@ -113,7 +113,7 @@ static int s3c_bat_use_data_call(int onoff);
 
 #define ADC_DATA_ARR_SIZE	6
 #define ADC_TOTAL_COUNT		10
-#define POLLING_INTERVAL	2000
+#define POLLING_INTERVAL	5000
 #ifdef __TEST_MODE_INTERFACE__
 #define POLLING_INTERVAL_TEST	1000
 #endif /* __TEST_MODE_INTERFACE__ */
@@ -145,11 +145,11 @@ static unsigned int start_time_msec;
 static unsigned int total_time_msec;
 
 static char *status_text[] = {
-	[POWER_SUPPLY_STATUS_UNKNOWN] =		"Unknown",
-	[POWER_SUPPLY_STATUS_CHARGING] =	"Charging",
-	[POWER_SUPPLY_STATUS_DISCHARGING] =	"Discharging",
+	[POWER_SUPPLY_STATUS_UNKNOWN] =			"Unknown",
+	[POWER_SUPPLY_STATUS_CHARGING] =			"Charging",
+	[POWER_SUPPLY_STATUS_DISCHARGING] =		"Discharging",
 	[POWER_SUPPLY_STATUS_NOT_CHARGING] =	"Not Charging",
-	[POWER_SUPPLY_STATUS_FULL] =		"Full",
+	[POWER_SUPPLY_STATUS_FULL] =				"Full",
 };
 
 typedef enum {
@@ -160,30 +160,30 @@ typedef enum {
 } charger_type_t;
 
 struct battery_info {
-	u32 batt_id;		/* Battery ID from ADC */
-	s32 batt_vol;		/* Battery voltage from ADC */
-	s32 batt_vol_adc;	/* Battery ADC value */
-	s32 batt_vol_adc_cal;	/* Battery ADC value (calibrated)*/
-	s32 batt_temp;		/* Battery Temperature (C) from ADC */
-	s32 batt_temp_adc;	/* Battery Temperature ADC value */
-	s32 batt_temp_adc_cal;	/* Battery Temperature ADC value (calibrated) */
-	s32 batt_current;	/* Battery current from ADC */
-	u32 level;		/* formula */
-	u32 charging_source;	/* 0: no cable, 1:usb, 2:AC */
-	u32 charging_enabled;	/* 0: Disable, 1: Enable */
-	u32 batt_health;	/* Battery Health (Authority) */
-	u32 batt_is_full;       /* 0 : Not full 1: Full */
-	u32 batt_is_recharging; /* 0 : Not recharging 1: Recharging */
-	s32 batt_vol_adc_aver;	/* batt vol adc average */
+	u32 batt_id;					/* Battery ID from ADC */
+	s32 batt_vol;					/* Battery voltage from ADC */
+	s32 batt_vol_adc;				/* Battery ADC value */
+	s32 batt_vol_adc_cal;		/* Battery ADC value (calibrated)*/
+	s32 batt_temp;					/* Battery Temperature (C) from ADC */
+	s32 batt_temp_adc;			/* Battery Temperature ADC value */
+	s32 batt_temp_adc_cal;		/* Battery Temperature ADC value (calibrated) */
+	s32 batt_current;				/* Battery current from ADC */
+	u32 level;						/* formula */
+	u32 charging_source;			/* 0: no cable, 1:usb, 2:AC */
+	u32 charging_enabled;		/* 0: Disable, 1: Enable */
+	u32 batt_health;				/* Battery Health (Authority) */
+	u32 batt_is_full;       	/* 0 : Not full 1: Full */
+	u32 batt_is_recharging; 	/* 0 : Not recharging 1: Recharging */
+	s32 batt_vol_adc_aver;		/* batt vol adc average */
 #ifdef __FUEL_GAUGES_IC__
 	u32 decimal_point_level;	// lobat pwroff
 #endif
 #ifdef __TEST_MODE_INTERFACE__
-	u32 batt_test_mode;	/* test mode */
-	s32 batt_vol_aver;	/* batt vol average */
-	s32 batt_temp_aver;	/* batt temp average */
-	s32 batt_temp_adc_aver;	/* batt temp adc average */
-	s32 batt_v_f_adc;	/* batt V_F adc */
+	u32 batt_test_mode;			/* test mode */
+	s32 batt_vol_aver;			/* batt vol average */
+	s32 batt_temp_aver;			/* batt temp average */
+	s32 batt_temp_adc_aver;		/* batt temp adc average */
+	s32 batt_v_f_adc;				/* batt V_F adc */
 #endif /* __TEST_MODE_INTERFACE__ */
 };
 
@@ -847,12 +847,12 @@ static int s3c_power_get_property(struct power_supply *bat_ps,
 }
 
 static struct device_attribute s3c_battery_attrs[] = {
-        SEC_BATTERY_ATTR(batt_vol),
-        SEC_BATTERY_ATTR(batt_vol_adc),
-        SEC_BATTERY_ATTR(batt_vol_adc_cal),
-        SEC_BATTERY_ATTR(batt_temp),
-        SEC_BATTERY_ATTR(batt_temp_adc),
-        SEC_BATTERY_ATTR(batt_temp_adc_cal),
+   SEC_BATTERY_ATTR(batt_vol),
+   SEC_BATTERY_ATTR(batt_vol_adc),
+   SEC_BATTERY_ATTR(batt_vol_adc_cal),
+   SEC_BATTERY_ATTR(batt_temp),
+   SEC_BATTERY_ATTR(batt_temp_adc),
+   SEC_BATTERY_ATTR(batt_temp_adc_cal),
 	SEC_BATTERY_ATTR(batt_vol_adc_aver),
 #ifdef __TEST_MODE_INTERFACE__
 	/* test mode */
@@ -899,12 +899,12 @@ static struct device_attribute s3c_battery_attrs[] = {
 };
 
 enum {
-        BATT_VOL = 0,
-        BATT_VOL_ADC,
-        BATT_VOL_ADC_CAL,
-        BATT_TEMP,
-        BATT_TEMP_ADC,
-        BATT_TEMP_ADC_CAL,
+   BATT_VOL = 0,
+   BATT_VOL_ADC,
+   BATT_VOL_ADC_CAL,
+   BATT_TEMP,
+   BATT_TEMP_ADC,
+   BATT_TEMP_ADC_CAL,
 	BATT_VOL_ADC_AVER,
 #ifdef __TEST_MODE_INTERFACE__
 	BATT_TEST_MODE,
@@ -1491,21 +1491,21 @@ static unsigned int s3c_bat_check_v_f(void)
 #else	/* __VZW_AUTH_CHECK__ */
 
 	unsigned int rc = 0;
-	int adc = 0;
+//	int adc = 0;
 	
-	adc = s3c_bat_get_adc_data(S3C_ADC_V_F);
-	s3c_bat_info.bat_info.batt_v_f_adc = adc;
+//	adc = s3c_bat_get_adc_data(S3C_ADC_V_F);
+//	s3c_bat_info.bat_info.batt_v_f_adc = adc;
 
 //	dev_info(dev, "%s: V_F ADC = %d\n", __func__, adc);
 
-	if (adc <= BATT_VF_MAX && adc >= BATT_VF_MIN) {
-		 //s3c_set_bat_health(POWER_SUPPLY_HEALTH_GOOD);
+//	if (adc <= BATT_VF_MAX && adc >= BATT_VF_MIN) {
+		s3c_set_bat_health(POWER_SUPPLY_HEALTH_GOOD);
 		rc = 1;
-	} else {
-		dev_info(dev, "%s: Unauthorized battery!\n", __func__);
-		s3c_set_bat_health(POWER_SUPPLY_HEALTH_UNSPEC_FAILURE);
-		rc = 0;
-	}
+//	} else {
+//		dev_info(dev, "%s: Unauthorized battery!\n", __func__);
+//		s3c_set_bat_health(POWER_SUPPLY_HEALTH_UNSPEC_FAILURE);
+//		rc = 0;
+//	}
 
 	return rc;
 #endif	/* __VZW_AUTH_CHECK__ */
