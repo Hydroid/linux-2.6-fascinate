@@ -30,23 +30,27 @@
 #include <asm/uaccess.h>
 #include <linux/earlysuspend.h>
 #include <asm/io.h>
+
 /*
 Melfas touchkey register
 */
-#define KEYCODE_REG 0x00
-#define FIRMWARE_VERSION 0x01
+#define KEYCODE_REG 			0x00
+#define FIRMWARE_VERSION 		0x01
 #define TOUCHKEY_MODULE_VERSION 0x02
-#define TOUCHKEY_ADDRESS	0x20
+#define TOUCHKEY_ADDRESS		0x20
+#define UPDOWN_EVENT_BIT 		0x08
+#define KEYCODE_BIT 			0x07
+#define ESD_STATE_BIT 			0x10
 
-#define UPDOWN_EVENT_BIT 0x08
-#define KEYCODE_BIT 0x07
-#define ESD_STATE_BIT 0x10
+
+
+
 
 /* keycode value */
-#define RESET_KEY 0x01
-#define SWTICH_KEY 0x02
-#define OK_KEY 0x03
-#define END_KEY 0x04
+#define RESET_KEY 	0x01
+#define SWTICH_KEY 	0x02
+#define OK_KEY 		0x03
+#define END_KEY		0x04
 
 #define I2C_M_WR 0 /* for i2c */
 
@@ -54,6 +58,7 @@ Melfas touchkey register
 #define DEVICE_NAME "melfas-touchkey"
 
 #ifdef CONFIG_KEYPAD_CYPRESS_TOUCH_USE_BLN
+//todo: update this everytime you modify BacklightNotification
 #define BACKLIGHTNOTIFICATION_VERSION 7
 #define BACKLIGHT_ON 1
 #define BACKLIGHT_OFF 2
@@ -97,10 +102,10 @@ static int touchkey_led_status = 0;
 
 #ifdef CONFIG_KEYPAD_CYPRESS_TOUCH_USE_BLN
 static bool touchkey_controller_vdd_on = false;
-static bool bln_enabled = false;			//indicates if BLN function is enabled/allowed
-static bool BLN_blink_enabled = false;				//indicates blink is set
+static bool bln_enabled = false;				//indicates if BLN function is enabled/allowed
+static bool BLN_blink_enabled = false;			//indicates blink is set
 bool BacklightNotification_ongoing= false;		//indicates ongoing LED Notification
-//EXPORT_SYMBOL(BacklightNotification_ongoing);		//export for mach-aries.c
+EXPORT_SYMBOL(BacklightNotification_ongoing);	//export for mach-aries.c
 #endif
 
 struct i2c_driver touchkey_i2c_driver =
@@ -257,7 +262,9 @@ void  touchkey_work_func(struct work_struct * p)
 	    touchkey_power_off_with_i2c();
 #else
             gpio_direction_output(_3_GPIO_TOUCH_EN, 0);
+#if !defined(CONFIG_ARIES_NTT)
             gpio_direction_output(_3_GPIO_TOUCH_CE, 0);
+#endif
             gpio_direction_output(_3_TOUCH_SDA_28V, 0);
             gpio_direction_output(_3_TOUCH_SCL_28V, 0);
 #endif
@@ -347,8 +354,10 @@ static void melfas_touchkey_early_suspend(struct early_suspend *h)
     touchkey_power_off_with_i2c();
 #else
     gpio_direction_output(_3_GPIO_TOUCH_EN, 0);
+#if !defined(CONFIG_ARIES_NTT)
     gpio_direction_output(_3_GPIO_TOUCH_CE, 0);
-    gpio_direction_output(_3_TOUCH_SDA_28V, 0);
+#endif
+	gpio_direction_output(_3_TOUCH_SDA_28V, 0);
     gpio_direction_output(_3_TOUCH_SCL_28V, 0);
 #endif
 }
@@ -367,7 +376,9 @@ static void melfas_touchkey_early_resume(struct early_suspend *h)
     touchkey_power_on();
 #else
     gpio_direction_output(_3_GPIO_TOUCH_EN, 1);
+#if !defined(CONFIG_ARIES_NTT)
     gpio_direction_output(_3_GPIO_TOUCH_CE, 1);
+#endif
 #endif
     
     msleep(50);
@@ -497,7 +508,9 @@ static void init_hw(void)
 	touchkey_power_on();
 #else
 	gpio_direction_output(_3_GPIO_TOUCH_EN, 1);
+#if !defined(CONFIG_ARIES_NTT)
 	gpio_direction_output(_3_GPIO_TOUCH_CE, 1);
+#endif
 #endif
 	msleep(200);
 	s3c_gpio_setpull(_3_GPIO_TOUCH_INT, S3C_GPIO_PULL_NONE); 
@@ -701,7 +714,9 @@ static ssize_t touchkey_enable_disable(struct device *dev, struct device_attribu
 	touchkey_power_off();
 #else
         gpio_direction_output(_3_GPIO_TOUCH_EN, 0);
+#if !defined(CONFIG_ARIES_NTT)
         gpio_direction_output(_3_GPIO_TOUCH_CE, 0);
+#endif
 #endif
         touchkey_enable = -2;
     }
@@ -714,7 +729,9 @@ static ssize_t touchkey_enable_disable(struct device *dev, struct device_attribu
 	    touchkey_power_on();
 #else
             gpio_direction_output(_3_GPIO_TOUCH_EN, 1);
+#if !defined(CONFIG_ARIES_NTT)
             gpio_direction_output(_3_GPIO_TOUCH_CE, 1);
+#endif
 #endif
             touchkey_enable = 1;
             enable_irq(IRQ_TOUCH_INT);
@@ -975,8 +992,10 @@ static int __init touchkey_init(void)
 #ifdef CONFIG_KEYPAD_CYPRESS_TOUCH_USE_BLN
 		  touchkey_power_off();
 #else
-                   gpio_direction_output(_3_GPIO_TOUCH_EN, 0);
+                gpio_direction_output(_3_GPIO_TOUCH_EN, 0);
+#if !defined(CONFIG_ARIES_NTT)
 	            gpio_direction_output(_3_GPIO_TOUCH_CE, 0);
+#endif
 #endif
                    msleep(300);
               }
