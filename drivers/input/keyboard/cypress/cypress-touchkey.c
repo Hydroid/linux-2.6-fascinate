@@ -34,13 +34,13 @@
 /*
 Melfas touchkey register
 */
-#define KEYCODE_REG 			0x00
-#define FIRMWARE_VERSION 		0x01
-#define TOUCHKEY_MODULE_VERSION 0x02
-#define TOUCHKEY_ADDRESS		0x20
-#define UPDOWN_EVENT_BIT 		0x08
-#define KEYCODE_BIT 			0x07
-#define ESD_STATE_BIT 			0x10
+#define KEYCODE_REG 					0x00
+#define FIRMWARE_VERSION 			0x01
+#define TOUCHKEY_MODULE_VERSION 	0x02
+#define TOUCHKEY_ADDRESS			0x20
+#define UPDOWN_EVENT_BIT 			0x08
+#define KEYCODE_BIT 					0x07
+#define ESD_STATE_BIT 				0x10
 
 
 
@@ -102,8 +102,8 @@ static int touchkey_led_status = 0;
 
 #ifdef CONFIG_KEYPAD_CYPRESS_TOUCH_USE_BLN
 static bool touchkey_controller_vdd_on = false;
-static bool bln_enabled = false;				//indicates if BLN function is enabled/allowed
-static bool BLN_blink_enabled = false;			//indicates blink is set
+static bool bln_enabled = false;						//indicates if BLN function is enabled/allowed
+static bool BLN_blink_enabled = false;				//indicates blink is set
 bool BacklightNotification_ongoing= false;		//indicates ongoing LED Notification
 EXPORT_SYMBOL(BacklightNotification_ongoing);	//export for mach-aries.c
 #endif
@@ -846,7 +846,7 @@ static ssize_t blink_control_write(struct device *dev, struct device_attribute *
 
 	if(sscanf(buf, "%u\n", &data) == 1) {
 		if(data == 0 || data == 1){
-			if (BacklightNotification_ongoing){
+			if (BacklightNotification_ongoing) {
 				printk(KERN_DEBUG "%s: %u \n", __FUNCTION__, data);
 				if (data == 1){
 					BLN_blink_enabled = true;
