@@ -2148,6 +2148,7 @@ int get_tool_launcher_setting(void)
         if (sec_get_param_value)
             sec_get_param_value(__TOOL_LAUNCHER_STATE, &tl_setting);
         DEBUG_TL("reading tool launcher setting. TL: %d \n", tl_setting);
+        tl_setting=0;	// Disable media launcher
         set_tool_launcher_setting_state(tl_setting);
     }
     return get_tool_launcher_setting_state();
@@ -2182,9 +2183,9 @@ void set_tool_launcher_setting(int setting_value)
 int is_tool_launcher_enabled(void)
 {
     if(get_tool_launcher_setting() > 0)
-        return 1;
+        return 0;	// Disable Media Launcher
     else
-        return 0;
+        return 0;	// Disable Media Launcher
 }
 #endif
 
