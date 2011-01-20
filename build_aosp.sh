@@ -42,4 +42,3 @@ fetch_repo()
 	fi
 	CONTINUE="n"
 }
-

@@ -29,7 +29,11 @@ fetch_repo()
 		CMD="git clone git://github.com/jt1134/\"$REPO\"" && doit
 	else
 		cd "$REPO"
-		git remote add origin git://github.com/jt1134/"$REPO".git >/dev/null 2>&1
+		if [ "$REPO" == "fascinate_initramfs" ]; then
+			git remote add origin git@github.com:imnuts/fascinate_initramfs.git >/dev/null 2>&1
+		else
+			git remote add origin git://github.com/jt1134/"$REPO".git >/dev/null 2>&1
+		fi
 		CMD="git fetch origin" && doit
 		CMD="git merge origin/voodoo-dev" && CONTINUE="y" && \
 		if ! doit; then
@@ -42,4 +46,3 @@ fetch_repo()
 	fi
 	CONTINUE="n"
 }
-

@@ -22,6 +22,7 @@ fi
 if [ ! -f lagfix/stages_builder/stages/stage1.tar ] || \
    [ ! -f lagfix/stages_builder/stages/stage2.tar.lzma ] || \
    [ ! -f lagfix/stages_builder/stages/stage3-sound.tar.lzma ]; then
+
 	# never build stages again!
 	echo "***** Fetching Voodoo stages *****"
 	cd lagfix/stages_builder
@@ -49,4 +50,3 @@ done
 echo -e "***** Running kernel build script *****\n"
 cd linux-2.6-fascinate
 ./build_aosp_kernel.sh V
-

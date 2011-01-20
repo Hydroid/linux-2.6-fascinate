@@ -43,15 +43,14 @@ do
 	TARGET="$MODEL"_"$CONFIG"
 	echo "***** Building : $TARGET *****"
 	make clean mrproper >/dev/null 2>&1
-	rm -f update/*.zip update/kernel_update/zImage "$DATE"_imnuts_aosp_"$CONFIG".zip
+	rm -f update_"$CONFIG"/*.zip update_"$CONFIG"/kernel_update/zImage
 
 	sed -i "s/\/.*_/\/"$MODEL"_/" arch/arm/configs/imnuts_"$CONFIG"_defconfig
 	CMD="make ARCH=arm imnuts_\"$CONFIG\"_defconfig" && doit
-	CMD="make -j6 CROSS_COMPILE=../arm-2009q3/bin/arm-none-linux-gnueabi- \
-		ARCH=arm HOSTCFLAGS=\"-g -O3\"" && doit
+	CMD="make -j6 CROSS_COMPILE=../arm-2009q3/bin/arm-none-linux-gnueabi- ARCH=arm HOSTCFLAGS=\"-g -O2\"" && doit
 
-	cp arch/arm/boot/zImage update/kernel_update/zImage
-	cd update
+	cp arch/arm/boot/zImage update_"$CONFIG"/kernel_update/zImage
+	cd update_"$CONFIG"
 	zip -r -q kernel_update.zip .
 	mv kernel_update.zip ../"$DATE"_imnuts_aosp_"$CONFIG".zip
 	cd ..
@@ -67,4 +66,3 @@ do
 done
 
 if [ "$1" == "A" ]; then ./build_aosp_voodoo.sh; fi
-
