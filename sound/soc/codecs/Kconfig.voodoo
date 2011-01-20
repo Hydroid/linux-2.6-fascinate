@@ -1,6 +1,6 @@
 config SND_VOODOO
 	bool "Voodoo sound driver"
-	#depends on SND_S3C24XX_SOC
+	depends on SND_S3C24XX_SOC
 	default y
 	help
 	  With this option enabled, the kernel compile an additionnal driver
