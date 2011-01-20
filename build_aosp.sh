@@ -29,9 +29,9 @@ fetch_repo()
 		CMD="git clone git://github.com/jt1134/\"$REPO\"" && doit
 	else
 		cd "$REPO"
-		git remote add origin git://github.com/jt1134/"$REPO".git >/dev/null 2>&1
-		CMD="git fetch origin" && doit
 		if [ "$REPO" != "fascinate_initramfs" ]; then
+			git remote add origin git://github.com/jt1134/"$REPO".git >/dev/null 2>&1
+			CMD="git fetch origin" && doit
 			CMD="git merge origin/voodoo-dev" && CONTINUE="y" && \
 			if ! doit; then
 				echo "***** Problem merging \"$REPO\". Redownloading... *****"
@@ -40,6 +40,8 @@ fetch_repo()
 				CONTINUE="n" && fetch_repo "$REPO"
 			fi
 		else
+			git remote add origin git@github.com:imnuts/fascinate_initramfs.git >/dev/null 2>&1
+			CMD="git fetch origin" && doit
 			CMD="git merge origin/aosp-dev" && CONTINUE="y" && \
 			if ! doit; then
 				echo "***** Problem merging \"$REPO\". Redownloading... *****"
