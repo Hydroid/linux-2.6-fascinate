@@ -31,12 +31,22 @@ fetch_repo()
 		cd "$REPO"
 		git remote add origin git://github.com/jt1134/"$REPO".git >/dev/null 2>&1
 		CMD="git fetch origin" && doit
-		CMD="git merge origin/aosp-dev" && CONTINUE="y" && \
-		if ! doit; then
-			echo "***** Problem merging \"$REPO\". Redownloading... *****"
-			rm -rf "$REPO"
-			# loop once P:
-			CONTINUE="n" && fetch_repo "$REPO"
+		if [ "$REPO" != "fascinate_initramfs" ]; then
+			CMD="git merge origin/voodoo-dev" && CONTINUE="y" && \
+			if ! doit; then
+				echo "***** Problem merging \"$REPO\". Redownloading... *****"
+				rm -rf "$REPO"
+				# loop once P:
+				CONTINUE="n" && fetch_repo "$REPO"
+			fi
+		else
+			CMD="git merge origin/aosp-dev" && CONTINUE="y" && \
+			if ! doit; then
+				echo "***** Problem merging \"$REPO\". Redownloading... *****"
+				rm -rf "$REPO"
+				# loop once P:
+				CONTINUE="n" && fetch_repo "$REPO"
+			fi
 		fi
 		cd ..
 	fi
