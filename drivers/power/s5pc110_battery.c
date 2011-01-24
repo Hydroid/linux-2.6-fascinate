@@ -106,7 +106,7 @@ static int s3c_bat_use_data_call(int onoff);
 #define USE_WIMAX			(0x1 << 4)
 #define USE_HOTSPOT		(0x1 << 5)
 #define USE_TALK_WCDMA	(0x1 << 6)
-#define USE_DATA_CALL	(0x1 << 7)
+#define USE_DATA_CALL		(0x1 << 7)
 
 #define TRUE	1
 #define FALSE	0
@@ -146,8 +146,8 @@ static unsigned int total_time_msec;
 
 static char *status_text[] = {
 	[POWER_SUPPLY_STATUS_UNKNOWN] = "Unknown",
-	[POWER_SUPPLY_STATUS_CHARGING] =	"Charging",
-	[POWER_SUPPLY_STATUS_DISCHARGING] =	"Discharging",
+	[POWER_SUPPLY_STATUS_CHARGING] = "Charging",
+	[POWER_SUPPLY_STATUS_DISCHARGING] = "Discharging",
 	[POWER_SUPPLY_STATUS_NOT_CHARGING] = "Not Charging",
 	[POWER_SUPPLY_STATUS_FULL] = "Full",
 };
@@ -179,11 +179,11 @@ struct battery_info {
 	u32 decimal_point_level;	// lobat pwroff
 #endif
 #ifdef __TEST_MODE_INTERFACE__
-	u32 batt_test_mode;	/* test mode */
-	s32 batt_vol_aver;	/* batt vol average */
-	s32 batt_temp_aver;	/* batt temp average */
+	u32 batt_test_mode;		/* test mode */
+	s32 batt_vol_aver;		/* batt vol average */
+	s32 batt_temp_aver;		/* batt temp average */
 	s32 batt_temp_adc_aver;	/* batt temp adc average */
-	s32 batt_v_f_adc;	/* batt V_F adc */
+	s32 batt_v_f_adc;			/* batt V_F adc */
 #endif /* __TEST_MODE_INTERFACE__ */
 };
 
@@ -839,12 +839,12 @@ static int s3c_power_get_property(struct power_supply *bat_ps,
 }
 
 static struct device_attribute s3c_battery_attrs[] = {
-   SEC_BATTERY_ATTR(batt_vol),
-   SEC_BATTERY_ATTR(batt_vol_adc),
-   SEC_BATTERY_ATTR(batt_vol_adc_cal),
-   SEC_BATTERY_ATTR(batt_temp),
-   SEC_BATTERY_ATTR(batt_temp_adc),
-   SEC_BATTERY_ATTR(batt_temp_adc_cal),
+        SEC_BATTERY_ATTR(batt_vol),
+        SEC_BATTERY_ATTR(batt_vol_adc),
+        SEC_BATTERY_ATTR(batt_vol_adc_cal),
+        SEC_BATTERY_ATTR(batt_temp),
+        SEC_BATTERY_ATTR(batt_temp_adc),
+        SEC_BATTERY_ATTR(batt_temp_adc_cal),
 	SEC_BATTERY_ATTR(batt_vol_adc_aver),
 #ifdef __TEST_MODE_INTERFACE__
 	/* test mode */
@@ -891,12 +891,12 @@ static struct device_attribute s3c_battery_attrs[] = {
 };
 
 enum {
-   BATT_VOL = 0,
-   BATT_VOL_ADC,
-   BATT_VOL_ADC_CAL,
-   BATT_TEMP,
-   BATT_TEMP_ADC,
-   BATT_TEMP_ADC_CAL,
+        BATT_VOL = 0,
+        BATT_VOL_ADC,
+        BATT_VOL_ADC_CAL,
+        BATT_TEMP,
+        BATT_TEMP_ADC,
+        BATT_TEMP_ADC_CAL,
 	BATT_VOL_ADC_AVER,
 #ifdef __TEST_MODE_INTERFACE__
 	BATT_TEST_MODE,
@@ -1466,7 +1466,7 @@ static unsigned int s3c_bat_check_v_f(void)
 //	dev_info(dev, "%s: V_F ADC = %d\n", __func__, adc);
 
 //	if (adc <= BATT_VF_MAX && adc >= BATT_VF_MIN) {
-		 //s3c_set_bat_health(POWER_SUPPLY_HEALTH_GOOD);
+		s3c_set_bat_health(POWER_SUPPLY_HEALTH_GOOD);
 		rc = 1;
 //	} else {
 //		dev_info(dev, "%s: Unauthorized battery!\n", __func__);
