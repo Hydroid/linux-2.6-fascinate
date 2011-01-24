@@ -369,5 +369,5 @@ config KEYPAD_CYPRESS_TOUCH_USE_BLN
 	help
 	  Say Y here to enable the backlight notification
 	  for android led-notification (modified liblight needed)
-	 
+ 
 endif
