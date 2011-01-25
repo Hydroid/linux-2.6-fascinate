@@ -39,3 +39,4 @@ source "sound/soc/codecs/Kconfig"
 source "sound/soc/codecs/Kconfig.voodoo"
 
 endif	# SND_SOC
+

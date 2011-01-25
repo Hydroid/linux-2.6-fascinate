@@ -207,8 +207,8 @@ int wm8994_write(struct snd_soc_codec *codec, unsigned int reg, unsigned int val
 
 #ifdef CONFIG_SND_VOODOO
 	value = voodoo_hook_wm8994_write(codec, reg, value);
-#endif	 
-	 
+#endif
+
 	data[0] = (reg & 0xff00 ) >> 8;
 	data[1] = reg & 0x00ff;
 	data[2] = value >> 8;
@@ -2309,7 +2309,7 @@ static int wm8994_pcm_probe(struct platform_device *pdev)
 	voodoo_hook_wm8994_pcm_probe(codec);
 #endif
 
-	return ret;
+        return ret;
 }
 
 /* power down chip */

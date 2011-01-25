@@ -59,25 +59,25 @@ enum state{OFF, ON};
 #define CALL_ACTIVE			0x04
 #define FMRADIO_ACTIVE		0x08
 
-#define PCM_STREAM_DEACTIVE	0x00
+#define PCM_STREAM_DEACTIVE		0x00
 #define PCM_STREAM_PLAYBACK	0x01
 #define PCM_STREAM_CAPTURE		0x02
 
 #define CMD_FMR_INPUT_DEACTIVE		0	// Codec Input PGA off for reducing white noise.
-#define CMD_FMR_INPUT_ACTIVE			1	// Codec Input PGA on
-#define CMD_FMR_FLAG_CLEAR				2	// Radio flag clear for shutdown - to reduce pop up noise.
-#define CMD_FMR_END						3	// Codec off in FM radio mode - to reduce pop up noise.
-#define CMD_RECOGNITION_DEACTIVE		4	// Distingush recognition gain. To use default MIC gain.
+#define CMD_FMR_INPUT_ACTIVE		1	// Codec Input PGA on
+#define CMD_FMR_FLAG_CLEAR		2	// Radio flag clear for shutdown - to reduce pop up noise.
+#define CMD_FMR_END			3	// Codec off in FM radio mode - to reduce pop up noise.
+#define CMD_RECOGNITION_DEACTIVE	4	// Distingush recognition gain. To use default MIC gain.
 #define CMD_RECOGNITION_ACTIVE		5	// Distingush recognition gain. To use MIC gain for recognition.
-#define CMD_CALL_FLAG_CLEAR			6	// Call flag clear for shutdown - to reduce pop up noise.
-#define CMD_CALL_END						7	// Codec off in call mode - to reduce pop up noise.
+#define CMD_CALL_FLAG_CLEAR		6	// Call flag clear for shutdown - to reduce pop up noise.
+#define CMD_CALL_END			7	// Codec off in call mode - to reduce pop up noise.
 
-#define TTY_MODE_OFF    	0
-#define TTY_MODE_FULL   	1
-#define TTY_MODE_HCO    	2
-#define TTY_MODE_VCO    	3
-#define LOOPBACK_MODE_OFF 	0
-#define LOOPBACK_MODE_ON 	1
+#define TTY_MODE_OFF    0
+#define TTY_MODE_FULL   1
+#define TTY_MODE_HCO    2
+#define TTY_MODE_VCO    3
+#define LOOPBACK_MODE_OFF 0
+#define LOOPBACK_MODE_ON 1
 
 typedef void (*select_route)(struct snd_soc_codec *);
 typedef void (*select_mic_route)(struct snd_soc_codec *);
