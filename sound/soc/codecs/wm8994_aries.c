@@ -21,6 +21,7 @@
 #include <mach/gpio-jupiter.h>
 #include "wm8994.h"
 #include "wm8994_voodoo.h"
+#include <mach/sec_jack.h>
 
 //------------------------------------------------
 //		Debug Feature
@@ -168,7 +169,6 @@ extern unsigned int loopback_mode;
 // Definition external function prototype.
 //------------------------------------------------
 extern int hw_version_check(void);
-extern short int get_headset_status(void);		// For ear-jack control(MIC-Bias)
 extern void set_recording_status(int value);	// For preventing MIC Bias off on using MIC.
 
 int audio_init(void)
@@ -1022,15 +1022,15 @@ void wm8994_record_main_mic(struct snd_soc_codec *codec)
     	wm8994_write(codec, 0x0002, 0x0240);    // Power Management 2
     	wm8994_write(codec, 0x002A, 0x0000);    // Input Mixer 4.
     
-      val = wm8994_read(codec,WM8994_POWER_MANAGEMENT_1 );
+        val = wm8994_read(codec,WM8994_POWER_MANAGEMENT_1 );
     	val &= ~(WM8994_BIAS_ENA_MASK | WM8994_VMID_SEL_MASK);
     	val |= (WM8994_BIAS_ENA | WM8994_VMID_SEL_NORMAL);
     	wm8994_write(codec, 0x0001, val);    // Power Management 1
     
-      wm8994_write(codec, 0x0018, 0x011F);    // Left Line Input 1&2 volume
-      wm8994_write(codec, 0x0029, 0x0020);    // Input Mixer 3
-      wm8994_write(codec, 0x0400, 0x01CA);    // AIF1 ADC1 Left Volume
-      wm8994_write(codec, 0x0401, 0x01CA);    // AIF1 ADC1 Right Volume
+        wm8994_write(codec, 0x0018, 0x011F);    // Left Line Input 1&2 volume
+        wm8994_write(codec, 0x0029, 0x0020);    // Input Mixer 3
+        wm8994_write(codec, 0x0400, 0x01CA);    // AIF1 ADC1 Left Volume
+        wm8994_write(codec, 0x0401, 0x01CA);    // AIF1 ADC1 Right Volume
     	wm8994_write(codec, 0x0410, 0x1800);    // AIF1 DRC 1(5)
     	wm8994_write(codec, 0x0028, 0x0010);    // Input Mixer 2. Single Ended Input. Negative is connected only.
     	wm8994_write(codec, 0x0004, 0x0202);    // Power Management 4
@@ -1045,8 +1045,8 @@ void wm8994_record_main_mic(struct snd_soc_codec *codec)
 #if 0
         /* DRC & Noise Gate */
     	wm8994_write(codec, 0x0444, 0x0004);    // AIF1 DRC 1(5)
-      wm8994_write(codec, 0x0442, 0x0800);    // AIF1 DRC 1(3)
-      wm8994_write(codec, 0x0440, 0x0100);    // AIF1 DRC 1(1)
+        wm8994_write(codec, 0x0442, 0x0800);    // AIF1 DRC 1(3)
+        wm8994_write(codec, 0x0440, 0x0100);    // AIF1 DRC 1(1)
 #endif
     	msleep(60);    // To remove the pop noise front of the recorded pcm data.
 
@@ -1054,14 +1054,14 @@ void wm8994_record_main_mic(struct snd_soc_codec *codec)
     }
     else
     {
-      wm8994_write(codec, 0x0700, 0xA101);   // GPIO1
-      audio_ctrl_mic_bias_gpio(1);
+        wm8994_write(codec, 0x0700, 0xA101);   // GPIO1
+        audio_ctrl_mic_bias_gpio(1);
 
-      val = wm8994_read(codec,WM8994_POWER_MANAGEMENT_1 );
+        val = wm8994_read(codec,WM8994_POWER_MANAGEMENT_1 );
     	val &= ~(WM8994_BIAS_ENA_MASK | WM8994_VMID_SEL_MASK);
     	val |= (WM8994_BIAS_ENA | WM8994_VMID_SEL_NORMAL);  
     	wm8994_write(codec,WM8994_POWER_MANAGEMENT_1, val);
-      msleep(50);
+        msleep(50);
         
     	val = wm8994_read(codec, WM8994_AIF1_CONTROL_1);
     	val &= ~(WM8994_AIF1ADCL_SRC_MASK | WM8994_AIF1ADCR_SRC_MASK);
@@ -1082,9 +1082,9 @@ void wm8994_record_main_mic(struct snd_soc_codec *codec)
     	}    
     	val = (WM8994_IN1LN_TO_IN1L | WM8994_IN2LN_TO_IN2L);
     	wm8994_write(codec, 0x0028, 0x0040);    // Input Mixer 2
-
+    	
 #ifdef CONFIG_SND_VOODOO_RECORD_PRESETS
-		voodoo_hook_record_main_mic();
+	voodoo_hook_record_main_mic();
 #endif
 
     	val = wm8994_read(codec,WM8994_POWER_MANAGEMENT_4 );
@@ -1095,79 +1095,79 @@ void wm8994_record_main_mic(struct snd_soc_codec *codec)
     	val = wm8994_read(codec,WM8994_AIF1_ADC1_LEFT_MIXER_ROUTING );
     	val |= WM8994_ADC1L_TO_AIF1ADC1L ;  
     	wm8994_write(codec, 0x0606, val);        // AIF1 ADC1 Left Mixer Routing. Enable.
-      wm8994_write(codec, 0x0607, 0x0002);    // AIF1 ADC1 Right Mixer Routing. Enable.
+        wm8994_write(codec, 0x0607, 0x0002);    // AIF1 ADC1 Right Mixer Routing. Enable.
 
-      /* DRC */
-      wm8994_write( codec, 0x441, 0x0885); 
-      wm8994_write( codec, 0x442, 0x0800); 
-      wm8994_write( codec, 0x443, 0x020E); 
-      wm8994_write( codec, 0x444, 0x0004); 
-      wm8994_write( codec, 0x440, 0x0112);
+        /* DRC */
+        wm8994_write( codec, 0x441, 0x0885); 
+        wm8994_write( codec, 0x442, 0x0800); 
+        wm8994_write( codec, 0x443, 0x020E); 
+        wm8994_write( codec, 0x444, 0x0004); 
+        wm8994_write( codec, 0x440, 0x0112);
 
-      msleep(60);    // To remove the pop noise front of the recorded pcm data.
+        msleep(60);    // To remove the pop noise front of the recorded pcm data.
         
-      DEBUG_LOG("===================================================> Camcorder Recording, Voice Recording");
+        DEBUG_LOG("===================================================> Camcorder Recording, Voice Recording");
     }
 }
 
 void wm8994_record_bluetooth(struct snd_soc_codec *codec)
 {
-   struct wm8994_priv *wm8994 = codec->private_data;
+    struct wm8994_priv *wm8994 = codec->private_data;
 
-   wm8994_write(codec, 0x0001, 0x0003);    // Power Management 1
-   msleep(50);
+    wm8994_write(codec, 0x0001, 0x0003);    // Power Management 1
+    msleep(50);
     
-   wm8994_write(codec, 0x0700, 0xA101);    // GPIO 1
+    wm8994_write(codec, 0x0700, 0xA101);    // GPIO 1
 	wm8994_write(codec, 0x0702, 0x0100);    // GPIO 3
-   wm8994_write(codec, 0x0704, 0x8100);    // GPIO 5
+    wm8994_write(codec, 0x0704, 0x8100);    // GPIO 5
 	wm8994_write(codec, 0x0706, 0x0100);    // GPIO 7
 	wm8994_write(codec, 0x0707, 0x8100);    // GPIO 8
 	wm8994_write(codec, 0x0708, 0x0100);    // GPIO 9
 	wm8994_write(codec, 0x0709, 0x0100);    // GPIO 10
 	wm8994_write(codec, 0x070A, 0x0100);    // GPIO 11
 
-   wm8994_write(codec, 0x0240, 0x0005);    // FLL2 Control 1
+    wm8994_write(codec, 0x0240, 0x0005);    // FLL2 Control 1
 	wm8994_write(codec, 0x0241, 0x2F00);    // FLL2 Control 2
 	wm8994_write(codec, 0x0242, 0x3126);    // FLL2 Control 3
 	wm8994_write(codec, 0x0244, 0x0C88);    // FLL2 Control 5
 	wm8994_write(codec, 0x0243, 0x0100);    // FLL2 Control 4
 	msleep(3);
 		
-   /* Audio Interface & Clock Setting */
+    /* Audio Interface & Clock Setting */
 	wm8994_write(codec, 0x0211, 0x0003);    // AIF2 Rate
 	wm8994_write(codec, 0x0310, 0x4118);    // AIF2 Control 1
 	wm8994_write(codec, 0x0312, 0x4000);    // AIF2 Master/Slave
 	wm8994_write(codec, 0x0204, 0x0019);    // AIF2 Clocking 1
 	wm8994_write(codec, 0x0208, 0x000E);    // Clocking 1
-   wm8994_write(codec, 0x0210, 0x0073);    // AIF1 Rate
+    wm8994_write(codec, 0x0210, 0x0073);    // AIF1 Rate
 	wm8994_write(codec, 0x0200, 0x0011);    // AIF1 Clocking 1
 	
 	/* Input Path Routing */
-   wm8994_write(codec, 0x0606, 0x0001);    // AIF1 ADC1 Left Mixer Routing
+    wm8994_write(codec, 0x0606, 0x0001);    // AIF1 ADC1 Left Mixer Routing
 	wm8994_write(codec, 0x0607, 0x0001);    // AIF1 ADC1 Right Mixer Routing
-   wm8994_write(codec, 0x0604, 0x0001);    // DAC2 Left Mixer Routing
+    wm8994_write(codec, 0x0604, 0x0001);    // DAC2 Left Mixer Routing
 	wm8994_write(codec, 0x0605, 0x0001);    // DAC2 Right Mixer Routing
 	wm8994_write(codec, 0x0520, 0x0000);    // AIF2 DAC Filter
-   wm8994_write(codec, 0x0422, 0x0000);    // AIF1 DAC2 Filter 1
+    wm8994_write(codec, 0x0422, 0x0000);    // AIF1 DAC2 Filter 1
 	wm8994_write(codec, 0x0423, 0x0010);    // AIF1 DAC2 FIlter 2
 	wm8994_write(codec, 0x0004, 0x3300);    // Power Management 4
 	wm8994_write(codec, 0x0005, 0x3300);    // Power Management 5
 
-   /* Output Path Routing */
+    /* Output Path Routing */
 	wm8994_write(codec, 0x0601, 0x0004);    // DAC1 Left Mixer Routing
 	wm8994_write(codec, 0x0602, 0x0004);    // DAC1 Right Mixer Routing
 	wm8994_write(codec, 0x0420, 0x0000);    // AIF1 DAC1 Filter
 	
 	/* Input Volume */
-   wm8994_write(codec, 0x0400, 0x01DA);    // AIF1 ADC1 Left Volume
-   wm8994_write(codec, 0x0401, 0x01DA);    // AIF1 ADC1 Right Volume
-   wm8994_write(codec, 0x0502, 0x01C0);    // AIF2 DAC Left Volume
-   wm8994_write(codec, 0x0503, 0x01C0);    // AIF2 DAC Right Volume
+    wm8994_write(codec, 0x0400, 0x01DA);    // AIF1 ADC1 Left Volume
+    wm8994_write(codec, 0x0401, 0x01DA);    // AIF1 ADC1 Right Volume
+    wm8994_write(codec, 0x0502, 0x01C0);    // AIF2 DAC Left Volume
+    wm8994_write(codec, 0x0503, 0x01C0);    // AIF2 DAC Right Volume
 
-   /* Output Volume */
-   wm8994_write(codec, 0x0610, 0x01C0);    // DAC1 Left Volume
-   wm8994_write(codec, 0x0611, 0x01C0);    // DAC1 Right Volume
-   wm8994_write(codec, 0x0612, 0x01C0);    // DAC2 Left Volume
+    /* Output Volume */
+    wm8994_write(codec, 0x0610, 0x01C0);    // DAC1 Left Volume
+    wm8994_write(codec, 0x0611, 0x01C0);    // DAC1 Right Volume
+    wm8994_write(codec, 0x0612, 0x01C0);    // DAC2 Left Volume
 	wm8994_write(codec, 0x0613, 0x01C0);    // DAC2 Right Volume
     
 	wm8994_write(codec, 0x0620, 0x0000);    // Oversampling
@@ -1175,7 +1175,7 @@ void wm8994_record_bluetooth(struct snd_soc_codec *codec)
 
 	wm8994_write(codec, 0x0006, 0x000A);    // Power Management 6
 	
-   DEBUG_LOG("");
+    DEBUG_LOG("");
 }
 
 void wm8994_set_playback_receiver(struct snd_soc_codec *codec)
@@ -1187,25 +1187,25 @@ void wm8994_set_playback_receiver(struct snd_soc_codec *codec)
     
 	if(!wm8994->testmode_config_flag)
 	{
-      wm8994_write(codec, 0x0031, 0x0000);    // Output Mixer 5
+        wm8994_write(codec, 0x0031, 0x0000);    // Output Mixer 5
 		wm8994_write(codec, 0x0032, 0x0000);    // Output Mixer 6
 		wm8994_write(codec, 0x0020, 0x017D);    // OPGA Left Volume
 		wm8994_write(codec, 0x0021, 0x017D);    // OPGA Right Volume
-      wm8994_write(codec, 0x001F, 0x0000);    // HPOUT2 Volume
+        wm8994_write(codec, 0x001F, 0x0000);    // HPOUT2 Volume
 		wm8994_write(codec, 0x0610, 0x01C0);    // DAC1 Left Volume
 		wm8994_write(codec, 0x0611, 0x01C0);    // DAC1 Right Volume
 		wm8994_write(codec, 0x0402, 0x01C0);    // AIF1 DAC1 Left Volume
 		wm8994_write(codec, 0x0403, 0x01C0);    // AIF1 DAC1 Right Volume
 	}
-   wm8994_write(codec, 0x002D, 0x0001);    // Output Mixer 1
-   wm8994_write(codec, 0x002E, 0x0001);    // Output Mixer 2
-   wm8994_write(codec, 0x0033, 0x0018);    // HPOUT2 Mixer
-   wm8994_write(codec, 0x0005, 0x0303);    // Power Management 5
-   wm8994_write(codec, 0x0420, 0x0080);    // AIF1 DAC1 Filter
-   wm8994_write(codec, 0x0601, 0x0001);    // DAC1 Left Mixer
-   wm8994_write(codec, 0x0602, 0x0001);    // DAC1 Right Mixer
-   wm8994_write(codec, 0x0208, 0x000A);    // Clocking 1
-   wm8994_write(codec, 0x0003, 0x00F0);    // Power Management 3
+    wm8994_write(codec, 0x002D, 0x0001);    // Output Mixer 1
+    wm8994_write(codec, 0x002E, 0x0001);    // Output Mixer 2
+    wm8994_write(codec, 0x0033, 0x0018);    // HPOUT2 Mixer
+    wm8994_write(codec, 0x0005, 0x0303);    // Power Management 5
+    wm8994_write(codec, 0x0420, 0x0080);    // AIF1 DAC1 Filter
+    wm8994_write(codec, 0x0601, 0x0001);    // DAC1 Left Mixer
+    wm8994_write(codec, 0x0602, 0x0001);    // DAC1 Right Mixer
+    wm8994_write(codec, 0x0208, 0x000A);    // Clocking 1
+    wm8994_write(codec, 0x0003, 0x00F0);    // Power Management 3
 	wm8994_write(codec, 0x0001, 0x0803);    // Power Management 1
 }
 
@@ -1227,7 +1227,7 @@ void wm8994_set_playback_headset(struct snd_soc_codec *codec)
 	wm8994_write(codec, 0x0602, 0x0001);    // DAC1 Right Mixer
 	wm8994_write(codec, 0x0102, 0x0003);
 	wm8994_write(codec, 0x0056, 0x0003);
-   wm8994_write(codec, 0x0102, 0x0000);
+    wm8994_write(codec, 0x0102, 0x0000);
 	wm8994_write(codec, 0x0051, 0x0005);    // Class W
 
 	if(!wm8994->testmode_config_flag)
@@ -1279,7 +1279,7 @@ void wm8994_set_playback_headset(struct snd_soc_codec *codec)
 #ifdef CONFIG_SND_VOODOO
 	voodoo_hook_playback_headset();
 #endif
-	
+
 	wm8994_write(codec, 0x0060, 0x00EE);    // Analogue HP 1
 	wm8994_write(codec, 0x0610, 0x01C0);    // DAC1 Left Volume
 	wm8994_write(codec, 0x0611, 0x01C0);    // DAC1 Right Volume
@@ -1429,62 +1429,62 @@ void wm8994_set_playback_speaker_headset(struct snd_soc_codec *codec)
 
 void wm8994_set_playback_bluetooth(struct snd_soc_codec *codec)
 {
-   struct wm8994_priv *wm8994 = codec->private_data;
+    struct wm8994_priv *wm8994 = codec->private_data;
 
-   wm8994_write(codec, 0x0001, 0x0003);    // Power Management 1
-   msleep(50);
+    wm8994_write(codec, 0x0001, 0x0003);    // Power Management 1
+    msleep(50);
     
-   wm8994_write(codec, 0x0700, 0xA101);    // GPIO 1
+    wm8994_write(codec, 0x0700, 0xA101);    // GPIO 1
 	wm8994_write(codec, 0x0702, 0x0100);    // GPIO 3
-   wm8994_write(codec, 0x0704, 0x8100);    // GPIO 5
+    wm8994_write(codec, 0x0704, 0x8100);    // GPIO 5
 	wm8994_write(codec, 0x0706, 0x0100);    // GPIO 7
 	wm8994_write(codec, 0x0707, 0x8100);    // GPIO 8
 	wm8994_write(codec, 0x0708, 0x0100);    // GPIO 9
 	wm8994_write(codec, 0x0709, 0x0100);    // GPIO 10
 	wm8994_write(codec, 0x070A, 0x0100);    // GPIO 11
 
-   wm8994_write(codec, 0x0240, 0x0005);    // FLL2 Control 1
+    wm8994_write(codec, 0x0240, 0x0005);    // FLL2 Control 1
 	wm8994_write(codec, 0x0241, 0x2F00);    // FLL2 Control 2
 	wm8994_write(codec, 0x0242, 0x3126);    // FLL2 Control 3
 	wm8994_write(codec, 0x0244, 0x0C88);    // FLL2 Control 5
 	wm8994_write(codec, 0x0243, 0x0100);    // FLL2 Control 4
 	msleep(3);
 		
-   /* Audio Interface & Clock Setting */
+    /* Audio Interface & Clock Setting */
 	wm8994_write(codec, 0x0211, 0x0003);    // AIF2 Rate
 	wm8994_write(codec, 0x0310, 0x4118);    // AIF2 Control 1
 	wm8994_write(codec, 0x0312, 0x4000);    // AIF2 Master/Slave
 	wm8994_write(codec, 0x0204, 0x0019);    // AIF2 Clocking 1
 	wm8994_write(codec, 0x0208, 0x000E);    // Clocking 1
-   wm8994_write(codec, 0x0210, 0x0073);    // AIF1 Rate
+    wm8994_write(codec, 0x0210, 0x0073);    // AIF1 Rate
 	wm8994_write(codec, 0x0200, 0x0011);    // AIF1 Clocking 1
 	
 	/* Input Path Routing */
-   wm8994_write(codec, 0x0606, 0x0001);    // AIF1 ADC1 Left Mixer Routing
+    wm8994_write(codec, 0x0606, 0x0001);    // AIF1 ADC1 Left Mixer Routing
 	wm8994_write(codec, 0x0607, 0x0001);    // AIF1 ADC1 Right Mixer Routing
-   wm8994_write(codec, 0x0604, 0x0001);    // DAC2 Left Mixer Routing
+    wm8994_write(codec, 0x0604, 0x0001);    // DAC2 Left Mixer Routing
 	wm8994_write(codec, 0x0605, 0x0001);    // DAC2 Right Mixer Routing
 	wm8994_write(codec, 0x0520, 0x0000);    // AIF2 DAC Filter
-   wm8994_write(codec, 0x0422, 0x0000);    // AIF1 DAC2 Filter 1
+    wm8994_write(codec, 0x0422, 0x0000);    // AIF1 DAC2 Filter 1
 	wm8994_write(codec, 0x0423, 0x0010);    // AIF1 DAC2 FIlter 2
 	wm8994_write(codec, 0x0004, 0x3300);    // Power Management 4
 	wm8994_write(codec, 0x0005, 0x3300);    // Power Management 5
 
-   /* Output Path Routing */
+    /* Output Path Routing */
 	wm8994_write(codec, 0x0601, 0x0004);    // DAC1 Left Mixer Routing
 	wm8994_write(codec, 0x0602, 0x0004);    // DAC1 Right Mixer Routing
 	wm8994_write(codec, 0x0420, 0x0000);    // AIF1 DAC1 Filter
 	
 	/* Input Volume */
-   wm8994_write(codec, 0x0400, 0x01DA);    // AIF1 ADC1 Left Volume
-   wm8994_write(codec, 0x0401, 0x01DA);    // AIF1 ADC1 Right Volume
-   wm8994_write(codec, 0x0502, 0x01C0);    // AIF2 DAC Left Volume
-   wm8994_write(codec, 0x0503, 0x01C0);    // AIF2 DAC Right Volume
+    wm8994_write(codec, 0x0400, 0x01DA);    // AIF1 ADC1 Left Volume
+    wm8994_write(codec, 0x0401, 0x01DA);    // AIF1 ADC1 Right Volume
+    wm8994_write(codec, 0x0502, 0x01C0);    // AIF2 DAC Left Volume
+    wm8994_write(codec, 0x0503, 0x01C0);    // AIF2 DAC Right Volume
 
-   /* Output Volume */
-   wm8994_write(codec, 0x0610, 0x01C0);    // DAC1 Left Volume
-   wm8994_write(codec, 0x0611, 0x01C0);    // DAC1 Right Volume
-   wm8994_write(codec, 0x0612, 0x01C0);    // DAC2 Left Volume
+    /* Output Volume */
+    wm8994_write(codec, 0x0610, 0x01C0);    // DAC1 Left Volume
+    wm8994_write(codec, 0x0611, 0x01C0);    // DAC1 Right Volume
+    wm8994_write(codec, 0x0612, 0x01C0);    // DAC2 Left Volume
 	wm8994_write(codec, 0x0613, 0x01C0);    // DAC2 Right Volume
     
 	wm8994_write(codec, 0x0620, 0x0000);    // Oversampling
@@ -1492,128 +1492,37 @@ void wm8994_set_playback_bluetooth(struct snd_soc_codec *codec)
 
 	wm8994_write(codec, 0x0006, 0x000A);    // Power Management 6
 	
-   DEBUG_LOG("");
+    DEBUG_LOG("");
 }
 	
 void wm8994_set_playback_extra_dock_speaker(struct snd_soc_codec *codec)
-{
-	struct wm8994_priv *wm8994 = codec->private_data;
+{    
+    /* Volume Setting */
+    wm8994_write(codec, 0x0031, 0x0000);    // Output Mixer 5
+	wm8994_write(codec, 0x0032, 0x0000);    // Output Mixer 6
+	wm8994_write(codec, 0x0020, 0x0177);    // Left OPGA Volume
+	wm8994_write(codec, 0x0021, 0x0177);    // Right OPGA Volume
+    wm8994_write(codec, 0x001E, 0x0000);    // Lineout Volume
+	wm8994_write(codec, 0x0610, 0x01C0);    // DAC1 Left Volume
+	wm8994_write(codec, 0x0611, 0x01C0);    // DAC 1 Right Volume
+	wm8994_write(codec, 0x0402, 0x01C0);    // AIF1 DAC 1 Left Volume
+	wm8994_write(codec, 0x0403, 0x01C0);    // AIF1 DAC 1 Rigt Volume
 
-	u16 val;
+    /* Output Path Routing */
+    wm8994_write(codec, 0x002D, 0x0001);    // Output Mixer1
+    wm8994_write(codec, 0x002E, 0x0001);    // Output Mixer2
+    wm8994_write(codec, 0x0035, 0x0031);    // Line Mixer 2
+    wm8994_write(codec, 0x0005, 0x0303);    // Power Management5
+    wm8994_write(codec, 0x0601, 0x0001);    // DAC1 Left Mixer Routing
+    wm8994_write(codec, 0x0602, 0x0001);    // DAC1 Right Mixer Routing
+    wm8994_write(codec, 0x0208, 0x000A);    // Clocking 1
+    wm8994_write(codec, 0x0003, 0x0CF0);    // Power Management 3
+    wm8994_write(codec, 0x0420, 0x0000);    // DAC1 Filter
 
-	DEBUG_LOG("");
-
-	//OUTPUT mute
-	val = wm8994_read(codec, WM8994_POWER_MANAGEMENT_3);
-	val &= ~(WM8994_LINEOUT2N_ENA_MASK | WM8994_LINEOUT2P_ENA_MASK);
-	wm8994_write(codec, WM8994_POWER_MANAGEMENT_3, val);
-
-
-	if(!wm8994->testmode_config_flag)
-	{
-	   val = wm8994_read(codec, WM8994_OUTPUT_MIXER_5);
-		val &= ~(WM8994_DACL_MIXOUTL_VOL_MASK);
-      val |= TUNING_EXTRA_DOCK_SPK_OUTMIX5_VOL << WM8994_DACL_MIXOUTL_VOL_SHIFT;
-	        wm8994_write(codec,WM8994_OUTPUT_MIXER_5, val );
-	
-		val = wm8994_read(codec, WM8994_OUTPUT_MIXER_6);
-		val &= ~(WM8994_DACR_MIXOUTR_VOL_MASK);
-		val |= TUNING_EXTRA_DOCK_SPK_OUTMIX6_VOL << WM8994_DACR_MIXOUTR_VOL_SHIFT;
-		wm8994_write(codec,WM8994_OUTPUT_MIXER_6, val );
-
-		val = wm8994_read(codec, WM8994_LEFT_OPGA_VOLUME);
-		val &= ~(WM8994_MIXOUTL_MUTE_N_MASK | WM8994_MIXOUTL_VOL_MASK);
-		val |= (WM8994_MIXOUT_VU |WM8994_MIXOUTL_MUTE_N | TUNING_MP3_EXTRA_DOCK_SPK_OPGAL_VOL);
-		wm8994_write(codec,WM8994_LEFT_OPGA_VOLUME, val );
-
-		val = wm8994_read(codec, WM8994_RIGHT_OPGA_VOLUME);
-		val &= ~(WM8994_MIXOUTR_MUTE_N_MASK | WM8994_MIXOUTR_VOL_MASK);
-		val |= (WM8994_MIXOUT_VU | WM8994_MIXOUTR_MUTE_N | TUNING_MP3_EXTRA_DOCK_SPK_OPGAR_VOL);
-		wm8994_write(codec,WM8994_RIGHT_OPGA_VOLUME, val );
-
-		val = wm8994_read(codec,WM8994_LINE_OUTPUTS_VOLUME);
-		val &= ~(WM8994_LINEOUT2_VOL_MASK);
-		val |= (TUNING_MP3_EXTRA_DOCK_SPK_VOL << WM8994_LINEOUT2_VOL_SHIFT);		
-		wm8994_write(codec,WM8994_LINE_OUTPUTS_VOLUME,val);
-		
-		//Unmute DAC1 left
-		val = wm8994_read(codec,WM8994_DAC1_LEFT_VOLUME );
-		val &= ~(WM8994_DAC1L_MUTE_MASK | WM8994_DAC1L_VOL_MASK);
-		val |= 0x00C0; 
-		wm8994_write(codec,WM8994_DAC1_LEFT_VOLUME ,val);
-	
-		//Unmute and volume ctrl RightDAC
-		val = wm8994_read(codec, WM8994_DAC1_RIGHT_VOLUME ); 
-		val &= ~(WM8994_DAC1R_MUTE_MASK | WM8994_DAC1R_VOL_MASK);
-		val |= TUNING_DAC1R_VOL;
-		wm8994_write(codec,WM8994_DAC1_RIGHT_VOLUME,val);
-		
-		val = wm8994_read(codec, WM8994_AIF1_DAC1_LEFT_VOLUME);
-		val &= ~(WM8994_AIF1DAC1L_VOL_MASK);
-		val |= 0x01C0;
-		wm8994_write(codec, WM8994_AIF1_DAC1_LEFT_VOLUME, val);
-
-		val = wm8994_read(codec, WM8994_AIF1_DAC1_RIGHT_VOLUME);
-		val &= ~(WM8994_AIF1DAC1R_VOL_MASK);
-		val |= (WM8994_AIF1DAC1_VU |TUNING_DAC1R_VOL);
-		wm8994_write(codec, WM8994_AIF1_DAC1_RIGHT_VOLUME, val);
-	}
-
-	val = wm8994_read(codec, WM8994_OUTPUT_MIXER_1);
-	val &= ~(WM8994_DAC1L_TO_MIXOUTL_MASK);
-	val |= (WM8994_DAC1L_TO_MIXOUTL);
-	wm8994_write(codec,WM8994_OUTPUT_MIXER_1, val);
-
-	val = wm8994_read(codec, WM8994_OUTPUT_MIXER_2);
-	val &= ~(WM8994_DAC1R_TO_MIXOUTR_MASK);
-	val |= (WM8994_DAC1R_TO_MIXOUTR);
-	wm8994_write(codec, WM8994_OUTPUT_MIXER_2, val);
-
-
-	val = wm8994_read(codec,WM8994_LINE_MIXER_2);
-	val &= ~(WM8994_MIXOUTR_TO_LINEOUT2N_MASK | WM8994_MIXOUTL_TO_LINEOUT2N_MASK | WM8994_LINEOUT2_MODE_MASK | WM8994_MIXOUTR_TO_LINEOUT2P_MASK);
-	val |= (WM8994_MIXOUTL_TO_LINEOUT2N | WM8994_LINEOUT2_MODE | WM8994_MIXOUTR_TO_LINEOUT2P);
-	wm8994_write(codec,WM8994_LINE_MIXER_2,val);
-
-	val = wm8994_read(codec,WM8994_POWER_MANAGEMENT_5);
-	val &= ~(WM8994_DAC1R_ENA_MASK | WM8994_DAC1L_ENA_MASK | WM8994_AIF1DAC1R_ENA_MASK | WM8994_AIF1DAC1L_ENA_MASK);
-	val |= (WM8994_AIF1DAC1L_ENA | WM8994_AIF1DAC1R_ENA | WM8994_DAC1L_ENA | WM8994_DAC1R_ENA);
-	wm8994_write(codec,WM8994_POWER_MANAGEMENT_5,val);
-
-	val = wm8994_read(codec,WM8994_AIF1_DAC1_FILTERS_1);
-	val &= ~(WM8994_AIF1DAC1_MUTE_MASK |WM8994_AIF1DAC1_MONO_MASK);
-	val |= (WM8994_AIF1DAC1_UNMUTE);
-	wm8994_write(codec,WM8994_AIF1_DAC1_FILTERS_1,val);
-
-	val = wm8994_read(codec,WM8994_LINE_OUTPUTS_VOLUME);
-	val &= ~(WM8994_LINEOUT2N_MUTE_MASK | WM8994_LINEOUT2P_MUTE_MASK);
-	wm8994_write(codec,WM8994_LINE_OUTPUTS_VOLUME,val);
-	
-	val = wm8994_read(codec,WM8994_DAC1_LEFT_MIXER_ROUTING);
-	val &= ~(WM8994_AIF1DAC1L_TO_DAC1L_MASK);
-	val |= (WM8994_AIF1DAC1L_TO_DAC1L);
-	wm8994_write(codec,WM8994_DAC1_LEFT_MIXER_ROUTING,val);
-	
-	val = wm8994_read(codec, WM8994_DAC1_RIGHT_MIXER_ROUTING  ); 	
-	val &= ~(WM8994_AIF1DAC1R_TO_DAC1R_MASK);
-	val |= (WM8994_AIF1DAC1R_TO_DAC1R);
-	wm8994_write(codec,WM8994_DAC1_RIGHT_MIXER_ROUTING ,val);
-
-	val = wm8994_read(codec, WM8994_CLOCKING_1);
-	val &= ~(WM8994_DSP_FS1CLK_ENA_MASK | WM8994_DSP_FSINTCLK_ENA_MASK);
-	val |= (WM8994_DSP_FS1CLK_ENA | WM8994_DSP_FSINTCLK_ENA);
-	wm8994_write(codec, WM8994_CLOCKING_1, val);
-
-	val = wm8994_read(codec,WM8994_POWER_MANAGEMENT_3);
-	val &= ~(WM8994_LINEOUT2N_ENA_MASK | WM8994_LINEOUT1P_ENA_MASK | WM8994_MIXOUTLVOL_ENA_MASK | WM8994_MIXOUTRVOL_ENA_MASK | WM8994_MIXOUTL_ENA_MASK | WM8994_MIXOUTR_ENA_MASK);
-	val |= (WM8994_LINEOUT2N_ENA | WM8994_LINEOUT2P_ENA | WM8994_MIXOUTL_ENA | WM8994_MIXOUTR_ENA | WM8994_MIXOUTRVOL_ENA | WM8994_MIXOUTLVOL_ENA);
-	wm8994_write(codec,WM8994_POWER_MANAGEMENT_3,val);
-		
-	val = wm8994_read(codec,WM8994_POWER_MANAGEMENT_1 );
-	val &= ~(WM8994_BIAS_ENA_MASK | WM8994_VMID_SEL_MASK | WM8994_HPOUT2_ENA_MASK );
-	val |= (WM8994_BIAS_ENA | WM8994_VMID_SEL_NORMAL );
-	wm8994_write(codec,WM8994_POWER_MANAGEMENT_1,val);
-
+    /* Channel Seperation */
+    wm8994_write(codec, 0x0037, 0x0040);    // Lineout Control
+    
+    DEBUG_LOG("");
 }
 
 void wm8994_set_voicecall_common_setting(struct snd_soc_codec *codec)
@@ -1695,29 +1604,32 @@ void wm8994_set_voicecall_common_setting(struct snd_soc_codec *codec)
 
 void wm8994_set_playback_vps(struct snd_soc_codec *codec)
 {
-   /* Volume Setting */
-   wm8994_write(codec, 0x0031, 0x0000);    // Output Mixer 5
-	wm8994_write(codec, 0x0032, 0x0000);    // Output Mixer 6
-	wm8994_write(codec, 0x0020, 0x017D);    // Left OPGA Volume
-	wm8994_write(codec, 0x0021, (WM8994_MIXOUT_VU | WM8994_MIXOUTR_MUTE_N | TUNING_RCV_OPGAR_VOL));   // Right OPGA Volume
-   wm8994_write(codec, 0x001E, 0x0000);    // Lineout Volume
+    /* Volume Setting */
+    wm8994_write(codec, 0x0031, 0x0400);    // Output Mixer 5
+	wm8994_write(codec, 0x0032, 0x0400);    // Output Mixer 6
+	wm8994_write(codec, 0x0020, 0x0179);    // Left OPGA Volume
+	wm8994_write(codec, 0x0021, 0x0179);    // Right OPGA Volume
+    wm8994_write(codec, 0x001E, 0x0000);    // Lineout Volume
 	wm8994_write(codec, 0x0610, 0x01C0);    // DAC1 Left Volume
-	wm8994_write(codec, 0x0611, TUNING_DAC1R_VOL);    // DAC 1 Right Volume
+	wm8994_write(codec, 0x0611, 0x01C0);    // DAC 1 Right Volume
 	wm8994_write(codec, 0x0402, 0x01C0);    // AIF1 DAC 1 Left Volume
-	wm8994_write(codec, 0x0403, (WM8994_AIF1DAC1_VU |TUNING_DAC1R_VOL));    // AIF1 DAC 1 Rigt Volume
+	wm8994_write(codec, 0x0403, 0x01C0);    // AIF1 DAC 1 Rigt Volume
 
-   /* Output Path Routing */
-   wm8994_write(codec, 0x002D, 0x0001);    // Output Mixer1
-   wm8994_write(codec, 0x002E, 0x0001);    // Output Mixer2
-   wm8994_write(codec, 0x0035, 0x0021);    // Line Mixer 2
-   wm8994_write(codec, 0x0005, 0x0303);    // Power Management5
-   wm8994_write(codec, 0x0420, 0x0080);    // AIF1 DAC1 Filter
-   wm8994_write(codec, 0x0601, 0x0001);    // DAC1 Left Mixer Routing
-   wm8994_write(codec, 0x0602, 0x0001);    // DAC1 Right Mixer Routing
-   wm8994_write(codec, 0x0208, 0x000A);    // Clocking 1
-   wm8994_write(codec, 0x0003, 0x0CF0);    // Power Management 3
+    /* Output Path Routing */
+    wm8994_write(codec, 0x002D, 0x0001);    // Output Mixer1
+    wm8994_write(codec, 0x002E, 0x0001);    // Output Mixer2
+    wm8994_write(codec, 0x0035, 0x0031);    // Line Mixer 2
+    wm8994_write(codec, 0x0005, 0x0303);    // Power Management5
+    wm8994_write(codec, 0x0601, 0x0001);    // DAC1 Left Mixer Routing
+    wm8994_write(codec, 0x0602, 0x0001);    // DAC1 Right Mixer Routing
+    wm8994_write(codec, 0x0208, 0x000A);    // Clocking 1
+    wm8994_write(codec, 0x0003, 0x0CF0);    // Power Management 3
+    wm8994_write(codec, 0x0420, 0x0000);    // DAC1 Filter
 
-   DEBUG_LOG("");
+    /* Channel Seperation */
+    wm8994_write(codec, 0x0037, 0x0040);    // Lineout Control
+    
+    DEBUG_LOG("");
 }
 
 void wm8994_set_voicecall_receiver(struct snd_soc_codec *codec)
@@ -1725,124 +1637,125 @@ void wm8994_set_voicecall_receiver(struct snd_soc_codec *codec)
 	struct wm8994_priv *wm8994 = codec->private_data;
 	int val;
 
-   wm8994_write(codec, 0x0039, 0x0068);    // Anti Pop2
-   wm8994_write(codec, 0x0001, 0x0003);    // Power Management 1
-   msleep(50);
-   wm8994_write(codec, 0x0102, 0x0003);    // To remove the robotic sound
-   wm8994_write(codec, 0x0817, 0x0000);    // To remove the robotic sound
-   wm8994_write(codec, 0x0102, 0x0003);    // To remove the robotic sound
-   wm8994_write(codec, 0x0015, 0x0040);
-   wm8994_write(codec, 0x0702, 0x8100);    // GPIO 3. Speech PCM Clock
-   wm8994_write(codec, 0x0703, 0x8100);    // GPIO 4. Speech PCM Sync
-   wm8994_write(codec, 0x0704, 0x8100);    // GPIO 5. Speech PCM Data Out
-   wm8994_write(codec, 0x0706, 0x0100);    // GPIO 7. Speech PCM Data Input
-   wm8994_write(codec, 0x0244, 0x0C81);    // FLL2 Control 5
-   wm8994_write(codec, 0x0241, 0x0700);    // FLL2 Control 2
-   wm8994_write(codec, 0x0242, 0x0000);    // FLL2 Control 3
-   wm8994_write(codec, 0x0243, 0x0600);    // FLL2 Control 4
-   wm8994_write(codec, 0x0240, 0x0001);    // FLL2 Control 1
-   msleep(3);
+    wm8994_write(codec, 0x0039, 0x0068);    // Anti Pop2
+    wm8994_write(codec, 0x0001, 0x0003);    // Power Management 1
+    msleep(50);
+    wm8994_write(codec, 0x0102, 0x0003);    // To remove the robotic sound
+    wm8994_write(codec, 0x0817, 0x0000);    // To remove the robotic sound
+    wm8994_write(codec, 0x0102, 0x0003);    // To remove the robotic sound
+    wm8994_write(codec, 0x0015, 0x0040);
+    wm8994_write(codec, 0x0702, 0x8100);    // GPIO 3. Speech PCM Clock
+    wm8994_write(codec, 0x0703, 0x8100);    // GPIO 4. Speech PCM Sync
+    wm8994_write(codec, 0x0704, 0x8100);    // GPIO 5. Speech PCM Data Out
+    wm8994_write(codec, 0x0706, 0x0100);    // GPIO 7. Speech PCM Data Input
+    wm8994_write(codec, 0x0244, 0x0C81);    // FLL2 Control 5
+    wm8994_write(codec, 0x0241, 0x0700);    // FLL2 Control 2
+    wm8994_write(codec, 0x0242, 0x0000);    // FLL2 Control 3
+    wm8994_write(codec, 0x0243, 0x0600);    // FLL2 Control 4
+    wm8994_write(codec, 0x0240, 0x0001);    // FLL2 Control 1
+    msleep(3);
 
-   /* Audio Interface & Clock Setting */
-   wm8994_write(codec, 0x0204, 0x0018);    // AIF2 Clocking 1. Clock Source Select
-   wm8994_write(codec, 0x0208, 0x000F);    // Clocking 1. '0x000A' is added for a playback. (original = 0x0007)
-   wm8994_write(codec, 0x0620, 0x0000);    // Oversampling
-   wm8994_write(codec, 0x0211, 0x0009);    // AIF2 Rate
-   wm8994_write(codec, 0x0302, 0x4000);    // AIF1 Master Slave Setting. To prevent that the music is played slowly.
-   wm8994_write(codec, 0x0312, 0x0000);    // AIF2 Master Slave Setting
-   wm8994_write(codec, 0x0310, 0x4118);    // AIF2 Control 1
-   wm8994_write(codec, 0x0311, 0x0000);    // AIF2 Control 2
-   wm8994_write(codec, 0x0520, 0x0080);    // AIF2 DAC Filter 1
-   wm8994_write(codec, 0x0204, 0x0019);    // AIF2 Clocking 1. AIF2 Clock Enable
+    /* Audio Interface & Clock Setting */
+    wm8994_write(codec, 0x0204, 0x0018);    // AIF2 Clocking 1. Clock Source Select
+    wm8994_write(codec, 0x0208, 0x000F);    // Clocking 1. '0x000A' is added for a playback. (original = 0x0007)
+    wm8994_write(codec, 0x0620, 0x0000);    // Oversampling
+    wm8994_write(codec, 0x0211, 0x0009);    // AIF2 Rate
+    wm8994_write(codec, 0x0302, 0x4000);    // AIF1 Master Slave Setting. To prevent that the music is played slowly.
+    wm8994_write(codec, 0x0312, 0x0000);    // AIF2 Master Slave Setting
+    wm8994_write(codec, 0x0310, 0x4118);    // AIF2 Control 1
+    wm8994_write(codec, 0x0311, 0x0000);    // AIF2 Control 2
+    wm8994_write(codec, 0x0520, 0x0080);    // AIF2 DAC Filter 1
+    wm8994_write(codec, 0x0204, 0x0019);    // AIF2 Clocking 1. AIF2 Clock Enable
 
-   /* Input Path Routing */
-   wm8994_write(codec, 0x0028, 0x0030);    // Input Mixer 2
-   wm8994_write(codec, 0x0002, 0x6240);    // Power Management 2
-   wm8994_write(codec, 0x0029, 0x0030);    // Input Mixer 3
-   wm8994_write(codec, 0x0004, 0x2002);    // Power Management 4
-   wm8994_write(codec, 0x0604, 0x0010);    // DAC2 Left Mixer Routing
-   audio_ctrl_mic_bias_gpio(1);
+    /* Input Path Routing */
+    wm8994_write(codec, 0x0028, 0x0030);    // Input Mixer 2
+    wm8994_write(codec, 0x0002, 0x6240);    // Power Management 2
+    wm8994_write(codec, 0x0029, 0x0030);    // Input Mixer 3
+    wm8994_write(codec, 0x0004, 0x2002);    // Power Management 4
+    wm8994_write(codec, 0x0604, 0x0010);    // DAC2 Left Mixer Routing
+    audio_ctrl_mic_bias_gpio(1);
     
-   /* Output Path Routing */
-   wm8994_write(codec, 0x0005, 0x2303);    // Power Management 5. '0x0303' is added for a playback. (Original = 0x2002)
-   wm8994_write(codec, 0x0601, 0x0015);    // DAC1 Left Mixer Routing. '0x0001' is added for a playback. (Original = 0x0004)
-   wm8994_write(codec, 0x0602, 0x0001);    // DAC1 Right Mixer Routing(Playback)
-   wm8994_write(codec, 0x002D, 0x0001);    // Output Mixer 1
-   wm8994_write(codec, 0x002E, 0x0001);    // Output Mixer 2(Playback)
-   wm8994_write(codec, 0x0003, 0x00F0);    // Power Management 3. '0x00F0' is added for a playback. (Original = 0x00A0)
-   wm8994_write(codec, 0x0033, 0x0018);    // HPOUT2 Mixer. '0x0008' is added for a playback. (Original = 0x0010)
-   wm8994_write(codec, 0x0420, 0x0080);    // AIF1 DAC1 FIlter(Playback)
+    /* Output Path Routing */
+    wm8994_write(codec, 0x0005, 0x2303);    // Power Management 5. '0x0303' is added for a playback. (Original = 0x2002)
+    wm8994_write(codec, 0x0601, 0x0015);    // DAC1 Left Mixer Routing. '0x0001' is added for a playback. (Original = 0x0004)
+    wm8994_write(codec, 0x0602, 0x0001);    // DAC1 Right Mixer Routing(Playback)
+    wm8994_write(codec, 0x002D, 0x0001);    // Output Mixer 1
+    wm8994_write(codec, 0x002E, 0x0001);    // Output Mixer 2(Playback)
+    wm8994_write(codec, 0x0003, 0x00F0);    // Power Management 3. '0x00F0' is added for a playback. (Original = 0x00A0)
+    wm8994_write(codec, 0x0033, 0x0018);    // HPOUT2 Mixer. '0x0008' is added for a playback. (Original = 0x0010)
+    wm8994_write(codec, 0x0420, 0x0080);    // AIF1 DAC1 FIlter(Playback)
 
-   /* Input Path Volume */
-   if(loopback_mode == LOOPBACK_MODE_OFF)
-   {
-       wm8994_write(codec, 0x0018, 0x0116);    // Left Line Input 1&2 Volume
-       wm8994_write(codec, 0x0500, 0x01C0);    // AIF2 ADC Left Volume
-       wm8994_write(codec, 0x0612, 0x01C0);    // DAC2 Left Volume
-       wm8994_write(codec, 0x0603, 0x000C);    // DAC2 Mixer Volumes
-       wm8994_write(codec, 0x0621, 0x01C0);    // Sidetone
-   }
-   else
-   {
-       wm8994_write(codec, 0x0018, 0x010A);    // Left Line Input 1&2 Volume
-       wm8994_write(codec, 0x0500, 0x01C0);    // AIF2 ADC Left Volume
-       wm8994_write(codec, 0x0612, 0x01C0);    // DAC2 Left Volume
-       wm8994_write(codec, 0x0603, 0x000C);    // DAC2 Mixer Volumes
+    /* Input Path Volume */
+    if(loopback_mode == LOOPBACK_MODE_OFF)
+    {
+        wm8994_write(codec, 0x0018, 0x0110);   //HYH_20100820 : -9dB  // Left Line Input 1&2 Volume
+        wm8994_write(codec, 0x0500, 0x01C0);    // AIF2 ADC Left Volume
+        wm8994_write(codec, 0x0612, 0x01C0);    // DAC2 Left Volume
+        wm8994_write(codec, 0x0603, 0x000C);    // DAC2 Mixer Volumes
+        wm8994_write(codec, 0x0621, 0x01C0);    // Sidetone
+    }
+    else
+    {
+        wm8994_write(codec, 0x0018, 0x010A);    // Left Line Input 1&2 Volume
+        wm8994_write(codec, 0x0500, 0x01C0);    // AIF2 ADC Left Volume
+        wm8994_write(codec, 0x0612, 0x01C0);    // DAC2 Left Volume
+        wm8994_write(codec, 0x0603, 0x000C);    // DAC2 Mixer Volumes
 
-       DEBUG_LOG("=====================================> Loopback Mode");
-   }
+        DEBUG_LOG("=====================================> Loopback Mode");
+    }
 
-   /* Output Path Volume */
-   if(loopback_mode == LOOPBACK_MODE_OFF)
-   {
-       wm8994_write(codec, 0x0031, 0x0000);    // Output Mixer 5
-       wm8994_write(codec, 0x0032, 0x0000);    // Output Mixer 6
-       wm8994_write(codec, 0x0020, 0x017D);    // Left OPGA Volume
-       wm8994_write(codec, 0x0021, 0x017D);    // Right OPGA Volume
-       wm8994_write(codec, 0x0610, 0x01C0);    // DAC1 Left Volume
-       wm8994_write(codec, 0x0611, 0x01C0);    // DAC1 Right Volume
+    /* Output Path Volume */
+    if(loopback_mode == LOOPBACK_MODE_OFF)
+    {
+        wm8994_write(codec, 0x0031, 0x0000);    // Output Mixer 5
+        wm8994_write(codec, 0x0032, 0x0000);    // Output Mixer 6
+        wm8994_write(codec, 0x0020, 0x017D);    // Left OPGA Volume
+        wm8994_write(codec, 0x0021, 0x017D);    // Right OPGA Volume
+        wm8994_write(codec, 0x0610, 0x01C0);    // DAC1 Left Volume
+        wm8994_write(codec, 0x0611, 0x01C0);    // DAC1 Right Volume
 #if 0
-       wm8994_write(codec, 0x001F, 0x0000);    // HPOUT2 Volume
+        wm8994_write(codec, 0x001F, 0x0000);    // HPOUT2 Volume
 #else
-       if(wm8994->codec_state & CALL_ACTIVE)
-       {
-           wm8994_write(codec, 0x001F, 0x0000);    // HPOUT2 Volume
-       }
-       else
-       {
-           wm8994_write(codec, 0x001F, 0x0020);    // HPOUT2 Volume
-       }
+        if(wm8994->codec_state & CALL_ACTIVE)
+        {
+            wm8994_write(codec, 0x001F, 0x0000);    // HPOUT2 Volume
+        }
+        else
+        {
+            wm8994_write(codec, 0x001F, 0x0020);    // HPOUT2 Volume
+        }
 #endif
-   }
-   else
-   {
-       wm8994_write(codec, 0x0031, 0x0000);    // Output Mixer 5
-       wm8994_write(codec, 0x0032, 0x0000);    // Output Mixer 6
-       wm8994_write(codec, 0x0020, 0x0179);    // Left OPGA Volume
-       wm8994_write(codec, 0x0021, 0x0179);    // Right OPGA Volume
-       wm8994_write(codec, 0x0610, 0x01C0);    // DAC1 Left Volume
-       wm8994_write(codec, 0x0611, 0x01C0);    // DAC1 Right Volume
-       wm8994_write(codec, 0x001F, 0x0000);    // HPOUT2 Volume
-   }
+    }
+    else
+    {
+        wm8994_write(codec, 0x0031, 0x0000);    // Output Mixer 5
+        wm8994_write(codec, 0x0032, 0x0000);    // Output Mixer 6
+        wm8994_write(codec, 0x0020, 0x0179);  // Left OPGA Volume
+        wm8994_write(codec, 0x0021, 0x0179);  // Right OPGA Volume
+        wm8994_write(codec, 0x0610, 0x01C0);    // DAC1 Left Volume
+        wm8994_write(codec, 0x0611, 0x01C0);    // DAC1 Right Volume
+        wm8994_write(codec, 0x001F, 0x0000);    // HPOUT2 Volume
+    }
 
-   wm8994_write(codec, 0x0015, 0x0000);    
-   wm8994_write(codec, 0x0038, 0x0040);    // Anti Pop 1
-   wm8994_write(codec, 0x0006, 0x0000);    // Power Management 6. Prevent the mute when the audio transfer is executed from the bluetooth.
+    wm8994_write(codec, 0x0015, 0x0000);    
+    wm8994_write(codec, 0x0038, 0x0040);    // Anti Pop 1
+    wm8994_write(codec, 0x0006, 0x0000);    // Power Management 6. Prevent the mute when the audio transfer is executed from the bluetooth.
 
-   /* Sidetone */
-   wm8994_write(codec, 0x0600, 0x0004);    // DAC1 Mixer Volume
+    /* Sidetone */
+    wm8994_write(codec, 0x0600, 0x0004);    // DAC1 Mixer Volume
 
-   wm8994_write(codec, 0x0001, 0x0803);    // Power Management 1
+    wm8994_write(codec, 0x0001, 0x0803);    // Power Management 1
 //    msleep(50);
-   wm8994_write(codec, 0x0224, 0x0C98);    // FLL1 Control(5). To set again the sampling rate for a AP sound.
+    wm8994_write(codec, 0x0224, 0x0C98);    // FLL1 Control(5). To set again the sampling rate for a AP sound.
 
-   DEBUG_LOG("");
+    DEBUG_LOG("");
 }
 
 
 void wm8994_set_voicecall_headset(struct snd_soc_codec *codec)
 {
     struct wm8994_priv *wm8994 = codec->private_data;
+    int headset_type = get_headset_status();
     int upper_value = 0;
     int lower_value = 0;
     int value = 0;
@@ -1938,7 +1851,7 @@ void wm8994_set_voicecall_headset(struct snd_soc_codec *codec)
     }
 
     /* Input Path Volume */
-    if(!wm8994->testmode_config_flag)
+    if(!wm8994->testmode_config_flag)  
     {
         if(tty_mode == TTY_MODE_VCO)
         {
@@ -1957,10 +1870,10 @@ void wm8994_set_voicecall_headset(struct snd_soc_codec *codec)
             wm8994_write(codec, 0x0501, 0x01EF);    // AIF2 Right ADC Volume
         }
         wm8994_write(codec, 0x0603, 0x018C);    // DAC2 Mixer Volumes
-    }
+    }        
 
     /* Output Path Volume */
-    if(!wm8994->testmode_config_flag)
+    if(!wm8994->testmode_config_flag) 
     {
         if(tty_mode == TTY_MODE_HCO)
         {
@@ -2016,6 +1929,7 @@ void wm8994_set_voicecall_headset(struct snd_soc_codec *codec)
             wm8994_write(codec, 0x0611, 0x01C0);    // DAC1 Right Volume
         }
     }
+        
     wm8994_write(codec, 0x0006, 0x0000);    // Power Management 6. Prevent the mute when the audio transfer is executed from the bluetooth.
     
     if(tty_mode == TTY_MODE_HCO)
@@ -2046,184 +1960,184 @@ void wm8994_set_voicecall_speaker(struct snd_soc_codec *codec)
 	wm8994_write(codec, 0x0039, 0x006C);    // Anti Pop 2
 	wm8994_write(codec, 0x0001, 0x0003);    // Power Management 1
 	msleep(50);
-   wm8994_write(codec, 0x0102, 0x0003);    // To remove the robotic sound
-   wm8994_write(codec, 0x0817, 0x0000);    // To remove the robotic sound
-   wm8994_write(codec, 0x0102, 0x0003);    // To remove the robotic sound
+    wm8994_write(codec, 0x0102, 0x0003);    // To remove the robotic sound
+    wm8994_write(codec, 0x0817, 0x0000);    // To remove the robotic sound
+    wm8994_write(codec, 0x0102, 0x0003);    // To remove the robotic sound
 
-   wm8994_write(codec, 0x0702, 0x8100);    // GPIO 3. Speech PCM Clock
+    wm8994_write(codec, 0x0702, 0x8100);    // GPIO 3. Speech PCM Clock
 	wm8994_write(codec, 0x0703, 0x8100);    // GPIO 4. Speech PCM Sync
 	wm8994_write(codec, 0x0704, 0x8100);    // GPIO 5. Speech PCM Data Out
 	wm8994_write(codec, 0x0706, 0x0100);    // GPIO 7. Speech PCM Data Input
 
-   wm8994_write(codec, 0x0244, 0x0C81);    // FLL2 Control 5
-   wm8994_write(codec, 0x0241, 0x0700);    // FLL2 Control 2
-   wm8994_write(codec, 0x0242, 0x0000);    // FLL2 Control 3
-   wm8994_write(codec, 0x0243, 0x0600);    // FLL2 Control 4
-   wm8994_write(codec, 0x0240, 0x0001);    // FLL2 Control 1
-   msleep(3);
+    wm8994_write(codec, 0x0244, 0x0C81);    // FLL2 Control 5
+    wm8994_write(codec, 0x0241, 0x0700);    // FLL2 Control 2
+    wm8994_write(codec, 0x0242, 0x0000);    // FLL2 Control 3
+    wm8994_write(codec, 0x0243, 0x0600);    // FLL2 Control 4
+    wm8994_write(codec, 0x0240, 0x0001);    // FLL2 Control 1
+    msleep(3);
 
-   /* Audio Interface & Clock Setting */
-   wm8994_write(codec, 0x0204, 0x0018);    // AIF2 Clocking 1
-   wm8994_write(codec, 0x0208, 0x000F);    // Clocking 1. '0x000A' is added for a playback. (original = 0x0007)
-   wm8994_write(codec, 0x0620, 0x0000);    // Oversampling
-   wm8994_write(codec, 0x0211, 0x0009);    // AIF2 Rate
-   wm8994_write(codec, 0x0300, 0x0010);    // AIF1 Control 1
-   wm8994_write(codec, 0x0302, 0x4000);    // AIF1 Master Slave Setting. To prevent that the music is played slowly.
-   wm8994_write(codec, 0x0312, 0x0000);    // AIF2 Master Slave Setting
-   wm8994_write(codec, 0x0310, 0x4118);    // AIF2 Control 1
+    /* Audio Interface & Clock Setting */
+    wm8994_write(codec, 0x0204, 0x0018);    // AIF2 Clocking 1
+    wm8994_write(codec, 0x0208, 0x000F);    // Clocking 1. '0x000A' is added for a playback. (original = 0x0007)
+    wm8994_write(codec, 0x0620, 0x0000);    // Oversampling
+    wm8994_write(codec, 0x0211, 0x0009);    // AIF2 Rate
+    wm8994_write(codec, 0x0300, 0x0010);    // AIF1 Control 1
+    wm8994_write(codec, 0x0302, 0x4000);    // AIF1 Master Slave Setting. To prevent that the music is played slowly.
+    wm8994_write(codec, 0x0312, 0x0000);    // AIF2 Master Slave Setting
+    wm8994_write(codec, 0x0310, 0x4118);    // AIF2 Control 1
 	wm8994_write(codec, 0x0311, 0x0000);    // AIF2 Control 2
-   wm8994_write(codec, 0x0520, 0x0080);    // AIF2 DAC Filter1
-   wm8994_write(codec, 0x0204, 0x0019);    // AIF2 Clocking 1
+    wm8994_write(codec, 0x0520, 0x0080);    // AIF2 DAC Filter1
+    wm8994_write(codec, 0x0204, 0x0019);    // AIF2 Clocking 1
 
-   /* Input Path Routing */
-   wm8994_write(codec, 0x0028, 0x0040);    // Input Mixer 2. SPK Mic using the IN2NL | DM1CDAT1
-   wm8994_write(codec, 0x0002, 0x6280);    // SPK Mic using the IN2NL | DM1CDAT1
+    /* Input Path Routing */
+    wm8994_write(codec, 0x0028, 0x0040);    // Input Mixer 2. SPK Mic using the IN2NL | DM1CDAT1
+    wm8994_write(codec, 0x0002, 0x6280);    // SPK Mic using the IN2NL | DM1CDAT1
 
-   if(!wm8994->testmode_config_flag)
+    if(!wm8994->testmode_config_flag)
 	{
 		wm8994_write(codec, 0x0029, 0x0100);    // Input Mixer 3. SPK Mic using the IN2NL | DM1CDAT1
-   }
-   wm8994_write(codec, 0x0004, 0x2002);	// Power Management 4
-   wm8994_write(codec, 0x0604, 0x0010);    // DAC2 Left Mixer Routing
+    }
+    wm8994_write(codec, 0x0004, 0x2002);	// Power Management 4
+    wm8994_write(codec, 0x0604, 0x0010);    // DAC2 Left Mixer Routing
 	wm8994_write(codec, 0x0605, 0x0010);    // DAC2 Right Mixer Routing
-   audio_ctrl_mic_bias_gpio(1);
+    audio_ctrl_mic_bias_gpio(1);
 
-   /* Output Path Routing */
-   wm8994_write(codec, 0x0005, 0x3303);    // Power Management 5
-   wm8994_write(codec, 0x0003, 0x0300);    // Power Management 3
-   wm8994_write(codec, 0x0601, 0x0005);    // DAC1 Left Mixer Routing. '0x0001' is added for a playback. (Original = 0x0004)
-   wm8994_write(codec, 0x0602, 0x0001);    // DAC1 Right Mixer Routing(Playback)
+    /* Output Path Routing */
+    wm8994_write(codec, 0x0005, 0x3303);    // Power Management 5
+    wm8994_write(codec, 0x0003, 0x0300);    // Power Management 3
+    wm8994_write(codec, 0x0601, 0x0005);    // DAC1 Left Mixer Routing. '0x0001' is added for a playback. (Original = 0x0004)
+    wm8994_write(codec, 0x0602, 0x0001);    // DAC1 Right Mixer Routing(Playback)
 #ifdef STEREO_SPEAKER_SUPPORT
-   wm8994_write(codec, 0x0024, 0x0011);    // SPKOUT Mixers
+    wm8994_write(codec, 0x0024, 0x0011);    // SPKOUT Mixers
 #else
-   wm8994_write(codec, 0x0024, 0x0010);    // SPKOUT Mixers
+    wm8994_write(codec, 0x0024, 0x0010);    // SPKOUT Mixers
 #endif
-   wm8994_write(codec, 0x0420, 0x0080);    // AIF2 DAC Filter1(Playback)
+    wm8994_write(codec, 0x0420, 0x0080);    // AIF2 DAC Filter1(Playback)
 
     /* Input Path Volume */
-   if(!wm8994->testmode_config_flag)
+    if(!wm8994->testmode_config_flag)
 	{
         wm8994_write(codec, 0x0019, 0x0112);    // Left Line Input 3&4 Volume. SPK Mic using the IN2NL | DM1CDAT1
         wm8994_write(codec, 0x0603, 0x000C);    // DAC2 Mixer Volumes
         wm8994_write(codec, 0x0612, 0x01C0);    // DAC2 Left Volume
         wm8994_write(codec, 0x0613, 0x01C0);    // DAC2 Right Volume
         wm8994_write(codec, 0x0500, 0x01EF);    // AIF2 ADC Left Volume
-   }
+    }
 
-   /* Output Path Volume */
-   if(!wm8994->testmode_config_flag)
+    /* Output Path Volume */
+    if(!wm8994->testmode_config_flag)
 	{
 		wm8994_write(codec, 0x0022, 0x0000);    // SPKMIXL Attenuation
 #if 0
-      wm8994_write(codec, 0x0026, 0x017E);    // Speaker Volume Left
+        wm8994_write(codec, 0x0026, 0x017E);    // Speaker Volume Left
 #else
-      if(wm8994->codec_state & CALL_ACTIVE)
-      {
-         wm8994_write(codec, 0x0026, 0x017E);    // Speaker Volume Left
-      }
-      else
-      {
-		   wm8994_write(codec, 0x0026, 0x0100);    // Speaker Volume Left
-      }
+        if(wm8994->codec_state & CALL_ACTIVE)
+        {
+            wm8994_write(codec, 0x0026, 0x017E);    // Speaker Volume Left
+        }
+        else
+        {
+		    wm8994_write(codec, 0x0026, 0x0100);    // Speaker Volume Left
+        }
 #endif
 #ifdef STEREO_SPEAKER_SUPPORT
-      wm8994_write(codec, 0x0025, ((0x0007 << 0x0003) | (0x0007 << 0x0000)));    // SPKOUT Boost
+        wm8994_write(codec, 0x0025, ((0x0007 << 0x0003) | (0x0007 << 0x0000)));    // SPKOUT Boost
 #else
-      wm8994_write(codec, 0x0025, (0x0007 << 0x0003));    // SPKOUT Boost
+        wm8994_write(codec, 0x0025, (0x0007 << 0x0003));    // SPKOUT Boost
 #endif
 		wm8994_write(codec, 0x0610, 0x01C0);    // DAC1 Left Volume
 	}
 
-   wm8994_write(codec, 0x0006, 0x0000);    // Power Management 6. Prevent the mute when the audio transfer is executed from the bluetooth.
-   wm8994_write(codec, 0x0621, 0x01C0);    // Sidetone
+    wm8994_write(codec, 0x0006, 0x0000);    // Power Management 6. Prevent the mute when the audio transfer is executed from the bluetooth.
+    wm8994_write(codec, 0x0621, 0x01C0);    // Sidetone
 	wm8994_write(codec, 0x0036, 0x0003);
 
 #ifdef STEREO_SPEAKER_SUPPORT
-   wm8994_write(codec, 0x0001, 0x3003);    // Power Management 1
+    wm8994_write(codec, 0x0001, 0x3003);    // Power Management 1
 #else
 	wm8994_write(codec, 0x0001, 0x1003);    // Power Management 1
 #endif
 //    msleep(50);
-   wm8994_write(codec, 0x0224, 0x0C98);    // FLL1 Control(5). To set again the sampling rate for a AP sound.
+    wm8994_write(codec, 0x0224, 0x0C98);    // FLL1 Control(5). To set again the sampling rate for a AP sound.
 
-   DEBUG_LOG("");
+    DEBUG_LOG("");
 }
 
 void wm8994_set_voicecall_bluetooth(struct snd_soc_codec *codec)
 {
-   struct wm8994_priv *wm8994 = codec->private_data;
+    struct wm8994_priv *wm8994 = codec->private_data;
 
-   wm8994_write(codec, 0x0039, 0x0068);    // Anti Pop2
-   wm8994_write(codec, 0x0001, 0x0003);    // Power Management 1
+    wm8994_write(codec, 0x0039, 0x0068);    // Anti Pop2
+    wm8994_write(codec, 0x0001, 0x0003);    // Power Management 1
 	msleep(50);
-   wm8994_write(codec, 0x0102, 0x0003);    // To remove the robotic sound
-   wm8994_write(codec, 0x0817, 0x0000);    // To remove the robotic sound
-   wm8994_write(codec, 0x0102, 0x0003);    // To remove the robotic sound
+    wm8994_write(codec, 0x0102, 0x0003);    // To remove the robotic sound
+    wm8994_write(codec, 0x0817, 0x0000);    // To remove the robotic sound
+    wm8994_write(codec, 0x0102, 0x0003);    // To remove the robotic sound
 
-   wm8994_write(codec, 0x0704, 0x8100);    // GPIO 5. Speech PCM OUT
-   wm8994_write(codec, 0x0706, 0x0100);    // GPIO 7. Speech PCM IN
-   wm8994_write(codec, 0x0702, 0x8100);    // GPIO 3. Speech PCM CLK
-   wm8994_write(codec, 0x0703, 0x8100);    // GPIO 4. Speech PCM SYNC
-   wm8994_write(codec, 0x0707, 0x8100);    // GPIO 8. BT PCM DOUT
-   wm8994_write(codec, 0x0708, 0x0100);    // GPIO 9. BT PCM DIN
-   wm8994_write(codec, 0x0709, 0x0100);    // GPIO 10. BT PCM SYNC
-   wm8994_write(codec, 0x070A, 0x0100);    // GPIO 11. BT PCM CLK
+    wm8994_write(codec, 0x0704, 0x8100);    // GPIO 5. Speech PCM OUT
+    wm8994_write(codec, 0x0706, 0x0100);    // GPIO 7. Speech PCM IN
+    wm8994_write(codec, 0x0702, 0x8100);    // GPIO 3. Speech PCM CLK
+    wm8994_write(codec, 0x0703, 0x8100);    // GPIO 4. Speech PCM SYNC
+    wm8994_write(codec, 0x0707, 0x8100);    // GPIO 8. BT PCM DOUT
+    wm8994_write(codec, 0x0708, 0x0100);    // GPIO 9. BT PCM DIN
+    wm8994_write(codec, 0x0709, 0x0100);    // GPIO 10. BT PCM SYNC
+    wm8994_write(codec, 0x070A, 0x0100);    // GPIO 11. BT PCM CLK
 
-   wm8994_write(codec, 0x0244, 0x0C81);    // FLL2 Control 5
-   wm8994_write(codec, 0x0241, 0x0700);    // FLL2 Control 2
-   wm8994_write(codec, 0x0242, 0x0000);    // FLL2 Control 3
-   wm8994_write(codec, 0x0243, 0x0600);    // FLL2 Control 4
-   wm8994_write(codec, 0x0240, 0x0001);    // FLL2 Cotnrol 1
-   msleep(3);
+    wm8994_write(codec, 0x0244, 0x0C81);    // FLL2 Control 5
+    wm8994_write(codec, 0x0241, 0x0700);    // FLL2 Control 2
+    wm8994_write(codec, 0x0242, 0x0000);    // FLL2 Control 3
+    wm8994_write(codec, 0x0243, 0x0600);    // FLL2 Control 4
+    wm8994_write(codec, 0x0240, 0x0001);    // FLL2 Cotnrol 1
+    msleep(3);
     
-   /* Audio Interface & Clock Setting */
-   wm8994_write(codec, 0x0204, 0x0018);    // AIF2 Clocking 1. Clock Source Select
-   wm8994_write(codec, 0x0208, 0x000F);    // Clocking 1. '0x000A' is added for a playback. (original = 0x0007)
-   wm8994_write(codec, 0x0620, 0x0000);    // Oversampling
-   wm8994_write(codec, 0x0211, 0x0009);    // AIF2 Rate
-   wm8994_write(codec, 0x0302, 0x4000);    // AIF1 Master Slave Setting. To prevent that the music is played slowly.
-   wm8994_write(codec, 0x0312, 0x0000);    // AIF2 Master Slave Setting
-   wm8994_write(codec, 0x0310, 0x4118);    // AIF2 Control 1
-   wm8994_write(codec, 0x0311, 0x0000);    // AIF2 Control 2
-   wm8994_write(codec, 0x0520, 0x0080);    // AIF2 DAC Filter 1
-   wm8994_write(codec, 0x0204, 0x0019);    // AIF2 Clocking 1. AIF2 Clock Enable
+    /* Audio Interface & Clock Setting */
+    wm8994_write(codec, 0x0204, 0x0018);    // AIF2 Clocking 1. Clock Source Select
+    wm8994_write(codec, 0x0208, 0x000F);    // Clocking 1. '0x000A' is added for a playback. (original = 0x0007)
+    wm8994_write(codec, 0x0620, 0x0000);    // Oversampling
+    wm8994_write(codec, 0x0211, 0x0009);    // AIF2 Rate
+    wm8994_write(codec, 0x0302, 0x4000);    // AIF1 Master Slave Setting. To prevent that the music is played slowly.
+    wm8994_write(codec, 0x0312, 0x0000);    // AIF2 Master Slave Setting
+    wm8994_write(codec, 0x0310, 0x4118);    // AIF2 Control 1
+    wm8994_write(codec, 0x0311, 0x0000);    // AIF2 Control 2
+    wm8994_write(codec, 0x0520, 0x0080);    // AIF2 DAC Filter 1
+    wm8994_write(codec, 0x0204, 0x0019);    // AIF2 Clocking 1. AIF2 Clock Enable
 
-   /* Input Path Routing */
-   wm8994_write(codec, 0x0002, 0x4000);    // Power Management 2
-   wm8994_write(codec, 0x0004, 0x3000);    // Power Management 4
-   wm8994_write(codec, 0x0604, 0x0007);    // DAC2 Left Mixer Routing(Playback)
-   wm8994_write(codec, 0x0605, 0x0007);    // DAC2 Right Mixer(Playback)
-   wm8994_write(codec, 0x0015, 0x0040);    
+    /* Input Path Routing */
+    wm8994_write(codec, 0x0002, 0x4000);    // Power Management 2
+    wm8994_write(codec, 0x0004, 0x3000);    // Power Management 4
+    wm8994_write(codec, 0x0604, 0x0007);    // DAC2 Left Mixer Routing(Playback)
+    wm8994_write(codec, 0x0605, 0x0007);    // DAC2 Right Mixer(Playback)
+    wm8994_write(codec, 0x0015, 0x0040);    
 
-   /* Output Path Routing */
-   wm8994_write(codec, 0x004C, 0x1F25);    // Charge Pump 1
-   wm8994_write(codec, 0x0006, 0x000C);    // Power Management 6. Input = GPIO8, Output = AIF2
-   wm8994_write(codec, 0x0003, 0x0000);    // Power Management 3
-   wm8994_write(codec, 0x0005, 0x3303);    // Power Management 5. '0x3300' is added for a playback. (Original = 0x0003)
-   wm8994_write(codec, 0x0420, 0x0080);    // AIF1 DAC1 FIlter(Playback)
+    /* Output Path Routing */
+    wm8994_write(codec, 0x004C, 0x1F25);    // Charge Pump 1
+    wm8994_write(codec, 0x0006, 0x000C);    // Power Management 6. Input = GPIO8, Output = AIF2
+    wm8994_write(codec, 0x0003, 0x0000);    // Power Management 3
+    wm8994_write(codec, 0x0005, 0x3303);    // Power Management 5. '0x3300' is added for a playback. (Original = 0x0003)
+    wm8994_write(codec, 0x0420, 0x0080);    // AIF1 DAC1 FIlter(Playback)
 
-   /* Output Path Volume */
+    /* Output Path Volume */
 	wm8994_write(codec, 0x0402, 0x01C0);    // AIF1 DAC1 Left Volume(Playback)
 
 #if 0
-   wm8994_write(codec, 0x0612, 0x01C0);    // DAC2 Left Volume
-   wm8994_write(codec, 0x0613, 0x01C0);    // DAC2 Right Volume
+    wm8994_write(codec, 0x0612, 0x01C0);    // DAC2 Left Volume
+    wm8994_write(codec, 0x0613, 0x01C0);    // DAC2 Right Volume
 #else
-   if(wm8994->codec_state & CALL_ACTIVE)
-   {
+    if(wm8994->codec_state & CALL_ACTIVE)
+    {
     	wm8994_write(codec, 0x0612, 0x01C0);    // DAC2 Left Volume
     	wm8994_write(codec, 0x0613, 0x01C0);    // DAC2 Right Volume
-   }
-   else
-   {
-      wm8994_write(codec, 0x0612, 0x0100);    // DAC2 Left Volume(Playback)
+    }
+    else
+    {
+        wm8994_write(codec, 0x0612, 0x0100);    // DAC2 Left Volume(Playback)
     	wm8994_write(codec, 0x0613, 0x0100);    // DAC2 Right Volume(Playback)
-   }
+    }
 #endif
-   wm8994_write(codec, 0x0015, 0x0000);
-   wm8994_write(codec, 0x0224, 0x0C98);    // FLL1 Control(5). To set again the sampling rate for a AP sound.
+    wm8994_write(codec, 0x0015, 0x0000);
+    wm8994_write(codec, 0x0224, 0x0C98);    // FLL1 Control(5). To set again the sampling rate for a AP sound.
     
-   DEBUG_LOG("");
+    DEBUG_LOG("");
 }
 
 void wm8994_set_voicecall_vps(struct snd_soc_codec *codec)
@@ -2231,114 +2145,114 @@ void wm8994_set_voicecall_vps(struct snd_soc_codec *codec)
 	struct wm8994_priv *wm8994 = codec->private_data;
 	int val;
 
-   wm8994_write(codec, 0x0039, 0x0068);    // Anti Pop2
-   wm8994_write(codec, 0x0001, 0x0003);    // Power Management 1
-   wm8994_write(codec, 0x0015, 0x0040);
-   wm8994_write(codec, 0x0702, 0x8100);    // GPIO 3. Speech PCM Clock
-   wm8994_write(codec, 0x0703, 0x8100);    // GPIO 4. Speech PCM Sync
-   wm8994_write(codec, 0x0704, 0x8100);    // GPIO 5. Speech PCM Data Out
-   wm8994_write(codec, 0x0706, 0x8100);    // GPIO 7. Speech PCM Data Input
-   wm8994_write(codec, 0x0244, 0x0C81);    // FLL2 Control 5
-   wm8994_write(codec, 0x0241, 0x0700);    // FLL2 Control 2
-   wm8994_write(codec, 0x0243, 0x0600);    // FLL2 Control 4
-   wm8994_write(codec, 0x0240, 0x0001);    // FLL2 Control 1
-   msleep(3);
+    wm8994_write(codec, 0x0039, 0x0068);    // Anti Pop2
+    wm8994_write(codec, 0x0001, 0x0003);    // Power Management 1
+    wm8994_write(codec, 0x0015, 0x0040);
+    wm8994_write(codec, 0x0702, 0x8100);    // GPIO 3. Speech PCM Clock
+    wm8994_write(codec, 0x0703, 0x8100);    // GPIO 4. Speech PCM Sync
+    wm8994_write(codec, 0x0704, 0x8100);    // GPIO 5. Speech PCM Data Out
+    wm8994_write(codec, 0x0706, 0x8100);    // GPIO 7. Speech PCM Data Input
+    wm8994_write(codec, 0x0244, 0x0C81);    // FLL2 Control 5
+    wm8994_write(codec, 0x0241, 0x0700);    // FLL2 Control 2
+    wm8994_write(codec, 0x0243, 0x0600);    // FLL2 Control 4
+    wm8994_write(codec, 0x0240, 0x0001);    // FLL2 Control 1
+    msleep(3);
 
-   /* Audio Interface & Clock Setting */
-   wm8994_write(codec, 0x0204, 0x0008);    // AIF2 Clocking 1. Clock Source Select
-   wm8994_write(codec, 0x0208, 0x000F);    // Clocking 1. '0x000A' is added for a playback. (original = 0x0007)
-   wm8994_write(codec, 0x0620, 0x0000);    // Oversampling
-   wm8994_write(codec, 0x0211, 0x0009);    // AIF2 Rate
-   wm8994_write(codec, 0x0312, 0x0000);    // AIF2 Master Slave Setting
-   wm8994_write(codec, 0x0310, 0x4118);    // AIF2 Control 1
-   wm8994_write(codec, 0x0311, 0x0000);    // AIF2 Control 2
-   wm8994_write(codec, 0x0520, 0x0080);    // AIF2 DAC Filter 1
-   wm8994_write(codec, 0x0204, 0x0009);    // AIF2 Clocking 1. AIF2 Clock Enable
+    /* Audio Interface & Clock Setting */
+    wm8994_write(codec, 0x0204, 0x0008);    // AIF2 Clocking 1. Clock Source Select
+    wm8994_write(codec, 0x0208, 0x000F);    // Clocking 1. '0x000A' is added for a playback. (original = 0x0007)
+    wm8994_write(codec, 0x0620, 0x0000);    // Oversampling
+    wm8994_write(codec, 0x0211, 0x0009);    // AIF2 Rate
+    wm8994_write(codec, 0x0312, 0x0000);    // AIF2 Master Slave Setting
+    wm8994_write(codec, 0x0310, 0x4118);    // AIF2 Control 1
+    wm8994_write(codec, 0x0311, 0x0000);    // AIF2 Control 2
+    wm8994_write(codec, 0x0520, 0x0080);    // AIF2 DAC Filter 1
+    wm8994_write(codec, 0x0204, 0x0009);    // AIF2 Clocking 1. AIF2 Clock Enable
 
-   /* Input Path Routing */
-   wm8994_write(codec, 0x0028, 0x0030);    // Input Mixer 2
-   wm8994_write(codec, 0x0002, 0x6240);    // Power Management 2
-   wm8994_write(codec, 0x0029, 0x0030);    // Input Mixer 3
-   wm8994_write(codec, 0x0004, 0x2002);    // Power Management 4
-   wm8994_write(codec, 0x0604, 0x0010);    // DAC2 Left Mixer Routing
-   audio_ctrl_mic_bias_gpio(1);
+    /* Input Path Routing */
+    wm8994_write(codec, 0x0028, 0x0030);    // Input Mixer 2
+    wm8994_write(codec, 0x0002, 0x6240);    // Power Management 2
+    wm8994_write(codec, 0x0029, 0x0030);    // Input Mixer 3
+    wm8994_write(codec, 0x0004, 0x2002);    // Power Management 4
+    wm8994_write(codec, 0x0604, 0x0010);    // DAC2 Left Mixer Routing
+    audio_ctrl_mic_bias_gpio(1);
     
-   /* Output Path Routing */
-   wm8994_write(codec, 0x0005, 0x2303);    // Power Management 5. '0x0303' is added for a playback. (Original = 0x2002)
-   wm8994_write(codec, 0x0601, 0x0005);    // DAC1 Left Mixer Routing. '0x0001' is added for a playback. (Original = 0x0004)
-   wm8994_write(codec, 0x0602, 0x0001);    // DAC1 Right Mixer Routing(Playback)
-   wm8994_write(codec, 0x002D, 0x0001);    // Output Mixer 1
-   wm8994_write(codec, 0x002E, 0x0001);    // Output Mixer 2(Playback)
-   wm8994_write(codec, 0x0003, 0x00F0);    // Power Management 3. '0x00F0' is added for a playback. (Original = 0x00A0)
-   wm8994_write(codec, 0x0035, 0x0021);    // Line Mixer2
-   wm8994_write(codec, 0x0420, 0x0000);    // AIF1 DAC1 FIlter(Playback)
+    /* Output Path Routing */
+    wm8994_write(codec, 0x0005, 0x2303);    // Power Management 5. '0x0303' is added for a playback. (Original = 0x2002)
+    wm8994_write(codec, 0x0601, 0x0005);    // DAC1 Left Mixer Routing. '0x0001' is added for a playback. (Original = 0x0004)
+    wm8994_write(codec, 0x0602, 0x0001);    // DAC1 Right Mixer Routing(Playback)
+    wm8994_write(codec, 0x002D, 0x0001);    // Output Mixer 1
+    wm8994_write(codec, 0x002E, 0x0001);    // Output Mixer 2(Playback)
+    wm8994_write(codec, 0x0003, 0x00F0);    // Power Management 3. '0x00F0' is added for a playback. (Original = 0x00A0)
+    wm8994_write(codec, 0x0035, 0x0021);    // Line Mixer2
+    wm8994_write(codec, 0x0420, 0x0000);    // AIF1 DAC1 FIlter(Playback)
 
-   /* Input Path Volume */
-   if(!wm8994->testmode_config_flag)
-   {
-       /* Left Line Input 1&2 Volume */
-       val = wm8994_read(codec, 0x0018);
-       val &= ~(WM8994_IN1L_MUTE_MASK | WM8994_IN1L_VOL_MASK);
-       val |= 0x0116;
-       wm8994_write(codec, 0x0018, val);
+    /* Input Path Volume */
+    if(!wm8994->testmode_config_flag)
+    {
+        /* Left Line Input 1&2 Volume */
+        val = wm8994_read(codec, 0x0018);
+        val &= ~(WM8994_IN1L_MUTE_MASK | WM8994_IN1L_VOL_MASK);
+        val |= 0x0116;
+        wm8994_write(codec, 0x0018, val);
 
-       wm8994_write(codec, 0x0500, 0x01C0);    // AIF2 ADC Left Volume
-       wm8994_write(codec, 0x0612, 0x01C0);    // DAC2 Left Volume
-       wm8994_write(codec, 0x0603, 0x000C);    // DAC2 Mixer Volumes
-   }
-   wm8994_write(codec, 0x0621, 0x01C0);    // Sidetone
+        wm8994_write(codec, 0x0500, 0x01C0);    // AIF2 ADC Left Volume
+        wm8994_write(codec, 0x0612, 0x01C0);    // DAC2 Left Volume
+        wm8994_write(codec, 0x0603, 0x000C);    // DAC2 Mixer Volumes
+    }
+    wm8994_write(codec, 0x0621, 0x01C0);    // Sidetone
 
-   /* Output Path Volume */
-   if(!wm8994->testmode_config_flag)
-   {
-       /* Output Mixer 5 */
-       val = wm8994_read(codec, 0x0031);
-       val &= ~(WM8994_DACL_MIXOUTL_VOL_MASK);
-       val |= TUNING_RCV_OUTMIX5_VOL << 0x0009;
-       wm8994_write(codec,0x0031, val);
+    /* Output Path Volume */
+    if(!wm8994->testmode_config_flag)
+    {
+        /* Output Mixer 5 */
+        val = wm8994_read(codec, 0x0031);
+        val &= ~(WM8994_DACL_MIXOUTL_VOL_MASK);
+        val |= TUNING_RCV_OUTMIX5_VOL << 0x0009;
+        wm8994_write(codec,0x0031, val);
 
-       /* Output Mixer 6 */
-       val = wm8994_read(codec, 0x0032);
-       val &= ~(WM8994_DACR_MIXOUTR_VOL_MASK);
-       val |= TUNING_RCV_OUTMIX6_VOL << 0x0009;
-       wm8994_write(codec,0x0032, val);
+        /* Output Mixer 6 */
+        val = wm8994_read(codec, 0x0032);
+        val &= ~(WM8994_DACR_MIXOUTR_VOL_MASK);
+        val |= TUNING_RCV_OUTMIX6_VOL << 0x0009;
+        wm8994_write(codec,0x0032, val);
 
-       /* DAC1 Left Volume */
-       val = wm8994_read(codec,0x0610);
-       val &= ~(WM8994_DAC1L_MUTE_MASK | WM8994_DAC1L_VOL_MASK);
-       val |= 0x00C0; 
-       wm8994_write(codec, 0x0610, val);
+        /* DAC1 Left Volume */
+        val = wm8994_read(codec,0x0610);
+        val &= ~(WM8994_DAC1L_MUTE_MASK | WM8994_DAC1L_VOL_MASK);
+        val |= 0x00C0; 
+        wm8994_write(codec, 0x0610, val);
 
-       /* DAC1 Right Volume */
-       val = wm8994_read(codec, 0x0611); 
-       val &= ~(WM8994_DAC1R_MUTE_MASK | WM8994_DAC1R_VOL_MASK);
-       val |= TUNING_DAC1R_VOL;
-       wm8994_write(codec, 0x0611, val);
+        /* DAC1 Right Volume */
+        val = wm8994_read(codec, 0x0611); 
+        val &= ~(WM8994_DAC1R_MUTE_MASK | WM8994_DAC1R_VOL_MASK);
+        val |= TUNING_DAC1R_VOL;
+        wm8994_write(codec, 0x0611, val);
         
-       /* Left OPGA Volume */
-       val = wm8994_read(codec, 0x0020);
-       val &= ~(WM8994_MIXOUTL_MUTE_N_MASK | WM8994_MIXOUTL_VOL_MASK);
-       val |= 0x017D;
-       wm8994_write(codec,0x0020, val);
+        /* Left OPGA Volume */
+        val = wm8994_read(codec, 0x0020);
+        val &= ~(WM8994_MIXOUTL_MUTE_N_MASK | WM8994_MIXOUTL_VOL_MASK);
+        val |= 0x017D;
+        wm8994_write(codec,0x0020, val);
 
-       /* Right OPGA Volume */
-       val = wm8994_read(codec, 0x0021);
-       val &= ~(WM8994_MIXOUTR_MUTE_N_MASK | WM8994_MIXOUTR_VOL_MASK);
-       val |= 0x017D;
-       wm8994_write(codec,0x0021, val);
+        /* Right OPGA Volume */
+        val = wm8994_read(codec, 0x0021);
+        val &= ~(WM8994_MIXOUTR_MUTE_N_MASK | WM8994_MIXOUTR_VOL_MASK);
+        val |= 0x017D;
+        wm8994_write(codec,0x0021, val);
 
-       /* Line Output2 Volume */
-       wm8994_write(codec, 0x001E, 0x0006);
-   }
-   wm8994_write(codec, 0x0015, 0x0000);    
-   wm8994_write(codec, 0x0038, 0x0040);    // Anti Pop 1
+        /* Line Output2 Volume */
+        wm8994_write(codec, 0x001E, 0x0006);
+    }
+    wm8994_write(codec, 0x0015, 0x0000);    
+    wm8994_write(codec, 0x0038, 0x0040);    // Anti Pop 1
 
-   /* Sidetone */
-   wm8994_write(codec, 0x0600, 0x0003);    // DAC1 Mixer Volume
+    /* Sidetone */
+    wm8994_write(codec, 0x0600, 0x0003);    // DAC1 Mixer Volume
 
-   wm8994_write(codec, 0x0001, 0x0803);    // Power Management 1
+    wm8994_write(codec, 0x0001, 0x0803);    // Power Management 1
 
-   DEBUG_LOG("");
+    DEBUG_LOG("");
 }
 
 void wm8994_set_fmradio_common(struct snd_soc_codec *codec, int onoff)
@@ -2683,12 +2597,12 @@ void wm8994_set_fmradio_headset(struct snd_soc_codec *codec)
 	val |= (WM8994_DAC1_VU | TUNING_DAC1R_VOL); //0 db volume	
 	wm8994_write(codec,WM8994_DAC1_RIGHT_VOLUME,val);
 
-	//DAC1 Unmute
-	wm8994_write(codec, WM8994_AIF1_DAC1_FILTERS_1, 0x0000);
-
 #ifdef CONFIG_SND_VOODOO_FM
 	voodoo_hook_fmradio_headset();
 #endif
+
+	//DAC1 Unmute
+	wm8994_write(codec, WM8994_AIF1_DAC1_FILTERS_1, 0x0000);
 
 	val = wm8994_read(codec, WM8994_AIF2_DAC_FILTERS_1);	//520 : 0
 	val &= ~(WM8994_AIF2DAC_MUTE_MASK);

@@ -24,13 +24,13 @@
 #include "wm8994_voodoo.h"
 
 #define SUBJECT "wm8994_voodoo.c"
-#define VOODOO_SOUND_VERSION 2
+#define VOODOO_SOUND_VERSION 3
 
+bool bypass_write_hook = false;
 
 #ifdef CONFIG_SND_VOODOO_HP_LEVEL_CONTROL
 unsigned short hplvol = CONFIG_SND_VOODOO_HP_LEVEL;
 unsigned short hprvol = CONFIG_SND_VOODOO_HP_LEVEL;
-bool hpvol_force = true;
 #endif
 
 #ifdef CONFIG_SND_VOODOO_FM
@@ -42,7 +42,9 @@ unsigned short recording_preset = 1;
 #endif
 
 bool full_bitwidth = false;
-bool dac_osr128 = false;
+bool dac_osr128 = true;
+bool fll_tuning = false;
+bool mono_downmix = fals
 
 // keep here a pointer to the codec structure
 struct snd_soc_codec *codec_;
@@ -53,7 +55,7 @@ void update_hpvol()
 {
 	unsigned short val;
 
-	hpvol_force = false;
+	bypass_write_hook = true;
 	// hard limit to 62 because 63 introduces distortions
 	if (hplvol > 62)
 		hplvol = 62;
@@ -71,20 +73,19 @@ void update_hpvol()
 	val |= WM8994_HPOUT1L_ZC;
 	wm8994_write(codec_, WM8994_RIGHT_OUTPUT_VOLUME, val);
 
-	hpvol_force = true;
+	bypass_write_hook = false;
 }
 #endif
 
 #ifdef CONFIG_SND_VOODOO_FM
 void update_fm_radio_headset_restore_bass(bool with_mute)
 {
-	
 	if (with_mute)
 	{
 		wm8994_write(codec_, WM8994_AIF2_DAC_FILTERS_1, 0x236);
 		msleep(180);
 	}
-	
+
 	if (fm_radio_headset_restore_bass)
 	{
 		// disable Sidetone high-pass filter designed for voice and not FM radio
@@ -100,13 +101,13 @@ void update_fm_radio_headset_restore_bass(bool with_mute)
 		wm8994_write(codec_, WM8994_SIDETONE, 0x01c0);
 		wm8994_write(codec_, WM8994_AIF2_ADC_FILTERS, 0xF800);
 	}
-	
+
 	// un-mute
 	if (with_mute)
 		wm8994_write(codec_, WM8994_AIF2_DAC_FILTERS_1, 0x036);
-
 }
 #endif
+
 
 #ifdef CONFIG_SND_VOODOO_RECORD_PRESETS
 void update_recording_preset()
@@ -199,12 +200,42 @@ void update_dac_osr128()
 		wm8994_write(codec_, WM8994_OVERSAMPLING, 0);
 }
 
+unsigned short tune_fll_value(unsigned short val)
+{
+	val = (val >> WM8994_FLL1_GAIN_WIDTH << WM8994_FLL1_GAIN_WIDTH);
+	if (fll_tuning == 1)
+		val |= 5;
+	return val;
+}
+
+void update_fll_tuning()
+{
+	unsigned short val;
+	bypass_write_hook = true;
+	val = wm8994_read(codec_, WM8994_FLL1_CONTROL_4);
+	val = tune_fll_value(val);
+	wm8994_write(codec_, WM8994_FLL1_CONTROL_4, val);
+	bypass_write_hook = false;
+}
+
+void update_mono_downmix()
+{
+	unsigned short val;
+	if (mono_downmix)
+	{
+		val = wm8994_read(codec_, WM8994_AIF1_DAC1_FILTERS_1);
+		val |= 0x80;
+		wm8994_write(codec_, WM8994_AIF1_DAC1_FILTERS_1, val);
+	}
+	else
+		wm8994_write(codec_, WM8994_AIF1_DAC1_FILTERS_1, 0x0);
+}
+
 /*
  *
  * Declaring the controling misc devices
  *
  */
-
 #ifdef CONFIG_SND_VOODOO_HP_LEVEL_CONTROL
 static ssize_t headphone_amplifier_level_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
@@ -225,6 +256,7 @@ static ssize_t headphone_amplifier_level_store(struct device *dev, struct device
 }
 #endif
 
+
 #ifdef CONFIG_SND_VOODOO_FM
 static ssize_t fm_radio_headset_restore_bass_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
@@ -240,11 +272,13 @@ static ssize_t fm_radio_headset_restore_bass_store(struct device *dev, struct de
 			fm_radio_headset_restore_bass = false;
 		else
 			fm_radio_headset_restore_bass = true;
+
 		update_fm_radio_headset_restore_bass(true);
 	}
 	return size;
 }
 #endif
+
 
 #ifdef CONFIG_SND_VOODOO_RECORD_PRESETS
 static ssize_t recording_preset_show(struct device *dev, struct device_attribute *attr, char *buf)
@@ -294,6 +328,38 @@ static ssize_t dac_osr128_store(struct device *dev, struct device_attribute *att
 	{
 		dac_osr128 = state == 0 ? false : true;
 		update_dac_osr128();
+	}
+	return size;
+}
+
+static ssize_t fll_tuning_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf,"%u\n",(fll_tuning ? 1 : 0));
+}
+
+static ssize_t fll_tuning_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
+{
+	unsigned short state;
+	if (sscanf(buf, "%hu", &state) == 1)
+	{
+		fll_tuning = state == 0 ? false : true;
+		update_fll_tuning();
+	}
+	return size;
+}
+
+static ssize_t mono_downmix_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf,"%u\n",(mono_downmix ? 1 : 0));
+}
+
+static ssize_t mono_downmix_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
+{
+	unsigned short state;
+	if (sscanf(buf, "%hu", &state) == 1)
+	{
+		mono_downmix = state == 0 ? false : true;
+		update_mono_downmix();
 	}
 	return size;
 }
@@ -387,6 +453,8 @@ static DEVICE_ATTR(recording_preset, S_IRUGO | S_IWUGO , recording_preset_show, 
 #endif
 static DEVICE_ATTR(full_bitwidth, S_IRUGO | S_IWUGO , full_bitwidth_show, full_bitwidth_store);
 static DEVICE_ATTR(dac_osr128, S_IRUGO | S_IWUGO , dac_osr128_show, dac_osr128_store);
+static DEVICE_ATTR(fll_tuning, S_IRUGO | S_IWUGO , fll_tuning_show, fll_tuning_store);
+static DEVICE_ATTR(mono_downmix, S_IRUGO | S_IWUGO , mono_downmix_show, mono_downmix_store);
 #ifdef CONFIG_SND_VOODOO_DEBUG
 static DEVICE_ATTR(wm8994_register_dump, S_IRUGO , show_wm8994_register_dump, NULL);
 static DEVICE_ATTR(wm8994_write, S_IWUSR , NULL, store_wm8994_write);
@@ -405,6 +473,8 @@ static struct attribute *voodoo_sound_attributes[] = {
 #endif
 		&dev_attr_full_bitwidth.attr,
 		&dev_attr_dac_osr128.attr,
+		&dev_attr_fll_tuning.attr,
+		&dev_attr_mono_downmix.attr,
 #ifdef CONFIG_SND_VOODOO_DEBUG
 		&dev_attr_wm8994_register_dump.attr,
 		&dev_attr_wm8994_write.attr,
@@ -439,6 +509,7 @@ void voodoo_hook_fmradio_headset()
 }
 #endif
 
+
 #ifdef CONFIG_SND_VOODOO_RECORD_PRESETS
 void voodoo_hook_record_main_mic()
 {
@@ -450,19 +521,23 @@ void voodoo_hook_playback_headset()
 {
 	update_full_bitwidth(false);
 	update_dac_osr128();
+	update_mono_downmix();
 }
+
 
 unsigned int voodoo_hook_wm8994_write(struct snd_soc_codec *codec, unsigned int reg, unsigned int value)
 {
 	// modify some registers before those being written to the codec
 #ifdef CONFIG_SND_VOODOO_HP_LEVEL_CONTROL
 	// sniff headphone amplifier level changes and apply our level instead
-	if (hpvol_force)
+	if (! bypass_write_hook)
 	{
 		if (reg == WM8994_LEFT_OUTPUT_VOLUME)
 			value = (WM8994_HPOUT1_VU | WM8994_HPOUT1L_MUTE_N | hplvol);
 		if (reg == WM8994_RIGHT_OUTPUT_VOLUME)
 			value = (WM8994_HPOUT1_VU | WM8994_HPOUT1R_MUTE_N | hprvol);
+		if (reg == WM8994_FLL1_CONTROL_4)
+			value = tune_fll_value(value);
 	}
 #endif
 

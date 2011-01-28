@@ -44,7 +44,7 @@ config SND_VOODOO_FM
 
 config SND_VOODOO_DEBUG
 	bool "Codec development tools (unsafe and introduce sound skipping)"
-	depends on SND_VOODOO
+	depends on SND_VOODOO && SND_ARIES_SOC_WM8994
 	default n
 	help
 	  Allow to codec dump registers and load register-address/value batchs

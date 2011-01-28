@@ -16,3 +16,6 @@ void update_fm_radio_headset_restore_bass(bool with_mute);
 void update_recording_preset(void);
 void update_full_bitwidth(bool with_mute);
 void update_dac_osr128(void);
+void update_fll_tuning(void);
+unsigned short tune_fll_value(unsigned short val);
+void update_mono_downmix(void);
