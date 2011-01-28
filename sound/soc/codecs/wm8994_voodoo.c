@@ -44,7 +44,7 @@ unsigned short recording_preset = 1;
 bool full_bitwidth = false;
 bool dac_osr128 = true;
 bool fll_tuning = false;
-bool mono_downmix = fals
+bool mono_downmix = false;
 
 // keep here a pointer to the codec structure
 struct snd_soc_codec *codec_;
