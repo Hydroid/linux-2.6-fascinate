@@ -137,9 +137,9 @@ static unsigned int s5pc110_thres_table_1GHZ[][2] = {
 static unsigned int s5pc110_thres_table_800MHZ[][2] = {
 //	down threshold, up threshold	
         {30, 70},
-        {30, 70},
-        {30, 70},
-        {30, 70},
+        {20, 50},
+        {20, 50},
+        {20, 50},
 };
 
 static unsigned int  (*s5pc110_thres_table[2])[2] = {
