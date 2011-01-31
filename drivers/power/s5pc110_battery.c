@@ -62,16 +62,16 @@ extern void set_low_bat_interrupt(int on);	// lobat pwroff
 extern void charging_stop_without_magic_number(void); // hanapark_DF01
 
 #ifdef __VZW_AUTH_CHECK__
-static int verizon_batt_auth_full_check(void);
-static int verizon_batt_auth_check(void);
-static int verizon_batt_auth_multi_check(void);
+//static int verizon_batt_auth_full_check(void);
+//static int verizon_batt_auth_check(void);
+//static int verizon_batt_auth_multi_check(void);
 
 extern int Reset_TA(void);
 extern int CRC_protection(void);
 extern int rom_code_protection(void);
 
 int batt_auth_check;
-static int batt_auth_full_check = 0; 
+//static int batt_auth_full_check = 0; 
 #endif
 
 unsigned char maxim_chg_status(void);
@@ -1110,6 +1110,9 @@ static ssize_t s3c_bat_show_property(struct device *dev,
 #endif /* __TEMP_BLOCK_EXCEPTION__ */
 #ifdef __VZW_AUTH_CHECK__
 	case AUTH_BATTERY:
+		i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", 1);
+		break;
+#if 0
 #if 0
 		i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n",
 			s3c_bat_check_v_f());	// hanapark_DD15
@@ -1125,6 +1128,7 @@ static ssize_t s3c_bat_show_property(struct device *dev,
 		}
 #endif
 		break;
+#endif
 #endif
         default:
                 i = -EINVAL;
@@ -1434,6 +1438,10 @@ static void s3c_bat_status_update(struct power_supply *bat_ps)
 
 static unsigned int s3c_bat_check_v_f(void)
 {
+	s3c_set_bat_health(POWER_SUPPLY_HEALTH_GOOD);
+   return 1;
+
+#if 0
 #ifdef __VZW_AUTH_CHECK__
 	int retval = 0;
 
@@ -1458,24 +1466,25 @@ static unsigned int s3c_bat_check_v_f(void)
 #else	/* __VZW_AUTH_CHECK__ */
 
 	unsigned int rc = 0;
-//	int adc = 0;
+	int adc = 0;
 	
-//	adc = s3c_bat_get_adc_data(S3C_ADC_V_F);
-//	s3c_bat_info.bat_info.batt_v_f_adc = adc;
+	adc = s3c_bat_get_adc_data(S3C_ADC_V_F);
+	s3c_bat_info.bat_info.batt_v_f_adc = adc;
 
-//	dev_info(dev, "%s: V_F ADC = %d\n", __func__, adc);
+	dev_info(dev, "%s: V_F ADC = %d\n", __func__, adc);
 
-//	if (adc <= BATT_VF_MAX && adc >= BATT_VF_MIN) {
+	if (adc <= BATT_VF_MAX && adc >= BATT_VF_MIN) {
 		s3c_set_bat_health(POWER_SUPPLY_HEALTH_GOOD);
 		rc = 1;
-//	} else {
-//		dev_info(dev, "%s: Unauthorized battery!\n", __func__);
-//		s3c_set_bat_health(POWER_SUPPLY_HEALTH_UNSPEC_FAILURE);
-//		rc = 0;
-//	}
+	} else {
+		dev_info(dev, "%s: Unauthorized battery!\n", __func__);
+		s3c_set_bat_health(POWER_SUPPLY_HEALTH_UNSPEC_FAILURE);
+		rc = 0;
+	}
 
 	return rc;
 #endif	/* __VZW_AUTH_CHECK__ */
+#endif
 }
 
 static void s3c_cable_check_status(void)
@@ -1612,6 +1621,7 @@ static void s3c_cable_work(struct work_struct *work)
 }
 
 #ifdef __VZW_AUTH_CHECK__
+#if 0
 static int verizon_batt_auth_full_check(void)
 {
 	int retval = 0;
@@ -1669,6 +1679,7 @@ static int verizon_batt_auth_check(void)
 
 	return result;
 }
+#endif
 #endif	/* __VZW_AUTH_CHECK__ */
 
 #ifdef CONFIG_PM
