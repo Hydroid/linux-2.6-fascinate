@@ -36,6 +36,9 @@
 #include <plat/map-base.h>
 #include <mach/regs-clock.h> 
 #include "wm8994.h"
+#ifdef CONFIG_SND_VOODOO
+#include "wm8994_voodoo.h"
+#endif
 #ifdef FEATURE_SS_AUDIO_CAL
 #include <linux/proc_fs.h>
 #include <mach/sec_jack.h>
@@ -229,6 +232,10 @@ int wm8994_write(struct snd_soc_codec *codec, unsigned int reg, unsigned int val
 	u8 data[4];
 	int ret;
 	//BUG_ON(reg > WM8993_MAX_REGISTER);
+
+#ifdef CONFIG_SND_VOODOO
+value = voodoo_hook_wm8994_write(codec, reg, value);
+#endif
 
 	/* data is
 	 *   D15..D9 WM8993 register offset
@@ -610,7 +617,7 @@ static int wm8994_get_playback_path(struct snd_kcontrol *kcontrol,
 static int wm8994_set_playback_path(struct snd_kcontrol *kcontrol,
         struct snd_ctl_elem_value *ucontrol)
 {
-        struct snd_soc_codec *codec = snd_kcontrol_chip(kcontrol);
+   struct snd_soc_codec *codec = snd_kcontrol_chip(kcontrol);
 	struct wm8994_priv *wm8994 = codec->private_data;
 	struct soc_enum *mc =
                 (struct soc_enum *)kcontrol->private_value;
@@ -619,6 +626,23 @@ static int wm8994_set_playback_path(struct snd_kcontrol *kcontrol,
 
 	// Get path value
 	int path_num = ucontrol->value.integer.value[0];
+
+#ifdef CONFIG_SND_VOODOO_HEADPHONE_STICK
+  unsigned int headset_status = get_headset_status();
+  enum playback_path path_current = wm8994->cur_path;
+
+  DEBUG_LOG("Sound Routing Change Request From %s To %s, headphone status %d \n", mc->texts[path_num], mc->texts[path_current], headset_status );
+
+  if (headphone_stick_check()) {
+    /* Check if a headjack is plugged in and if so do not switch to external speaker for mere audio playback */
+    if (headset_status == SEC_HEADSET_4_POLE_DEVICE || headset_status == SEC_HEADSET_3_POLE_DEVICE) {
+      if (path_num == SPK || path_num == RING_SPK || path_num == RING_DUAL) {
+        DEBUG_LOG("PLACEHOLDER: not routing to %s, headjack plugged in, re-routing to %s \n", mc->texts[path_num], mc->texts[HP]);
+        path_num = HP;
+      }
+    }
+  }
+#endif
 
 	//select the requested path from the array of function pointers
 	switch(path_num)
@@ -2452,6 +2476,11 @@ static int wm8994_pcm_probe(struct platform_device *pdev)
 #else
                 /* Add other interfaces here */
 #endif
+
+#ifdef CONFIG_SND_VOODOO
+voodoo_hook_wm8994_pcm_probe(codec);
+#endif
+
         return ret;
 }
 
