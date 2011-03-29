@@ -6,33 +6,9 @@
  * Resolves DNS hostnames into valid ip addresses
  */
 
-#ifdef CONFIG_NFS_USE_KERNEL_DNS
-
-#include <linux/sunrpc/clnt.h>
-#include <linux/dns_resolver.h>
-
-ssize_t nfs_dns_resolve_name(char *name, size_t namelen,
-		struct sockaddr *sa, size_t salen)
-{
-	ssize_t ret;
-	char *ip_addr = NULL;
-	int ip_len;
-
-	ip_len = dns_query(NULL, name, namelen, NULL, &ip_addr, NULL);
-	if (ip_len > 0)
-		ret = rpc_pton(ip_addr, ip_len, sa, salen);
-	else
-		ret = -ESRCH;
-	kfree(ip_addr);
-	return ret;
-}
-
-#else
-
 #include <linux/hash.h>
 #include <linux/string.h>
 #include <linux/kmod.h>
-#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/socket.h>
 #include <linux/seq_file.h>
@@ -60,19 +36,6 @@ struct nfs_dns_ent {
 };
 
 
-static void nfs_dns_ent_update(struct cache_head *cnew,
-		struct cache_head *ckey)
-{
-	struct nfs_dns_ent *new;
-	struct nfs_dns_ent *key;
-
-	new = container_of(cnew, struct nfs_dns_ent, h);
-	key = container_of(ckey, struct nfs_dns_ent, h);
-
-	memcpy(&new->addr, &key->addr, key->addrlen);
-	new->addrlen = key->addrlen;
-}
-
 static void nfs_dns_ent_init(struct cache_head *cnew,
 		struct cache_head *ckey)
 {
@@ -86,7 +49,8 @@ static void nfs_dns_ent_init(struct cache_head *cnew,
 	new->hostname = kstrndup(key->hostname, key->namelen, GFP_KERNEL);
 	if (new->hostname) {
 		new->namelen = key->namelen;
-		nfs_dns_ent_update(cnew, ckey);
+		memcpy(&new->addr, &key->addr, key->addrlen);
+		new->addrlen = key->addrlen;
 	} else {
 		new->namelen = 0;
 		new->addrlen = 0;
@@ -182,7 +146,7 @@ static int nfs_dns_show(struct seq_file *m, struct cache_detail *cd,
 	return 0;
 }
 
-static struct nfs_dns_ent *nfs_dns_lookup(struct cache_detail *cd,
+struct nfs_dns_ent *nfs_dns_lookup(struct cache_detail *cd,
 		struct nfs_dns_ent *key)
 {
 	struct cache_head *ch;
@@ -195,7 +159,7 @@ static struct nfs_dns_ent *nfs_dns_lookup(struct cache_detail *cd,
 	return container_of(ch, struct nfs_dns_ent, h);
 }
 
-static struct nfs_dns_ent *nfs_dns_update(struct cache_detail *cd,
+struct nfs_dns_ent *nfs_dns_update(struct cache_detail *cd,
 		struct nfs_dns_ent *new,
 		struct nfs_dns_ent *key)
 {
@@ -270,7 +234,7 @@ static struct cache_detail nfs_dns_resolve = {
 	.cache_show = nfs_dns_show,
 	.match = nfs_dns_match,
 	.init = nfs_dns_ent_init,
-	.update = nfs_dns_ent_update,
+	.update = nfs_dns_ent_init,
 	.alloc = nfs_dns_ent_alloc,
 };
 
@@ -369,4 +333,3 @@ void nfs_dns_resolver_destroy(void)
 	nfs_cache_unregister(&nfs_dns_resolve);
 }
 
-#endif

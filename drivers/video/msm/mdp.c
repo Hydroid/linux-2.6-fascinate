@@ -23,7 +23,6 @@
 #include <linux/clk.h>
 #include <linux/file.h>
 #include <linux/major.h>
-#include <linux/slab.h>
 
 #include <mach/msm_iomap.h>
 #include <mach/msm_fb.h>
@@ -258,6 +257,7 @@ int get_img(struct mdp_img *img, struct fb_info *info,
 {
 	int put_needed, ret = 0;
 	struct file *file;
+	unsigned long vstart;
 
 	file = fget_light(img->memory_id, &put_needed);
 	if (file == NULL)

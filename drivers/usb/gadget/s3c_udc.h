@@ -1,7 +1,7 @@
 /*
  * drivers/usb/gadget/s3c_udc.h
  * Samsung S3C on-chip full/high speed USB device controllers
- * Copyright (C) 2005 for Samsung Electronics 
+ * Copyright (C) 2005 for Samsung Electronics
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
- 
+
 #ifndef __S3C_USB_GADGET
 #define __S3C_USB_GADGET
 
@@ -46,18 +46,17 @@
 #include <asm/irq.h>
 #include <asm/system.h>
 #include <asm/unaligned.h>
-//#include <asm/hardware.h>
+/* #include <asm/hardware.h> */
 
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 
-// Max packet size
+/* Max packet size */
 #if defined(CONFIG_USB_GADGET_S3C_FS)
 #define EP0_FIFO_SIZE		8
 #define EP_FIFO_SIZE		64
 #define S3C_MAX_ENDPOINTS	5
-#elif defined(CONFIG_USB_GADGET_S3C_HS) || defined(CONFIG_PLAT_S5P64XX) || defined(CONFIG_PLAT_S5PC11X) \
-	|| defined(CONFIG_CPU_S5P6442)
+#elif defined(CONFIG_USB_GADGET_S3C_HS) || defined(CONFIG_ARCH_S5PV210)
 #define EP0_FIFO_SIZE		64
 #define EP_FIFO_SIZE		512
 #define EP_FIFO_SIZE2		1024
@@ -84,7 +83,7 @@
 #define TEST_PACKET_SEL		0x4
 #define TEST_FORCE_ENABLE_SEL	0x5
 
-/* ********************************************************************************************* */
+/* ************************************************************************** */
 /* IO
  */
 
@@ -120,10 +119,10 @@ struct s3c_request {
 struct s3c_udc {
 	struct usb_gadget gadget;
 	struct usb_gadget_driver *driver;
-	//struct device *dev;
+	/* struct device *dev; */
 	struct platform_device *dev;
 	spinlock_t lock;
-
+	u16 status;
 	int ep0state;
 	struct s3c_ep ep[S3C_MAX_ENDPOINTS];
 
@@ -134,8 +133,8 @@ struct s3c_udc {
 
 extern struct s3c_udc *the_controller;
 
-#define ep_is_in(EP) 		(((EP)->bEndpointAddress&USB_DIR_IN)==USB_DIR_IN)
-#define ep_index(EP) 		((EP)->bEndpointAddress&0xF)
-#define ep_maxpacket(EP) 	((EP)->ep.maxpacket)
+#define ep_is_in(EP)		(((EP)->bEndpointAddress&USB_DIR_IN) == USB_DIR_IN)
+#define ep_index(EP)		((EP)->bEndpointAddress&0xF)
+#define ep_maxpacket(EP)	((EP)->ep.maxpacket)
 
 #endif

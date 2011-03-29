@@ -118,7 +118,7 @@ bfa_fcs_port_ms_sm_offline(struct bfa_fcs_port_ms_s *ms,
 		break;
 
 	default:
-		bfa_sm_fault(ms->port->fcs, event);
+		bfa_assert(0);
 	}
 }
 
@@ -141,7 +141,7 @@ bfa_fcs_port_ms_sm_plogi_sending(struct bfa_fcs_port_ms_s *ms,
 		break;
 
 	default:
-		bfa_sm_fault(ms->port->fcs, event);
+		bfa_assert(0);
 	}
 }
 
@@ -157,7 +157,6 @@ bfa_fcs_port_ms_sm_plogi(struct bfa_fcs_port_ms_s *ms, enum port_ms_event event)
 		 * Start timer for a delayed retry
 		 */
 		bfa_sm_set_state(ms, bfa_fcs_port_ms_sm_plogi_retry);
-		ms->port->stats.ms_retries++;
 		bfa_timer_start(BFA_FCS_GET_HAL_FROM_PORT(ms->port), &ms->timer,
 				bfa_fcs_port_ms_timeout, ms,
 				BFA_FCS_RETRY_TIMEOUT);
@@ -191,7 +190,7 @@ bfa_fcs_port_ms_sm_plogi(struct bfa_fcs_port_ms_s *ms, enum port_ms_event event)
 		break;
 
 	default:
-		bfa_sm_fault(ms->port->fcs, event);
+		bfa_assert(0);
 	}
 }
 
@@ -217,7 +216,7 @@ bfa_fcs_port_ms_sm_plogi_retry(struct bfa_fcs_port_ms_s *ms,
 		break;
 
 	default:
-		bfa_sm_fault(ms->port->fcs, event);
+		bfa_assert(0);
 	}
 }
 
@@ -231,6 +230,10 @@ bfa_fcs_port_ms_sm_online(struct bfa_fcs_port_ms_s *ms,
 	switch (event) {
 	case MSSM_EVENT_PORT_OFFLINE:
 		bfa_sm_set_state(ms, bfa_fcs_port_ms_sm_offline);
+		/*
+		 * now invoke MS related sub-modules
+		 */
+		bfa_fcs_port_fdmi_offline(ms);
 		break;
 
 	case MSSM_EVENT_PORT_FABRIC_RSCN:
@@ -240,7 +243,7 @@ bfa_fcs_port_ms_sm_online(struct bfa_fcs_port_ms_s *ms,
 		break;
 
 	default:
-		bfa_sm_fault(ms->port->fcs, event);
+		bfa_assert(0);
 	}
 }
 
@@ -263,7 +266,7 @@ bfa_fcs_port_ms_sm_gmal_sending(struct bfa_fcs_port_ms_s *ms,
 		break;
 
 	default:
-		bfa_sm_fault(ms->port->fcs, event);
+		bfa_assert(0);
 	}
 }
 
@@ -280,7 +283,6 @@ bfa_fcs_port_ms_sm_gmal(struct bfa_fcs_port_ms_s *ms, enum port_ms_event event)
 		 */
 		if (ms->retry_cnt++ < BFA_FCS_MS_CMD_MAX_RETRIES) {
 			bfa_sm_set_state(ms, bfa_fcs_port_ms_sm_gmal_retry);
-			ms->port->stats.ms_retries++;
 			bfa_timer_start(BFA_FCS_GET_HAL_FROM_PORT(ms->port),
 					&ms->timer, bfa_fcs_port_ms_timeout, ms,
 					BFA_FCS_RETRY_TIMEOUT);
@@ -302,7 +304,7 @@ bfa_fcs_port_ms_sm_gmal(struct bfa_fcs_port_ms_s *ms, enum port_ms_event event)
 		break;
 
 	default:
-		bfa_sm_fault(ms->port->fcs, event);
+		bfa_assert(0);
 	}
 }
 
@@ -328,7 +330,7 @@ bfa_fcs_port_ms_sm_gmal_retry(struct bfa_fcs_port_ms_s *ms,
 		break;
 
 	default:
-		bfa_sm_fault(ms->port->fcs, event);
+		bfa_assert(0);
 	}
 }
 
@@ -361,7 +363,7 @@ bfa_fcs_port_ms_send_gmal(void *ms_cbarg, struct bfa_fcxp_s *fcxp_alloced)
 
 	bfa_fcxp_send(fcxp, NULL, port->fabric->vf_id, port->lp_tag, BFA_FALSE,
 		      FC_CLASS_3, len, &fchs, bfa_fcs_port_ms_gmal_response,
-		      (void *)ms, FC_MAX_PDUSZ, FC_FCCT_TOV);
+		      (void *)ms, FC_MAX_PDUSZ, FC_RA_TOV);
 
 	bfa_sm_send_event(ms, MSSM_EVENT_FCXP_SENT);
 }
@@ -464,7 +466,7 @@ bfa_fcs_port_ms_sm_gfn_sending(struct bfa_fcs_port_ms_s *ms,
 		break;
 
 	default:
-		bfa_sm_fault(ms->port->fcs, event);
+		bfa_assert(0);
 	}
 }
 
@@ -481,7 +483,6 @@ bfa_fcs_port_ms_sm_gfn(struct bfa_fcs_port_ms_s *ms, enum port_ms_event event)
 		 */
 		if (ms->retry_cnt++ < BFA_FCS_MS_CMD_MAX_RETRIES) {
 			bfa_sm_set_state(ms, bfa_fcs_port_ms_sm_gfn_retry);
-			ms->port->stats.ms_retries++;
 			bfa_timer_start(BFA_FCS_GET_HAL_FROM_PORT(ms->port),
 					&ms->timer, bfa_fcs_port_ms_timeout, ms,
 					BFA_FCS_RETRY_TIMEOUT);
@@ -501,7 +502,7 @@ bfa_fcs_port_ms_sm_gfn(struct bfa_fcs_port_ms_s *ms, enum port_ms_event event)
 		break;
 
 	default:
-		bfa_sm_fault(ms->port->fcs, event);
+		bfa_assert(0);
 	}
 }
 
@@ -527,7 +528,7 @@ bfa_fcs_port_ms_sm_gfn_retry(struct bfa_fcs_port_ms_s *ms,
 		break;
 
 	default:
-		bfa_sm_fault(ms->port->fcs, event);
+		bfa_assert(0);
 	}
 }
 
@@ -560,7 +561,7 @@ bfa_fcs_port_ms_send_gfn(void *ms_cbarg, struct bfa_fcxp_s *fcxp_alloced)
 
 	bfa_fcxp_send(fcxp, NULL, port->fabric->vf_id, port->lp_tag, BFA_FALSE,
 		      FC_CLASS_3, len, &fchs, bfa_fcs_port_ms_gfn_response,
-		      (void *)ms, FC_MAX_PDUSZ, FC_FCCT_TOV);
+		      (void *)ms, FC_MAX_PDUSZ, FC_RA_TOV);
 
 	bfa_sm_send_event(ms, MSSM_EVENT_FCXP_SENT);
 }
@@ -636,11 +637,11 @@ bfa_fcs_port_ms_send_plogi(void *ms_cbarg, struct bfa_fcxp_s *fcxp_alloced)
 			     bfa_os_hton3b(FC_MGMT_SERVER),
 			     bfa_fcs_port_get_fcid(port), 0,
 			     port->port_cfg.pwwn, port->port_cfg.nwwn,
-			     bfa_fcport_get_maxfrsize(port->fcs->bfa));
+			     bfa_pport_get_maxfrsize(port->fcs->bfa));
 
 	bfa_fcxp_send(fcxp, NULL, port->fabric->vf_id, port->lp_tag, BFA_FALSE,
 		      FC_CLASS_3, len, &fchs, bfa_fcs_port_ms_plogi_response,
-		      (void *)ms, FC_MAX_PDUSZ, FC_ELS_TOV);
+		      (void *)ms, FC_MAX_PDUSZ, FC_RA_TOV);
 
 	port->stats.ms_plogi_sent++;
 	bfa_sm_send_event(ms, MSSM_EVENT_FCXP_SENT);
@@ -734,7 +735,6 @@ bfa_fcs_port_ms_offline(struct bfa_fcs_port_s *port)
 
 	ms->port = port;
 	bfa_sm_send_event(ms, MSSM_EVENT_PORT_OFFLINE);
-	bfa_fcs_port_fdmi_offline(ms);
 }
 
 void

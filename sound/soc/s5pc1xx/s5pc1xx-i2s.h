@@ -1,37 +1,35 @@
-/*
- * s3c24xx-i2s.c  --  ALSA Soc Audio Layer
+/* sound/soc/s3c24xx/s5pc1xx-i2s.h
  *
- * Copyright 2005 Wolfson Microelectronics PLC.
- * Author: Graeme Gregory
- *         graeme.gregory@wolfsonmicro.com or linux@wolfsonmicro.com
+ * ALSA SoC Audio Layer - s5pc1xx I2S driver
  *
- *  This program is free software; you can redistribute  it and/or modify it
- *  under  the terms of  the GNU General  Public License as published by the
- *  Free Software Foundation;  either version 2 of the  License, or (at your
- *  option) any later version.
+ * Copyright 2008 Openmoko, Inc.
+ * Copyright 2008 Simtec Electronics
+ *      Ben Dooks <ben@simtec.co.uk>
+ *      http://armlinux.simtec.co.uk/
  *
- *  Revision history
- *    10th Nov 2006   Initial version.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
  */
 
-#ifndef S5PC1XXI2S_H_
-#define S5PC1XXI2S_H_
+#ifndef __SND_SOC_S3C24XX_s5pc1xx_I2S_H
+#define __SND_SOC_S3C24XX_s5pc1xx_I2S_H __FILE__
 
-/* clock sources */
-#define S5PC1XX_CLKSRC_PCLK 0
-#define S5PC1XX_CLKSRC_MPLL 1
+struct clk;
 
-/* Clock dividers */
-#define S5PC1XX_DIV_MCLK	0
-#define S5PC1XX_DIV_BCLK	1
-#define S5PC1XX_DIV_PRESCALER	2
+#include "s3c-i2s-v2.h"
+#if 0 //sayanta commented
+#define s5pc1xx_DIV_BCLK	S3C_I2SV2_DIV_BCLK
+#define s5pc1xx_DIV_RCLK	S3C_I2SV2_DIV_RCLK
+#define s5pc1xx_DIV_PRESCALER	S3C_I2SV2_DIV_PRESCALER
 
-/* prescaler */
-#define S5PC1XX_PRESCALE(a,b) \
-	(((a - 1) << S3C_IISPSR_INTSHIFT) | ((b - 1) << S3C_IISPSR_INTSHIFT))
+#define s5pc1xx_CLKSRC_PCLK	(0)
+#define s5pc1xx_CLKSRC_MUX	(1)
+#define s5pc1xx_CLKSRC_CDCLK    (2)
+#define s5pc1xx_CLKSRC_I2SEXT   (3)//sayanta
+#endif
+extern struct snd_soc_dai s5pc1xx_i2s_dai[];
 
-u32 s5pc1xx_i2s_get_clockrate(void);
+extern struct clk *s5pc1xx_i2s_get_clock(struct snd_soc_dai *dai);
 
-extern struct snd_soc_dai	s3c_i2s_v50_dai;
-
-#endif /*S5PC1XXI2S_H_*/
+#endif /* __SND_SOC_S3C24XX_s5pc1xx_I2S_H */

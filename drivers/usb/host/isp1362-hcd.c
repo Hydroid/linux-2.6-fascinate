@@ -77,11 +77,10 @@
 #include <linux/interrupt.h>
 #include <linux/usb.h>
 #include <linux/usb/isp1362.h>
-#include <linux/usb/hcd.h>
 #include <linux/platform_device.h>
 #include <linux/pm.h>
 #include <linux/io.h>
-#include <linux/bitmap.h>
+#include <linux/bitops.h>
 
 #include <asm/irq.h>
 #include <asm/system.h>
@@ -96,6 +95,7 @@ module_param(dbg_level, int, 0);
 #define	STUB_DEBUG_FILE
 #endif
 
+#include "../core/hcd.h"
 #include "../core/usb.h"
 #include "isp1362.h"
 
@@ -190,8 +190,10 @@ static int claim_ptd_buffers(struct isp1362_ep_queue *epq,
 			     struct isp1362_ep *ep, u16 len)
 {
 	int ptd_offset = -EINVAL;
+	int index;
 	int num_ptds = ((len + PTD_HEADER_SIZE - 1) / epq->blk_size) + 1;
-	int found;
+	int found = -1;
+	int last = -1;
 
 	BUG_ON(len > epq->buf_size);
 
@@ -203,9 +205,20 @@ static int claim_ptd_buffers(struct isp1362_ep_queue *epq,
 		    epq->name, len, epq->blk_size, num_ptds, epq->buf_map, epq->skip_map);
 	BUG_ON(ep->num_ptds != 0);
 
-	found = bitmap_find_next_zero_area(&epq->buf_map, epq->buf_count, 0,
-						num_ptds, 0);
-	if (found >= epq->buf_count)
+	for (index = 0; index <= epq->buf_count - num_ptds; index++) {
+		if (test_bit(index, &epq->buf_map))
+			continue;
+		found = index;
+		for (last = index + 1; last < index + num_ptds; last++) {
+			if (test_bit(last, &epq->buf_map)) {
+				found = -1;
+				break;
+			}
+		}
+		if (found >= 0)
+			break;
+	}
+	if (found < 0)
 		return -EOVERFLOW;
 
 	DBG(1, "%s: Found %d PTDs[%d] for %d/%d byte\n", __func__,
@@ -217,7 +230,8 @@ static int claim_ptd_buffers(struct isp1362_ep_queue *epq,
 	epq->buf_avail -= num_ptds;
 	BUG_ON(epq->buf_avail > epq->buf_count);
 	ep->ptd_index = found;
-	bitmap_set(&epq->buf_map, found, num_ptds);
+	for (index = found; index < last; index++)
+		__set_bit(index, &epq->buf_map);
 	DBG(1, "%s: Done %s PTD[%d] $%04x, avail %d count %d claimed %d %08lx:%08lx\n",
 	    __func__, epq->name, ep->ptd_index, ep->ptd_offset,
 	    epq->buf_avail, epq->buf_count, num_ptds, epq->buf_map, epq->skip_map);
@@ -1257,7 +1271,7 @@ static int isp1362_urb_enqueue(struct usb_hcd *hcd,
 
 	/* avoid all allocations within spinlocks: request or endpoint */
 	if (!hep->hcpriv) {
-		ep = kzalloc(sizeof *ep, mem_flags);
+		ep = kcalloc(1, sizeof *ep, mem_flags);
 		if (!ep)
 			return -ENOMEM;
 	}
@@ -1265,7 +1279,7 @@ static int isp1362_urb_enqueue(struct usb_hcd *hcd,
 
 	/* don't submit to a dead or disabled port */
 	if (!((isp1362_hcd->rhport[0] | isp1362_hcd->rhport[1]) &
-	      USB_PORT_STAT_ENABLE) ||
+	      (1 << USB_PORT_FEAT_ENABLE)) ||
 	    !HC_IS_RUNNING(hcd->state)) {
 		kfree(ep);
 		retval = -ENODEV;
@@ -2217,16 +2231,19 @@ static void create_debug_file(struct isp1362_hcd *isp1362_hcd)
 static void remove_debug_file(struct isp1362_hcd *isp1362_hcd)
 {
 	if (isp1362_hcd->pde)
-		remove_proc_entry(proc_filename, NULL);
+		remove_proc_entry(proc_filename, 0);
 }
 
 #endif
 
 /*-------------------------------------------------------------------------*/
 
-static void __isp1362_sw_reset(struct isp1362_hcd *isp1362_hcd)
+static void isp1362_sw_reset(struct isp1362_hcd *isp1362_hcd)
 {
 	int tmp = 20;
+	unsigned long flags;
+
+	spin_lock_irqsave(&isp1362_hcd->lock, flags);
 
 	isp1362_write_reg16(isp1362_hcd, HCSWRES, HCSWRES_MAGIC);
 	isp1362_write_reg32(isp1362_hcd, HCCMDSTAT, OHCI_HCR);
@@ -2237,14 +2254,6 @@ static void __isp1362_sw_reset(struct isp1362_hcd *isp1362_hcd)
 	}
 	if (!tmp)
 		pr_err("Software reset timeout\n");
-}
-
-static void isp1362_sw_reset(struct isp1362_hcd *isp1362_hcd)
-{
-	unsigned long flags;
-
-	spin_lock_irqsave(&isp1362_hcd->lock, flags);
-	__isp1362_sw_reset(isp1362_hcd);
 	spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
 }
 
@@ -2275,10 +2284,10 @@ static int isp1362_mem_config(struct usb_hcd *hcd)
 	dev_info(hcd->self.controller, "ISP1362 Memory usage:\n");
 	dev_info(hcd->self.controller, "  ISTL:    2 * %4d:     %4d @ $%04x:$%04x\n",
 		 istl_size / 2, istl_size, 0, istl_size / 2);
-	dev_info(hcd->self.controller, "  INTL: %4d * (%3zu+8):  %4d @ $%04x\n",
+	dev_info(hcd->self.controller, "  INTL: %4d * (%3lu+8):  %4d @ $%04x\n",
 		 ISP1362_INTL_BUFFERS, intl_blksize - PTD_HEADER_SIZE,
 		 intl_size, istl_size);
-	dev_info(hcd->self.controller, "  ATL : %4d * (%3zu+8):  %4d @ $%04x\n",
+	dev_info(hcd->self.controller, "  ATL : %4d * (%3lu+8):  %4d @ $%04x\n",
 		 atl_buffers, atl_blksize - PTD_HEADER_SIZE,
 		 atl_size, istl_size + intl_size);
 	dev_info(hcd->self.controller, "  USED/FREE:   %4d      %4d\n", total,
@@ -2423,7 +2432,7 @@ static void isp1362_hc_stop(struct usb_hcd *hcd)
 	if (isp1362_hcd->board && isp1362_hcd->board->reset)
 		isp1362_hcd->board->reset(hcd->self.controller, 1);
 	else
-		__isp1362_sw_reset(isp1362_hcd);
+		isp1362_sw_reset(isp1362_hcd);
 
 	if (isp1362_hcd->board && isp1362_hcd->board->clock)
 		isp1362_hcd->board->clock(hcd->self.controller, 0);
@@ -2702,8 +2711,6 @@ static int __init isp1362_probe(struct platform_device *pdev)
 	void __iomem *data_reg;
 	int irq;
 	int retval = 0;
-	struct resource *irq_res;
-	unsigned int irq_flags = 0;
 
 	/* basic sanity checks first.  board-specific init logic should
 	 * have initialized this the three resources and probably board
@@ -2717,18 +2724,30 @@ static int __init isp1362_probe(struct platform_device *pdev)
 
 	data = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	addr = platform_get_resource(pdev, IORESOURCE_MEM, 1);
-	irq_res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	if (!addr || !data || !irq_res) {
+	irq = platform_get_irq(pdev, 0);
+	if (!addr || !data || irq < 0) {
 		retval = -ENODEV;
 		goto err1;
 	}
-	irq = irq_res->start;
 
+#ifdef CONFIG_USB_HCD_DMA
+	if (pdev->dev.dma_mask) {
+		struct resource *dma_res = platform_get_resource(pdev, IORESOURCE_MEM, 2);
+
+		if (!dma_res) {
+			retval = -ENODEV;
+			goto err1;
+		}
+		isp1362_hcd->data_dma = dma_res->start;
+		isp1362_hcd->max_dma_size = resource_len(dma_res);
+	}
+#else
 	if (pdev->dev.dma_mask) {
 		DBG(1, "won't do DMA");
 		retval = -ENODEV;
 		goto err1;
 	}
+#endif
 
 	if (!request_mem_region(addr->start, resource_len(addr), hcd_name)) {
 		retval = -EBUSY;
@@ -2776,16 +2795,12 @@ static int __init isp1362_probe(struct platform_device *pdev)
 	}
 #endif
 
-	if (irq_res->flags & IORESOURCE_IRQ_HIGHEDGE)
-		irq_flags |= IRQF_TRIGGER_RISING;
-	if (irq_res->flags & IORESOURCE_IRQ_LOWEDGE)
-		irq_flags |= IRQF_TRIGGER_FALLING;
-	if (irq_res->flags & IORESOURCE_IRQ_HIGHLEVEL)
-		irq_flags |= IRQF_TRIGGER_HIGH;
-	if (irq_res->flags & IORESOURCE_IRQ_LOWLEVEL)
-		irq_flags |= IRQF_TRIGGER_LOW;
+#ifdef CONFIG_ARM
+	if (isp1362_hcd->board)
+		set_irq_type(irq, isp1362_hcd->board->int_act_high ? IRQT_RISING : IRQT_FALLING);
+#endif
 
-	retval = usb_add_hcd(hcd, irq, irq_flags | IRQF_DISABLED | IRQF_SHARED);
+	retval = usb_add_hcd(hcd, irq, IRQF_TRIGGER_LOW | IRQF_DISABLED | IRQF_SHARED);
 	if (retval != 0)
 		goto err6;
 	pr_info("%s, irq %d\n", hcd->product_desc, irq);

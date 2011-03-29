@@ -48,6 +48,7 @@
 #include <linux/videodev2.h>
 #include <linux/version.h>
 #include <linux/mm.h>
+#include <linux/smp_lock.h>
 #include <media/videobuf-vmalloc.h>
 #include <media/v4l2-common.h>
 #include <media/v4l2-ioctl.h>
@@ -597,11 +598,6 @@ static int s2255_got_frame(struct s2255_dev *dev, int chn, int jpgsize)
 	buf = list_entry(dma_q->active.next,
 			 struct s2255_buffer, vb.queue);
 
-	if (!waitqueue_active(&buf->vb.done)) {
-		/* no one active */
-		rc = -1;
-		goto unlock;
-	}
 	list_del(&buf->vb.queue);
 	do_gettimeofday(&buf->vb.ts);
 	dprintk(100, "[%p/%d] wakeup\n", buf, buf->vb.i);

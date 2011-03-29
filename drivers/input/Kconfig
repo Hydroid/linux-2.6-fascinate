@@ -25,6 +25,18 @@ config INPUT
 
 if INPUT
 
+config INPUT_ATLAS
+        depends on INPUT
+        tristate "Atlas Generic input layer (needed for keyboard, mouse, ...)"
+        help
+        Atlas Product
+
+config INPUT_VICTORY
+        depends on INPUT
+        bool "Victory Generic input layer (needed for keyboard, mouse, ...)"
+        help
+        Victory Product
+
 config INPUT_FF_MEMLESS
 	tristate "Support for memoryless force-feedback devices"
 	default n
@@ -143,7 +155,7 @@ config INPUT_APMPOWER
 	---help---
 	  Say Y here if you want suspend key events to trigger a user
 	  requested suspend through APM. This is useful on embedded
-	  systems where such behviour is desired without userspace
+	  systems where such behaviour is desired without userspace
 	  interaction. If unsure, say N.
 
 	  To compile this driver as a module, choose M here: the
@@ -166,15 +178,6 @@ config XEN_KBDDEV_FRONTEND
 	  This driver implements the front-end of the Xen virtual
 	  keyboard and mouse device driver.  It communicates with a back-end
 	  in another domain.
-
-config JUPITER_HEADSET_DETECT
-	tristate "TRS Connector detection support on JUPITER Board."
-	depends on S5PC110_JUPITER_BOARD
-	default n
-	select SWITCH
-	help
-	   Select this driver for TRS connector detection (wired headset) on Jupiter board. 
-
 
 comment "Input Device Drivers"
 

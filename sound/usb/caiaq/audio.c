@@ -17,7 +17,6 @@
 */
 
 #include <linux/spinlock.h>
-#include <linux/slab.h>
 #include <linux/init.h>
 #include <linux/usb.h>
 #include <sound/core.h>

@@ -19,7 +19,6 @@
 #include <linux/jiffies.h>
 #include <linux/ctype.h>
 #include <linux/slab.h>
-#include <linux/smp_lock.h>
 #include <linux/buffer_head.h>
 #include <linux/namei.h>
 #include "fat.h"
@@ -166,13 +165,13 @@ static int vfat_cmp(struct dentry *dentry, struct qstr *a, struct qstr *b)
 	return 1;
 }
 
-static struct dentry_operations vfat_ci_dentry_ops = {
+static const struct dentry_operations vfat_ci_dentry_ops = {
 	.d_revalidate	= vfat_revalidate_ci,
 	.d_hash		= vfat_hashi,
 	.d_compare	= vfat_cmpi,
 };
 
-static struct dentry_operations vfat_dentry_ops = {
+static const struct dentry_operations vfat_dentry_ops = {
 	.d_revalidate	= vfat_revalidate,
 	.d_hash		= vfat_hash,
 	.d_compare	= vfat_cmp,
@@ -500,17 +499,10 @@ xlate_to_uni(const unsigned char *name, int len, unsigned char *outname,
 	int charlen;
 
 	if (utf8) {
-		int name_len = strlen(name);
-
-		*outlen = utf8_mbstowcs((wchar_t *)outname, name, PATH_MAX);
-
-		/*
-		 * We stripped '.'s before and set len appropriately,
-		 * but utf8_mbstowcs doesn't care about len
-		 */
-		*outlen -= (name_len - len);
-
-		if (*outlen > 255)
+		*outlen = utf8s_to_utf16s(name, len, (wchar_t *)outname);
+		if (*outlen < 0)
+			return *outlen;
+		else if (*outlen > 255)
 			return -ENAMETOOLONG;
 
 		op = &outname[*outlen * sizeof(wchar_t)];
@@ -603,15 +595,6 @@ static int vfat_build_slots(struct inode *dir, const unsigned char *name,
 	int err, ulen, usize, i;
 	loff_t offset;
 
-#if 1	/* 2009-06-25/ Kyo.oh/ workaround code for hiding /sdcard/sd/ */
-	unsigned char InternalHiddneDir=false;
-	if( strcmp(name,"sd")==0 )
-	{
-		InternalHiddneDir=true;
-		printk(KERN_ERR "FAT: vfat_build_slots name [%s] hidden=%d\n",name,InternalHiddneDir);
-	}
-#endif	
-
 	*nr_slots = 0;
 
 	uname = __getname();
@@ -660,12 +643,6 @@ shortname:
 	(*nr_slots)++;
 	memcpy(de->name, msdos_name, MSDOS_NAME);
 	de->attr = is_dir ? ATTR_DIR : ATTR_ARCH;
-#if 1	/* 2009-06-06/ Kyo.oh/ workaround code for hiding /sdcard/sd/ */
-	if(InternalHiddneDir)
-	{
-		de->attr |=ATTR_HIDDEN;
-	}
-#endif	
 	de->lcase = lcase;
 	fat_time_unix2fat(sbi, ts, &time, &date, &time_cs);
 	de->time = de->ctime = time;
@@ -980,7 +957,7 @@ static int vfat_rename(struct inode *old_dir, struct dentry *old_dentry,
 		int start = MSDOS_I(new_dir)->i_logstart;
 		dotdot_de->start = cpu_to_le16(start);
 		dotdot_de->starthi = cpu_to_le16(start >> 16);
-		mark_buffer_dirty(dotdot_bh);
+		mark_buffer_dirty_inode(dotdot_bh, old_inode);
 		if (IS_DIRSYNC(new_dir)) {
 			err = sync_dirty_buffer(dotdot_bh);
 			if (err)
@@ -1024,7 +1001,7 @@ error_dotdot:
 		int start = MSDOS_I(old_dir)->i_logstart;
 		dotdot_de->start = cpu_to_le16(start);
 		dotdot_de->starthi = cpu_to_le16(start >> 16);
-		mark_buffer_dirty(dotdot_bh);
+		mark_buffer_dirty_inode(dotdot_bh, old_inode);
 		corrupt |= sync_dirty_buffer(dotdot_bh);
 	}
 error_inode:

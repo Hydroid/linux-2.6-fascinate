@@ -7,6 +7,7 @@
  * of the GNU General Public License version 2.
  */
 
+#include <linux/slab.h>
 #include <linux/spinlock.h>
 #include <linux/completion.h>
 #include <linux/buffer_head.h>
@@ -168,7 +169,7 @@ static struct dentry *gfs2_get_dentry(struct super_block *sb,
 	if (error)
 		goto fail;
 
-	inode = gfs2_inode_lookup(sb, DT_UNKNOWN, inum->no_addr, 0);
+	inode = gfs2_inode_lookup(sb, DT_UNKNOWN, inum->no_addr, 0, 0);
 	if (IS_ERR(inode)) {
 		error = PTR_ERR(inode);
 		goto fail;

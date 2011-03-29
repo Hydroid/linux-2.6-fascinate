@@ -1,16 +1,16 @@
-/*
+/* linux/drivers/media/video/s5k4ea.c
+ *
+ * Copyright (c) 2010 Samsung Electronics Co., Ltd.
+ * 		http://www.samsung.com/
+ *
  * Driver for S5K4EA (SXGA camera) from Samsung Electronics
- * 
  * 1/6" 1.3Mp CMOS Image Sensor SoC with an Embedded Image Processor
  * supporting MIPI CSI-2
  *
- * Copyright (C) 2009, Dongsoo Nathaniel Kim<dongsoo45.kim@samsung.com>
- *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- */
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
 
 #include <linux/i2c.h>
 #include <linux/delay.h>
@@ -35,7 +35,7 @@
 
 /*
  * Specification
- * Parallel : ITU-R. 656/601 YUV422, RGB565, RGB888 (Up to VGA), RAW10 
+ * Parallel : ITU-R. 656/601 YUV422, RGB565, RGB888 (Up to VGA), RAW10
  * Serial : MIPI CSI2 (single lane) YUV422, RGB565, RGB888 (Up to VGA), RAW10
  * Resolution : 1280 (H) x 1024 (V)
  * Image control : Brightness, Contrast, Saturation, Sharpness, Glamour
@@ -128,9 +128,9 @@ static int s5k4ea_i2c_write(struct v4l2_subdev *sd, unsigned char i2c_data[],
 	unsigned char buf[length], i;
 	struct i2c_msg msg = {client->addr, 0, length, buf};
 
-	for (i = 0; i < length; i++) {
+	for (i = 0; i < length; i++)
 		buf[i] = i2c_data[i];
-	}
+
 	return i2c_transfer(client->adapter, &msg, 1) == 1 ? 0 : -EIO;
 }
 
@@ -190,7 +190,8 @@ static struct v4l2_queryctrl s5k4ea_controls[] = {
 		.minimum = 0,
 		.maximum = ARRAY_SIZE(s5k4ea_querymenu_ev_bias_mode) - 2,
 		.step = 1,
-		.default_value = (ARRAY_SIZE(s5k4ea_querymenu_ev_bias_mode) - 2) / 2,	/* 0 EV */
+		.default_value = (ARRAY_SIZE(s5k4ea_querymenu_ev_bias_mode) \
+				- 2) / 2,	/* 0 EV */
 	},
 	{
 		.id = V4L2_CID_COLORFX,
@@ -310,7 +311,7 @@ static int s5k4ea_s_fmt(struct v4l2_subdev *sd, struct v4l2_format *fmt)
 
 	return err;
 }
-static int s5k4ea_enum_framesizes(struct v4l2_subdev *sd, 
+static int s5k4ea_enum_framesizes(struct v4l2_subdev *sd,
 					struct v4l2_frmsizeenum *fsize)
 {
 	int err = 0;
@@ -318,7 +319,7 @@ static int s5k4ea_enum_framesizes(struct v4l2_subdev *sd,
 	return err;
 }
 
-static int s5k4ea_enum_frameintervals(struct v4l2_subdev *sd, 
+static int s5k4ea_enum_frameintervals(struct v4l2_subdev *sd,
 					struct v4l2_frmivalenum *fival)
 {
 	int err = 0;
@@ -326,7 +327,7 @@ static int s5k4ea_enum_frameintervals(struct v4l2_subdev *sd,
 	return err;
 }
 
-static int s5k4ea_enum_fmt(struct v4l2_subdev *sd, 
+static int s5k4ea_enum_fmt(struct v4l2_subdev *sd,
 				struct v4l2_fmtdesc *fmtdesc)
 {
 	int err = 0;
@@ -399,7 +400,7 @@ static int s5k4ea_g_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		dev_err(&client->dev, "%s: no such ctrl\n", __func__);
 		break;
 	}
-	
+
 	return err;
 }
 
@@ -420,33 +421,40 @@ static int s5k4ea_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	case V4L2_CID_AUTO_WHITE_BALANCE:
 		dev_dbg(&client->dev, "%s: V4L2_CID_AUTO_WHITE_BALANCE\n", \
 			__func__);
-		err = s5k4ea_write_regs(sd, s5k4ea_regs_awb_enable[ctrl->value]);
+		err = s5k4ea_write_regs(sd, \
+			s5k4ea_regs_awb_enable[ctrl->value]);
 		break;
 	case V4L2_CID_WHITE_BALANCE_PRESET:
 		dev_dbg(&client->dev, "%s: V4L2_CID_WHITE_BALANCE_PRESET\n", \
 			__func__);
-		err = s5k4ea_write_regs(sd, s5k4ea_regs_wb_preset[ctrl->value]);
+		err = s5k4ea_write_regs(sd, \
+			s5k4ea_regs_wb_preset[ctrl->value]);
 		break;
 	case V4L2_CID_WHITE_BALANCE_TEMPERATURE:
-		dev_dbg(&client->dev, "%s: V4L2_CID_WHITE_BALANCE_TEMPERATURE\n", \
-			__func__);
-		err = s5k4ea_write_regs(sd, s5k4ea_regs_wb_temperature[ctrl->value]);
+		dev_dbg(&client->dev, \
+			"%s: V4L2_CID_WHITE_BALANCE_TEMPERATURE\n", __func__);
+		err = s5k4ea_write_regs(sd, \
+			s5k4ea_regs_wb_temperature[ctrl->value]);
 		break;
 	case V4L2_CID_COLORFX:
 		dev_dbg(&client->dev, "%s: V4L2_CID_COLORFX\n", __func__);
-		err = s5k4ea_write_regs(sd, s5k4ea_regs_color_effect[ctrl->value]);
+		err = s5k4ea_write_regs(sd, \
+			s5k4ea_regs_color_effect[ctrl->value]);
 		break;
 	case V4L2_CID_CONTRAST:
 		dev_dbg(&client->dev, "%s: V4L2_CID_CONTRAST\n", __func__);
-		err = s5k4ea_write_regs(sd, s5k4ea_regs_contrast_bias[ctrl->value]);
+		err = s5k4ea_write_regs(sd, \
+			s5k4ea_regs_contrast_bias[ctrl->value]);
 		break;
 	case V4L2_CID_SATURATION:
 		dev_dbg(&client->dev, "%s: V4L2_CID_SATURATION\n", __func__);
-		err = s5k4ea_write_regs(sd, s5k4ea_regs_saturation_bias[ctrl->value]);
+		err = s5k4ea_write_regs(sd, \
+			s5k4ea_regs_saturation_bias[ctrl->value]);
 		break;
 	case V4L2_CID_SHARPNESS:
 		dev_dbg(&client->dev, "%s: V4L2_CID_SHARPNESS\n", __func__);
-		err = s5k4ea_write_regs(sd, s5k4ea_regs_sharpness_bias[ctrl->value]);
+		err = s5k4ea_write_regs(sd, \
+			s5k4ea_regs_sharpness_bias[ctrl->value]);
 		break;
 	default:
 		dev_err(&client->dev, "%s: no such control\n", __func__);
@@ -466,7 +474,8 @@ out:
 #endif
 }
 
- int __s5k4ea_init_4bytes(struct v4l2_subdev *sd, unsigned char *reg[], int total)
+int
+__s5k4ea_init_4bytes(struct v4l2_subdev *sd, unsigned char *reg[], int total)
 {
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	int err = -EINVAL, i;
@@ -489,7 +498,8 @@ out:
 	return err;
 }
 
-static int __s5k4ea_init_2bytes(struct v4l2_subdev *sd, unsigned short *reg[], int total)
+static int
+__s5k4ea_init_2bytes(struct v4l2_subdev *sd, unsigned short *reg[], int total)
 {
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	int err = -EINVAL, i;
@@ -563,8 +573,9 @@ static int s5k4ea_init(struct v4l2_subdev *sd, u32 val)
 
 /*
  * s_config subdev ops
- * With camera device, we need to re-initialize every single opening time therefor,
- * it is not necessary to be initialized on probe time. except for version checking
+ * With camera device, we need to re-initialize every single opening time
+ * therefor,it is not necessary to be initialized on probe time.
+ * except for version checking
  * NOTE: version checking is optional
  */
 static int s5k4ea_s_config(struct v4l2_subdev *sd, int irq, void *platform_data)
@@ -600,7 +611,7 @@ static int s5k4ea_s_config(struct v4l2_subdev *sd, int irq, void *platform_data)
 		state->pix.pixelformat = pdata->pixelformat;
 
 	if (!pdata->freq)
-		state->freq = 24000000;	/* 24MHz default */
+		state->freq = 48000000;	/* 48MHz default */
 	else
 		state->freq = pdata->freq;
 
@@ -671,7 +682,7 @@ static int s5k4ea_wakeup(struct v4l2_subdev *sd)
 
 static int s5k4ea_s_stream(struct v4l2_subdev *sd, int enable)
 {
-	return (enable ? s5k4ea_wakeup(sd) : s5k4ea_sleep(sd));
+	return enable ? s5k4ea_wakeup(sd) : s5k4ea_sleep(sd);
 }
 
 static const struct v4l2_subdev_core_ops s5k4ea_core_ops = {

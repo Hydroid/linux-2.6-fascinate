@@ -302,12 +302,10 @@ int Readx(void)
     spin_lock_irqsave(&intlock, flags);
 
     port_out_low(); //Drives DQ low
-#if 0	// hanapark_DF01 from GLUON2
     Waitx(1);
     port_out_high(); //Releases the bus
     Waitx(15);   
     //Sample after 15us
-#endif	// hanapark_DF01 from GLUON2
     result = port_input() & 0x01;
     Waitx(45);
 
@@ -445,13 +443,5 @@ int CRC_protection()
 
 	Waitx(delay_time); // hanapark
 	return retVal;
-}
-
-void BattAuth_Finish()	// hanapark_Garnett
-{
-	// Set BATT_ID high !
-	s3c_gpio_cfgpin(S5PC11X_GPH2(3), S3C_GPIO_OUTPUT);
-	s3c_gpio_setpull(S5PC11X_GPH2(3), S3C_GPIO_PULL_NONE);
-	s3c_gpio_setpin(S5PC11X_GPH2(3), 1);
 }
 

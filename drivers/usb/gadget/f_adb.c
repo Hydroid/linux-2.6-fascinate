@@ -22,6 +22,7 @@
 #include <linux/init.h>
 #include <linux/poll.h>
 #include <linux/delay.h>
+#include <linux/sched.h>
 #include <linux/wait.h>
 #include <linux/err.h>
 #include <linux/interrupt.h>
@@ -510,14 +511,20 @@ static struct miscdevice adb_device = {
 	.fops = &adb_fops,
 };
 
-#if	USBCV_CH9_REMOTE_WAKE_UP_TEST
-//To send wakeup signal for USBCV test scenario
-static int adb_function_suspend(struct usb_function *f) {
+static void adb_function_suspend(struct usb_function *f)
+{
+	struct adb_dev *dev = func_to_dev(f);
+	struct usb_composite_dev *cdev = dev->cdev;
+	printk(KERN_INFO "adb_function_suspend\n");
 	mdelay(200);
-	printk("[%s] Request usb_gadget_wakeup()\n", __func__);
-	usb_gadget_wakeup(f->config->cdev->gadget);
+	usb_gadget_wakeup(cdev->gadget);	
+}
+
+static void adb_function_resume(struct usb_function *f)
+{
+	printk(KERN_INFO "adb_function_resume\n");
+	//ToDo: Handle resume of adb here.
 }	
-#endif
 
 
 static int __init
@@ -681,9 +688,8 @@ int __init adb_function_add(struct usb_configuration *c)
 	dev->function.unbind = adb_function_unbind;
 	dev->function.set_alt = adb_function_set_alt;
 	dev->function.disable = adb_function_disable;
-#if	USBCV_CH9_REMOTE_WAKE_UP_TEST
 	dev->function.suspend = adb_function_suspend;
-#endif
+	dev->function.resume = adb_function_resume;
 
 	/* _adb_dev must be set before calling usb_gadget_register_driver */
 	_adb_dev = dev;

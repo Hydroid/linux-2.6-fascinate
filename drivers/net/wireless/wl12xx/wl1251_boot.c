@@ -22,7 +22,6 @@
  */
 
 #include <linux/gpio.h>
-#include <linux/slab.h>
 
 #include "wl1251_reg.h"
 #include "wl1251_boot.h"
@@ -225,7 +224,7 @@ static void wl1251_boot_set_ecpu_ctrl(struct wl1251 *wl, u32 flag)
 int wl1251_boot_run_firmware(struct wl1251 *wl)
 {
 	int loop, ret;
-	u32 chip_id, acx_intr;
+	u32 chip_id, interrupt;
 
 	wl1251_boot_set_ecpu_ctrl(wl, ECPU_CONTROL_HALT);
 
@@ -242,22 +241,22 @@ int wl1251_boot_run_firmware(struct wl1251 *wl)
 	loop = 0;
 	while (loop++ < INIT_LOOP) {
 		udelay(INIT_LOOP_DELAY);
-		acx_intr = wl1251_reg_read32(wl, ACX_REG_INTERRUPT_NO_CLEAR);
+		interrupt = wl1251_reg_read32(wl, ACX_REG_INTERRUPT_NO_CLEAR);
 
-		if (acx_intr == 0xffffffff) {
+		if (interrupt == 0xffffffff) {
 			wl1251_error("error reading hardware complete "
 				     "init indication");
 			return -EIO;
 		}
 		/* check that ACX_INTR_INIT_COMPLETE is enabled */
-		else if (acx_intr & WL1251_ACX_INTR_INIT_COMPLETE) {
+		else if (interrupt & WL1251_ACX_INTR_INIT_COMPLETE) {
 			wl1251_reg_write32(wl, ACX_REG_INTERRUPT_ACK,
 					   WL1251_ACX_INTR_INIT_COMPLETE);
 			break;
 		}
 	}
 
-	if (loop > INIT_LOOP) {
+	if (loop >= INIT_LOOP) {
 		wl1251_error("timeout waiting for the hardware to "
 			     "complete initialization");
 		return -EIO;
@@ -297,12 +296,8 @@ int wl1251_boot_run_firmware(struct wl1251 *wl)
 		WL1251_ACX_INTR_INIT_COMPLETE;
 	wl1251_boot_target_enable_interrupts(wl);
 
-	wl->event_mask = SCAN_COMPLETE_EVENT_ID | BSS_LOSE_EVENT_ID |
-		SYNCHRONIZATION_TIMEOUT_EVENT_ID |
-		ROAMING_TRIGGER_LOW_RSSI_EVENT_ID |
-		ROAMING_TRIGGER_REGAINED_RSSI_EVENT_ID |
-		REGAINED_BSS_EVENT_ID | BT_PTA_SENSE_EVENT_ID |
-		BT_PTA_PREDICTION_EVENT_ID;
+	/* unmask all mbox events  */
+	wl->event_mask = 0xffffffff;
 
 	ret = wl1251_event_unmask(wl);
 	if (ret < 0) {
@@ -319,8 +314,8 @@ int wl1251_boot_run_firmware(struct wl1251 *wl)
 static int wl1251_boot_upload_firmware(struct wl1251 *wl)
 {
 	int addr, chunk_num, partition_limit;
-	size_t fw_data_len, len;
-	u8 *p, *buf;
+	size_t fw_data_len;
+	u8 *p;
 
 	/* whal_FwCtrl_LoadFwImageSm() */
 
@@ -337,12 +332,6 @@ static int wl1251_boot_upload_firmware(struct wl1251 *wl)
 	if ((fw_data_len % 4) != 0) {
 		wl1251_error("firmware length not multiple of four");
 		return -EIO;
-	}
-
-	buf = kmalloc(CHUNK_SIZE, GFP_KERNEL);
-	if (!buf) {
-		wl1251_error("allocation for firmware upload chunk failed");
-		return -ENOMEM;
 	}
 
 	wl1251_set_partition(wl, WL1251_PART_DOWN_MEM_START,
@@ -375,11 +364,7 @@ static int wl1251_boot_upload_firmware(struct wl1251 *wl)
 		p = wl->fw + FW_HDR_SIZE + chunk_num * CHUNK_SIZE;
 		wl1251_debug(DEBUG_BOOT, "uploading fw chunk 0x%p to 0x%x",
 			     p, addr);
-
-		/* need to copy the chunk for dma */
-		len = CHUNK_SIZE;
-		memcpy(buf, p, len);
-		wl1251_mem_write(wl, addr, buf, len);
+		wl1251_mem_write(wl, addr, p, CHUNK_SIZE);
 
 		chunk_num++;
 	}
@@ -387,16 +372,9 @@ static int wl1251_boot_upload_firmware(struct wl1251 *wl)
 	/* 10.4 upload the last chunk */
 	addr = WL1251_PART_DOWN_MEM_START + chunk_num * CHUNK_SIZE;
 	p = wl->fw + FW_HDR_SIZE + chunk_num * CHUNK_SIZE;
-
-	/* need to copy the chunk for dma */
-	len = fw_data_len % CHUNK_SIZE;
-	memcpy(buf, p, len);
-
 	wl1251_debug(DEBUG_BOOT, "uploading fw last chunk (%zu B) 0x%p to 0x%x",
-		     len, p, addr);
-	wl1251_mem_write(wl, addr, buf, len);
-
-	kfree(buf);
+		     fw_data_len % CHUNK_SIZE, p, addr);
+	wl1251_mem_write(wl, addr, p, fw_data_len % CHUNK_SIZE);
 
 	return 0;
 }
@@ -495,20 +473,13 @@ int wl1251_boot(struct wl1251 *wl)
 		goto out;
 
 	/* 2. start processing NVS file */
-	if (wl->use_eeprom) {
-		wl1251_reg_write32(wl, ACX_REG_EE_START, START_EEPROM_MGR);
-		/* Wait for EEPROM NVS burst read to complete */
-		msleep(40);
-		wl1251_reg_write32(wl, ACX_EEPROMLESS_IND_REG, USE_EEPROM);
-	} else {
-		ret = wl1251_boot_upload_nvs(wl);
-		if (ret < 0)
-			goto out;
+	ret = wl1251_boot_upload_nvs(wl);
+	if (ret < 0)
+		goto out;
 
-		/* write firmware's last address (ie. it's length) to
-		 * ACX_EEPROMLESS_IND_REG */
-		wl1251_reg_write32(wl, ACX_EEPROMLESS_IND_REG, wl->fw_len);
-	}
+	/* write firmware's last address (ie. it's length) to
+	 * ACX_EEPROMLESS_IND_REG */
+	wl1251_reg_write32(wl, ACX_EEPROMLESS_IND_REG, wl->fw_len);
 
 	/* 6. read the EEPROM parameters */
 	tmp = wl1251_reg_read32(wl, SCR_PAD2);

@@ -33,24 +33,11 @@
  * struct (with offset set to 0). 
  */
 #define PMEM_GET_TOTAL_SIZE	_IOW(PMEM_IOCTL_MAGIC, 7, unsigned int)
-/* Revokes gpu registers and resets the gpu.  Pass a pointer to the
- * start of the mapped gpu regs (the vaddr returned by mmap) as the argument.
- */
-#define HW3D_REVOKE_GPU		_IOW(PMEM_IOCTL_MAGIC, 8, unsigned int)
-#define HW3D_GRANT_GPU		_IOW(PMEM_IOCTL_MAGIC, 9, unsigned int)
-#define HW3D_WAIT_FOR_INTERRUPT	_IOW(PMEM_IOCTL_MAGIC, 10, unsigned int)
+#define PMEM_CACHE_FLUSH	_IOW(PMEM_IOCTL_MAGIC, 8, unsigned int)
 
 // added by jamie (2009.10.20)
 // in order to provide feature to invalidate cache area
 #define PMEM_CACHE_INV _IOW(PMEM_IOCTL_MAGIC, 20, unsigned int)
-
-int get_pmem_file(int fd, unsigned long *start, unsigned long *vstart,
-		  unsigned long *end, struct file **filp);
-int get_pmem_user_addr(struct file *file, unsigned long *start,
-		       unsigned long *end);
-void put_pmem_file(struct file* file);
-void flush_pmem_file(struct file *file, unsigned long start, unsigned long len);
-#define PMEM_CACHE_FLUSH	_IOW(PMEM_IOCTL_MAGIC, 8, unsigned int)
 
 struct android_pmem_platform_data
 {

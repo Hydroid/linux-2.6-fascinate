@@ -77,7 +77,8 @@ typedef elf_fpreg_t elf_fpregset_t[ELF_NFPREG];
 #define ELF_DATA	ELFDATA2MSB
 #endif
 
-#define ELF_EXEC_PAGESIZE	PAGE_SIZE
+#define USE_ELF_CORE_DUMP
+#define ELF_EXEC_PAGESIZE	4096
 
 
 #define ELF_CORE_COPY_REGS(_dest, _regs)			\

@@ -22,7 +22,7 @@
  * an single MOVS instruction (ie, only 8 bits of set data)
  */
 
-#define S3C_ADDR_BASE	(0xF4000000)
+#define S3C_ADDR_BASE	(0xFD000000)
 
 #ifndef __ASSEMBLY__
 #define S3C_ADDR(x)	((void __iomem __force *)S3C_ADDR_BASE + (x))
@@ -37,6 +37,7 @@
 #define S3C_VA_WATCHDOG	S3C_ADDR(0x00400000)	/* watchdog */
 #define S3C_VA_UART	S3C_ADDR(0x01000000)	/* UART */
 
+#define S3C_VA_AUDSS	S3C_ADDR(0x01600000)	/* Audio SubSystem */
 /* This is used for the CPU specific mappings that may be needed, so that
  * they do not need to directly used S3C_ADDR() and thus make it easier to
  * modify the space for mapping.

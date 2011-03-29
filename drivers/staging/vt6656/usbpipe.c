@@ -71,52 +71,56 @@ static int          msglevel                =MSG_LEVEL_INFO;
 
 /*---------------------  Static Functions  --------------------------*/
 static
-void
+VOID
 s_nsInterruptUsbIoCompleteRead(
-     struct urb *urb
+    IN struct urb *urb
     );
 
 
 static
-void
+VOID
 s_nsBulkInUsbIoCompleteRead(
-     struct urb *urb
+    IN struct urb *urb
     );
 
 
 static
-void
+VOID
 s_nsBulkOutIoCompleteWrite(
-     struct urb *urb
+    IN struct urb *urb
     );
 
 
 static
-void
+VOID
 s_nsControlInUsbIoCompleteRead(
-     struct urb *urb
+    IN struct urb *urb
     );
 
 static
-void
+VOID
 s_nsControlInUsbIoCompleteWrite(
-     struct urb *urb
+    IN struct urb *urb
     );
 
 /*---------------------  Export Variables  --------------------------*/
 
 /*---------------------  Export Functions  --------------------------*/
 
-int PIPEnsControlOutAsyn(
-     PSDevice     pDevice,
-     BYTE         byRequest,
-     WORD         wValue,
-     WORD         wIndex,
-     WORD         wLength,
-     PBYTE        pbyBuffer
+
+
+NTSTATUS
+PIPEnsControlOutAsyn(
+    IN PSDevice     pDevice,
+    IN BYTE         byRequest,
+    IN WORD         wValue,
+    IN WORD         wIndex,
+    IN WORD         wLength,
+    IN PBYTE        pbyBuffer
     )
 {
-	int ntStatus;
+    NTSTATUS                ntStatus;
+
 
     if (MP_TEST_FLAG(pDevice, fMP_DISCONNECTED))
         return STATUS_FAILURE;
@@ -138,7 +142,7 @@ int PIPEnsControlOutAsyn(
                             0x40, // RequestType
                             wValue,
                             wIndex,
-			    (void *) pbyBuffer,
+                            (PVOID) pbyBuffer,
                             wLength,
                             HZ
                           );
@@ -152,17 +156,23 @@ int PIPEnsControlOutAsyn(
     return ntStatus;
 }
 
-int PIPEnsControlOut(
-     PSDevice     pDevice,
-     BYTE         byRequest,
-     WORD         wValue,
-     WORD         wIndex,
-     WORD         wLength,
-     PBYTE        pbyBuffer
+
+
+
+
+NTSTATUS
+PIPEnsControlOut(
+    IN PSDevice     pDevice,
+    IN BYTE         byRequest,
+    IN WORD         wValue,
+    IN WORD         wIndex,
+    IN WORD         wLength,
+    IN PBYTE        pbyBuffer
     )
 {
-	int ntStatus = 0;
+    NTSTATUS            ntStatus = 0;
     int ii;
+
 
     if (MP_TEST_FLAG(pDevice, fMP_DISCONNECTED))
         return STATUS_FAILURE;
@@ -183,8 +193,7 @@ int PIPEnsControlOut(
 			 usb_sndctrlpipe(pDevice->usb , 0), (char *) &pDevice->sUsbCtlRequest,
 			 pbyBuffer, wLength, s_nsControlInUsbIoCompleteWrite, pDevice);
 
-	ntStatus = usb_submit_urb(pDevice->pControlURB, GFP_ATOMIC);
-	if (ntStatus != 0) {
+	if ((ntStatus = usb_submit_urb(pDevice->pControlURB, GFP_ATOMIC)) != 0) {
 		DBG_PRT(MSG_LEVEL_DEBUG, KERN_INFO"control send request submission failed: %d\n", ntStatus);
 		return STATUS_FAILURE;
 	}
@@ -209,16 +218,20 @@ int PIPEnsControlOut(
     return STATUS_SUCCESS;
 }
 
-int PIPEnsControlIn(
-     PSDevice     pDevice,
-     BYTE         byRequest,
-     WORD         wValue,
-     WORD         wIndex,
-     WORD         wLength,
-       PBYTE   pbyBuffer
+
+
+
+NTSTATUS
+PIPEnsControlIn(
+    IN PSDevice     pDevice,
+    IN BYTE         byRequest,
+    IN WORD         wValue,
+    IN WORD         wIndex,
+    IN WORD         wLength,
+    IN OUT  PBYTE   pbyBuffer
     )
 {
-	int ntStatus = 0;
+    NTSTATUS            ntStatus = 0;
     int ii;
 
     if (MP_TEST_FLAG(pDevice, fMP_DISCONNECTED))
@@ -238,8 +251,7 @@ int PIPEnsControlIn(
 			 usb_rcvctrlpipe(pDevice->usb , 0), (char *) &pDevice->sUsbCtlRequest,
 			 pbyBuffer, wLength, s_nsControlInUsbIoCompleteRead, pDevice);
 
-	ntStatus = usb_submit_urb(pDevice->pControlURB, GFP_ATOMIC);
-	if (ntStatus != 0) {
+	if ((ntStatus = usb_submit_urb(pDevice->pControlURB, GFP_ATOMIC)) != 0) {
 		DBG_PRT(MSG_LEVEL_DEBUG, KERN_INFO"control request submission failed: %d\n", ntStatus);
 	}else {
 		MP_SET_FLAG(pDevice, fMP_CONTROL_READS);
@@ -265,9 +277,9 @@ int PIPEnsControlIn(
 }
 
 static
-void
+VOID
 s_nsControlInUsbIoCompleteWrite(
-     struct urb *urb
+    IN struct urb *urb
     )
 {
     PSDevice        pDevice;
@@ -306,9 +318,9 @@ s_nsControlInUsbIoCompleteWrite(
  *
  */
 static
-void
+VOID
 s_nsControlInUsbIoCompleteRead(
-     struct urb *urb
+    IN struct urb *urb
     )
 {
     PSDevice        pDevice;
@@ -346,9 +358,13 @@ s_nsControlInUsbIoCompleteRead(
  * Return Value: STATUS_INSUFFICIENT_RESOURCES or result of IoCallDriver
  *
  */
-int PIPEnsInterruptRead(PSDevice pDevice)
+NTSTATUS
+PIPEnsInterruptRead(
+    IN PSDevice pDevice
+    )
 {
-    int ntStatus = STATUS_FAILURE;
+    NTSTATUS            ntStatus = STATUS_FAILURE;
+
 
     DBG_PRT(MSG_LEVEL_DEBUG, KERN_INFO"---->s_nsStartInterruptUsbRead()\n");
 
@@ -363,18 +379,42 @@ int PIPEnsInterruptRead(PSDevice pDevice)
     // Now that we have created the urb, we will send a
     // request to the USB device object.
     //
+#if 0            //reserve int URB submit
+	usb_fill_int_urb(pDevice->pInterruptURB,
+	                 pDevice->usb,
+	                 usb_rcvintpipe(pDevice->usb, 1),
+	                 (PVOID) pDevice->intBuf.pDataBuf,
+	                 MAX_INTERRUPT_SIZE,
+	                 s_nsInterruptUsbIoCompleteRead,
+	                 pDevice,
+	                 pDevice->int_interval
+	                 );
+#else            //replace int URB submit by bulk transfer
+#ifndef Safe_Close
+	usb_fill_int_urb(pDevice->pInterruptURB,
+	                 pDevice->usb,
+	                 usb_rcvintpipe(pDevice->usb, 1),
+	                 (PVOID) pDevice->intBuf.pDataBuf,
+	                 MAX_INTERRUPT_SIZE,
+	                 s_nsInterruptUsbIoCompleteRead,
+	                 pDevice,
+	                 pDevice->int_interval
+	                 );
+#else
+
     pDevice->pInterruptURB->interval = pDevice->int_interval;
 
 usb_fill_bulk_urb(pDevice->pInterruptURB,
 		pDevice->usb,
 		usb_rcvbulkpipe(pDevice->usb, 1),
-		(void *) pDevice->intBuf.pDataBuf,
+		(PVOID) pDevice->intBuf.pDataBuf,
 		MAX_INTERRUPT_SIZE,
 		s_nsInterruptUsbIoCompleteRead,
 		pDevice);
+#endif
+#endif
 
-	ntStatus = usb_submit_urb(pDevice->pInterruptURB, GFP_ATOMIC);
-	if (ntStatus != 0) {
+	if ((ntStatus = usb_submit_urb(pDevice->pInterruptURB, GFP_ATOMIC)) != 0) {
 	    DBG_PRT(MSG_LEVEL_DEBUG, KERN_INFO"Submit int URB failed %d\n", ntStatus);
     }
 
@@ -398,14 +438,15 @@ usb_fill_bulk_urb(pDevice->pInterruptURB,
  *
  */
 static
-void
+VOID
 s_nsInterruptUsbIoCompleteRead(
-     struct urb *urb
+    IN struct urb *urb
     )
 
 {
     PSDevice        pDevice;
-    int ntStatus;
+    NTSTATUS        ntStatus;
+
 
     DBG_PRT(MSG_LEVEL_DEBUG, KERN_INFO"---->s_nsInterruptUsbIoCompleteRead\n");
     //
@@ -440,29 +481,40 @@ s_nsInterruptUsbIoCompleteRead(
             pDevice->fKillEventPollingThread = TRUE;
 //        }
         DBG_PRT(MSG_LEVEL_DEBUG, KERN_INFO"IntUSBIoCompleteControl STATUS = %d\n", ntStatus );
-    } else {
-	    pDevice->ulIntInBytesRead += (unsigned long) urb->actual_length;
-	    pDevice->ulIntInContCRCError = 0;
-	    pDevice->bEventAvailable = TRUE;
-	    INTnsProcessData(pDevice);
+    }
+    else {
+        pDevice->ulIntInBytesRead += (ULONG)urb->actual_length;
+        pDevice->ulIntInContCRCError = 0;
+        pDevice->bEventAvailable = TRUE;
+        INTnsProcessData(pDevice);
     }
 
     STAvUpdateUSBCounter(&pDevice->scStatistic.USB_InterruptStat, ntStatus);
 
 
     if (pDevice->fKillEventPollingThread != TRUE) {
+   #if 0               //reserve int URB submit
+	if ((ntStatus = usb_submit_urb(urb, GFP_ATOMIC)) != 0) {
+	    DBG_PRT(MSG_LEVEL_DEBUG, KERN_INFO"Re-Submit int URB failed %d\n", ntStatus);
+    }
+   #else                                                                                     //replace int URB submit by bulk transfer
+    #ifdef Safe_Close
        usb_fill_bulk_urb(pDevice->pInterruptURB,
 		      pDevice->usb,
 		      usb_rcvbulkpipe(pDevice->usb, 1),
-		     (void *) pDevice->intBuf.pDataBuf,
+		     (PVOID) pDevice->intBuf.pDataBuf,
 		     MAX_INTERRUPT_SIZE,
 		     s_nsInterruptUsbIoCompleteRead,
 		     pDevice);
 
-	ntStatus = usb_submit_urb(pDevice->pInterruptURB, GFP_ATOMIC);
-	if (ntStatus != 0) {
+	if ((ntStatus = usb_submit_urb(pDevice->pInterruptURB, GFP_ATOMIC)) != 0) {
 	    DBG_PRT(MSG_LEVEL_DEBUG, KERN_INFO"Submit int URB failed %d\n", ntStatus);
            }
+
+    #else
+        tasklet_schedule(&pDevice->EventWorkItem);
+    #endif
+#endif
     }
     //
     // We return STATUS_MORE_PROCESSING_REQUIRED so that the completion
@@ -484,9 +536,13 @@ s_nsInterruptUsbIoCompleteRead(
  * Return Value: STATUS_INSUFFICIENT_RESOURCES or result of IoCallDriver
  *
  */
-int PIPEnsBulkInUsbRead(PSDevice pDevice, PRCB pRCB)
+NTSTATUS
+PIPEnsBulkInUsbRead(
+    IN PSDevice pDevice,
+    IN PRCB     pRCB
+    )
 {
-	int ntStatus = 0;
+    NTSTATUS            ntStatus= 0;
     struct urb          *pUrb;
 
 
@@ -511,13 +567,12 @@ int PIPEnsBulkInUsbRead(PSDevice pDevice, PRCB pRCB)
 	usb_fill_bulk_urb(pUrb,
 		pDevice->usb,
 		usb_rcvbulkpipe(pDevice->usb, 2),
-		(void *) (pRCB->skb->data),
+		(PVOID) (pRCB->skb->data),
 		MAX_TOTAL_SIZE_WITH_ALL_HEADERS,
 		s_nsBulkInUsbIoCompleteRead,
 		pRCB);
 
-	ntStatus = usb_submit_urb(pUrb, GFP_ATOMIC);
-	if (ntStatus != 0) {
+	if((ntStatus = usb_submit_urb(pUrb, GFP_ATOMIC)) != 0){
 		DBG_PRT(MSG_LEVEL_DEBUG, KERN_INFO"Submit Rx URB failed %d\n", ntStatus);
 		return STATUS_FAILURE ;
 	}
@@ -545,18 +600,20 @@ int PIPEnsBulkInUsbRead(PSDevice pDevice, PRCB pRCB)
  *
  */
 static
-void
+VOID
 s_nsBulkInUsbIoCompleteRead(
-     struct urb *urb
+    IN struct urb *urb
     )
 
 {
     PRCB    pRCB = (PRCB)urb->context;
     PSDevice pDevice = (PSDevice)pRCB->pDevice;
-    unsigned long   bytesRead;
+    ULONG   bytesRead;
     BOOL    bIndicateReceive = FALSE;
     BOOL    bReAllocSkb = FALSE;
-    int status;
+    NTSTATUS    status;
+
+
 
     DBG_PRT(MSG_LEVEL_DEBUG, KERN_INFO"---->s_nsBulkInUsbIoCompleteRead\n");
     status = urb->status;
@@ -566,7 +623,9 @@ s_nsBulkInUsbIoCompleteRead(
         pDevice->ulBulkInError++;
         DBG_PRT(MSG_LEVEL_DEBUG, KERN_INFO"BULK In failed %d\n", status);
 
+     	#ifdef Calcu_LinkQual
            pDevice->scStatistic.RxFcsErrCnt ++;
+	#endif
 //todo...xxxxxx
 //        if (status == USBD_STATUS_CRC) {
 //            pDevice->ulBulkInContCRCError++;
@@ -580,7 +639,9 @@ s_nsBulkInUsbIoCompleteRead(
         pDevice->ulBulkInContCRCError = 0;
         pDevice->ulBulkInBytesRead += bytesRead;
 
+	#ifdef Calcu_LinkQual
            pDevice->scStatistic.RxOkCnt ++;
+	#endif
     }
 
 
@@ -620,11 +681,11 @@ s_nsBulkInUsbIoCompleteRead(
  */
 NDIS_STATUS
 PIPEnsSendBulkOut(
-      PSDevice pDevice,
-      PUSB_SEND_CONTEXT pContext
+    IN  PSDevice pDevice,
+    IN  PUSB_SEND_CONTEXT pContext
     )
 {
-    int status;
+    NTSTATUS            status;
     struct urb          *pUrb;
 
 
@@ -651,14 +712,13 @@ PIPEnsSendBulkOut(
         usb_fill_bulk_urb(
         	    pUrb,
         		pDevice->usb,
-		    usb_sndbulkpipe(pDevice->usb, 3),
-		    (void *) &(pContext->Data[0]),
+        		usb_sndbulkpipe(pDevice->usb, 3),
+        		(PVOID) &(pContext->Data[0]),
         		pContext->uBufLen,
         		s_nsBulkOutIoCompleteWrite,
         		pContext);
 
-    	status = usb_submit_urb(pUrb, GFP_ATOMIC);
-    	if (status != 0)
+    	if((status = usb_submit_urb(pUrb, GFP_ATOMIC))!=0)
     	{
     		DBG_PRT(MSG_LEVEL_DEBUG, KERN_INFO"Submit Tx URB failed %d\n", status);
     		return STATUS_FAILURE;
@@ -699,15 +759,15 @@ PIPEnsSendBulkOut(
  *
  */
 static
-void
+VOID
 s_nsBulkOutIoCompleteWrite(
-     struct urb *urb
+    IN struct urb *urb
     )
 {
     PSDevice            pDevice;
-    int status;
+    NTSTATUS            status;
     CONTEXT_TYPE        ContextType;
-    unsigned long               ulBufLen;
+    ULONG               ulBufLen;
     PUSB_SEND_CONTEXT   pContext;
 
 
@@ -737,7 +797,10 @@ s_nsBulkOutIoCompleteWrite(
         DBG_PRT(MSG_LEVEL_DEBUG, KERN_INFO"Write %d bytes\n",(int)ulBufLen);
         pDevice->ulBulkOutBytesWrite += ulBufLen;
         pDevice->ulBulkOutContCRCError = 0;
-	pDevice->nTxDataTimeCout = 0;
+	//2007-0115-06<Add>by MikeLiu
+           #ifdef TxInSleep
+             pDevice->nTxDataTimeCout = 0;
+           #endif
 
     } else {
         DBG_PRT(MSG_LEVEL_DEBUG, KERN_INFO"BULK Out failed %d\n", status);

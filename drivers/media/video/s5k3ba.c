@@ -1,14 +1,14 @@
-/*
+/* linux/drivers/media/video/s5k3ba.c
+ *
+ * Copyright (c) 2010 Samsung Electronics Co., Ltd.
+ * 		http://www.samsung.com/
+ *
  * Driver for S5K3BA (UXGA camera) from Samsung Electronics
- * 
  * 2.0Mp CMOS Image Sensor SoC with an Embedded Image Processor
  *
- * Copyright (C) 2009, Jinsung Yang <jsgood.yang@samsung.com>
- *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
  */
 
 #include <linux/i2c.h>
@@ -34,7 +34,7 @@
 
 /*
  * Specification
- * Parallel : ITU-R. 656/601 YUV422, RGB565, RGB888 (Up to VGA), RAW10 
+ * Parallel : ITU-R. 656/601 YUV422, RGB565, RGB888 (Up to VGA), RAW10
  * Serial : MIPI CSI2 (single lane) YUV422, RGB565, RGB888 (Up to VGA), RAW10
  * Resolution : 1280 (H) x 1024 (V)
  * Image control : Brightness, Contrast, Saturation, Sharpness, Glamour
@@ -125,13 +125,13 @@ static int s5k3ba_i2c_write(struct v4l2_subdev *sd, unsigned char i2c_data[],
 	unsigned char buf[length], i;
 	struct i2c_msg msg = {client->addr, 0, length, buf};
 
-	for (i = 0; i < length; i++) {
+	for (i = 0; i < length; i++)
 		buf[i] = i2c_data[i];
-	}
+
 	return i2c_transfer(client->adapter, &msg, 1) == 1 ? 0 : -EIO;
 }
 
-static int s5k3ba_write_regs(struct v4l2_subdev *sd, unsigned char regs[], 
+static int s5k3ba_write_regs(struct v4l2_subdev *sd, unsigned char regs[],
 				int size)
 {
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -203,7 +203,9 @@ static struct v4l2_queryctrl s5k3ba_controls[] = {
 		.minimum = 0,
 		.maximum = ARRAY_SIZE(s5k3ba_querymenu_ev_bias_mode) - 2,
 		.step = 1,
-		.default_value = (ARRAY_SIZE(s5k3ba_querymenu_ev_bias_mode) - 2) / 2,	/* 0 EV */
+		.default_value = \
+			(ARRAY_SIZE(s5k3ba_querymenu_ev_bias_mode) - 2) / 2,
+			/* 0 EV */
 	},
 	{
 		.id = V4L2_CID_COLORFX,
@@ -331,7 +333,7 @@ static int s5k3ba_enum_framesizes(struct v4l2_subdev *sd, \
 	return err;
 }
 
-static int s5k3ba_enum_frameintervals(struct v4l2_subdev *sd, 
+static int s5k3ba_enum_frameintervals(struct v4l2_subdev *sd,
 					struct v4l2_frmivalenum *fival)
 {
 	int err = 0;
@@ -422,7 +424,7 @@ static int s5k3ba_g_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		dev_err(&client->dev, "%s: no such ctrl\n", __func__);
 		break;
 	}
-	
+
 	return err;
 }
 
@@ -436,7 +438,7 @@ static int s5k3ba_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	case V4L2_CID_EXPOSURE:
 		dev_dbg(&client->dev, "%s: V4L2_CID_EXPOSURE\n", __func__);
 		err = s5k3ba_write_regs(sd, \
-			(unsigned char *) s5k3ba_regs_ev_bias[ctrl->value], \
+		(unsigned char *) s5k3ba_regs_ev_bias[ctrl->value], \
 			sizeof(s5k3ba_regs_ev_bias[ctrl->value]));
 		break;
 
@@ -444,7 +446,7 @@ static int s5k3ba_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		dev_dbg(&client->dev, "%s: V4L2_CID_AUTO_WHITE_BALANCE\n", \
 			__func__);
 		err = s5k3ba_write_regs(sd, \
-			(unsigned char *) s5k3ba_regs_awb_enable[ctrl->value], \
+		(unsigned char *) s5k3ba_regs_awb_enable[ctrl->value], \
 			sizeof(s5k3ba_regs_awb_enable[ctrl->value]));
 		break;
 
@@ -459,28 +461,28 @@ static int s5k3ba_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	case V4L2_CID_COLORFX:
 		dev_dbg(&client->dev, "%s: V4L2_CID_COLORFX\n", __func__);
 		err = s5k3ba_write_regs(sd, \
-			(unsigned char *) s5k3ba_regs_color_effect[ctrl->value], \
+		(unsigned char *) s5k3ba_regs_color_effect[ctrl->value], \
 			sizeof(s5k3ba_regs_color_effect[ctrl->value]));
 		break;
 
 	case V4L2_CID_CONTRAST:
 		dev_dbg(&client->dev, "%s: V4L2_CID_CONTRAST\n", __func__);
 		err = s5k3ba_write_regs(sd, \
-			(unsigned char *) s5k3ba_regs_contrast_bias[ctrl->value], \
+		(unsigned char *) s5k3ba_regs_contrast_bias[ctrl->value], \
 			sizeof(s5k3ba_regs_contrast_bias[ctrl->value]));
 		break;
 
 	case V4L2_CID_SATURATION:
 		dev_dbg(&client->dev, "%s: V4L2_CID_SATURATION\n", __func__);
 		err = s5k3ba_write_regs(sd, \
-			(unsigned char *) s5k3ba_regs_saturation_bias[ctrl->value], \
+		(unsigned char *) s5k3ba_regs_saturation_bias[ctrl->value], \
 			sizeof(s5k3ba_regs_saturation_bias[ctrl->value]));
 		break;
 
 	case V4L2_CID_SHARPNESS:
 		dev_dbg(&client->dev, "%s: V4L2_CID_SHARPNESS\n", __func__);
 		err = s5k3ba_write_regs(sd, \
-			(unsigned char *) s5k3ba_regs_sharpness_bias[ctrl->value], \
+		(unsigned char *) s5k3ba_regs_sharpness_bias[ctrl->value], \
 			sizeof(s5k3ba_regs_sharpness_bias[ctrl->value]));
 		break;
 
@@ -528,8 +530,9 @@ static int s5k3ba_init(struct v4l2_subdev *sd, u32 val)
 
 /*
  * s_config subdev ops
- * With camera device, we need to re-initialize every single opening time therefor,
- * it is not necessary to be initialized on probe time. except for version checking
+ * With camera device, we need to re-initialize every single opening time
+ * therefor, it is not necessary to be initialized on probe time.
+ * except for version checking.
  * NOTE: version checking is optional
  */
 static int s5k3ba_s_config(struct v4l2_subdev *sd, int irq, void *platform_data)

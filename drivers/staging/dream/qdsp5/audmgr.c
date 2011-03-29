@@ -18,7 +18,6 @@
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/uaccess.h>
-#include <linux/slab.h>
 #include <linux/kthread.h>
 #include <linux/wait.h>
 

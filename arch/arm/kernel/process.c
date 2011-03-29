@@ -34,11 +34,15 @@
 #include <asm/processor.h>
 #include <asm/system.h>
 #include <asm/thread_notify.h>
+#include <asm/stacktrace.h>
 #include <asm/mach/time.h>
-#include <plat/regs-clock.h>
+#include <mach/regs-clock.h>
 
 #ifdef CONFIG_KERNEL_DEBUG_SEC
 #include <linux/kernel_sec_common.h>
+#ifdef CONFIG_S5PV210_VICTORY
+struct pt_regs kernel_sec_core_ureg_dump;
+#endif
 #endif
 
 static const char *processor_modes[] = {
@@ -87,7 +91,7 @@ static int __init hlt_setup(char *__unused)
 __setup("nohlt", nohlt_setup);
 __setup("hlt", hlt_setup);
 
-void arm_machine_restart(char mode)
+void arm_machine_restart(char mode, const char *cmd)
 {
 	/*
 	 * Clean and disable cache, and turn off interrupts
@@ -103,12 +107,13 @@ void arm_machine_restart(char mode)
 
 #ifdef CONFIG_KERNEL_DEBUG_SEC
 	kernel_sec_clear_upload_magic_number();  // Clear the magic number because it's normal reboot.
-#endif 	
-	writel(0x12345678,S5P_INFORM5);//reset
+#endif
+	writel(0x12345678, S5P_INFORM5);  //Reset
+
 	/*
 	 * Now call the architecture specific reboot code.
 	 */
-	arch_reset(mode);
+	arch_reset(mode, cmd);
 
 	/*
 	 * Whoops - the architecture was unable to reboot.
@@ -125,7 +130,7 @@ void arm_machine_restart(char mode)
 void (*pm_power_off)(void);
 EXPORT_SYMBOL(pm_power_off);
 
-void (*arm_pm_restart)(char str) = arm_machine_restart;
+void (*arm_pm_restart)(char str, const char *cmd) = arm_machine_restart;
 EXPORT_SYMBOL_GPL(arm_pm_restart);
 
 
@@ -209,9 +214,9 @@ void machine_power_off(void)
 		pm_power_off();
 }
 
-void machine_restart(char * __unused)
+void machine_restart(char *cmd)
 {
-	arm_pm_restart(reboot_mode);
+	arm_pm_restart(reboot_mode, cmd);
 }
 
 /*
@@ -309,7 +314,12 @@ void __show_regs(struct pt_regs *regs)
 	printk("r3 : %08lx  r2 : %08lx  r1 : %08lx  r0 : %08lx\n",
 		regs->ARM_r3, regs->ARM_r2,
 		regs->ARM_r1, regs->ARM_r0);
-
+#ifdef CONFIG_S5PV210_VICTORY
+#ifdef CONFIG_KERNEL_DEBUG_SEC
+	// Overwrite SVC context which the error just occurs from regs (tkHWANG).
+	memcpy((void*)&kernel_sec_core_ureg_dump, (void*)(regs), sizeof(kernel_sec_core_ureg_dump));
+#endif		
+#endif	
 	flags = regs->ARM_cpsr;
 	buf[0] = flags & PSR_N_BIT ? 'N' : 'n';
 	buf[1] = flags & PSR_Z_BIT ? 'Z' : 'z';
@@ -409,6 +419,15 @@ copy_thread(unsigned long clone_flags, unsigned long stack_start,
 }
 
 /*
+ * Fill in the task's elfregs structure for a core dump.
+ */
+int dump_task_regs(struct task_struct *t, elf_gregset_t *elfregs)
+{
+	elf_core_copy_regs(elfregs, task_pt_regs(t));
+	return 1;
+}
+
+/*
  * fill in the fpe structure for a core dump...
  */
 int dump_fpu (struct pt_regs *regs, struct user_fp *fp)
@@ -422,16 +441,6 @@ int dump_fpu (struct pt_regs *regs, struct user_fp *fp)
 	return used_math != 0;
 }
 EXPORT_SYMBOL(dump_fpu);
-
-/*
- * Capture the user space registers if the task is not running (in user space)
- */
-int dump_task_regs(struct task_struct *tsk, elf_gregset_t *regs)
-{
-	struct pt_regs ptregs = *task_pt_regs(tsk);
-	elf_core_copy_regs(regs, &ptregs);
-	return 1;
-}
 
 /*
  * Shuffle the argument into the correct register before calling the
@@ -449,6 +458,23 @@ asm(	".section .text\n"
 "	.size	kernel_thread_helper, . - kernel_thread_helper\n"
 "	.previous");
 
+#ifdef CONFIG_ARM_UNWIND
+extern void kernel_thread_exit(long code);
+asm(	".section .text\n"
+"	.align\n"
+"	.type	kernel_thread_exit, #function\n"
+"kernel_thread_exit:\n"
+"	.fnstart\n"
+"	.cantunwind\n"
+"	bl	do_exit\n"
+"	nop\n"
+"	.fnend\n"
+"	.size	kernel_thread_exit, . - kernel_thread_exit\n"
+"	.previous");
+#else
+#define kernel_thread_exit	do_exit
+#endif
+
 /*
  * Create a kernel thread.
  */
@@ -460,9 +486,9 @@ pid_t kernel_thread(int (*fn)(void *), void *arg, unsigned long flags)
 
 	regs.ARM_r1 = (unsigned long)arg;
 	regs.ARM_r2 = (unsigned long)fn;
-	regs.ARM_r3 = (unsigned long)do_exit;
+	regs.ARM_r3 = (unsigned long)kernel_thread_exit;
 	regs.ARM_pc = (unsigned long)kernel_thread_helper;
-	regs.ARM_cpsr = SVC_MODE;
+	regs.ARM_cpsr = SVC_MODE | PSR_ENDSTATE | PSR_ISETSTATE;
 
 	return do_fork(flags|CLONE_VM|CLONE_UNTRACED, 0, &regs, 0, NULL, NULL);
 }
@@ -470,23 +496,21 @@ EXPORT_SYMBOL(kernel_thread);
 
 unsigned long get_wchan(struct task_struct *p)
 {
-	unsigned long fp, lr;
-	unsigned long stack_start, stack_end;
+	struct stackframe frame;
 	int count = 0;
 	if (!p || p == current || p->state == TASK_RUNNING)
 		return 0;
 
-	stack_start = (unsigned long)end_of_stack(p);
-	stack_end = (unsigned long)task_stack_page(p) + THREAD_SIZE;
-
-	fp = thread_saved_fp(p);
+	frame.fp = thread_saved_fp(p);
+	frame.sp = thread_saved_sp(p);
+	frame.lr = 0;			/* recovered from the stack */
+	frame.pc = thread_saved_pc(p);
 	do {
-		if (fp < stack_start || fp > stack_end)
+		int ret = unwind_frame(&frame);
+		if (ret < 0)
 			return 0;
-		lr = ((unsigned long *)fp)[-1];
-		if (!in_sched_functions(lr))
-			return lr;
-		fp = *(unsigned long *) (fp - 12);
+		if (!in_sched_functions(frame.pc))
+			return frame.pc;
 	} while (count ++ < 16);
 	return 0;
 }

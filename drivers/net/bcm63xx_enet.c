@@ -21,7 +21,6 @@
 #include <linux/module.h>
 #include <linux/clk.h>
 #include <linux/etherdevice.h>
-#include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/ethtool.h>
 #include <linux/crc32.h>
@@ -321,13 +320,16 @@ static int bcm_enet_receive_queue(struct net_device *dev, int budget)
 		if (len < copybreak) {
 			struct sk_buff *nskb;
 
-			nskb = netdev_alloc_skb_ip_align(dev, len);
+			nskb = netdev_alloc_skb(dev, len + NET_IP_ALIGN);
 			if (!nskb) {
 				/* forget packet, just rearm desc */
 				priv->stats.rx_dropped++;
 				continue;
 			}
 
+			/* since we're copying the data, we can align
+			 * them properly */
+			skb_reserve(nskb, NET_IP_ALIGN);
 			dma_sync_single_for_cpu(kdev, desc->address,
 						len, DMA_FROM_DEVICE);
 			memcpy(nskb->data, skb->data, len);
@@ -341,9 +343,11 @@ static int bcm_enet_receive_queue(struct net_device *dev, int budget)
 		}
 
 		skb_put(skb, len);
+		skb->dev = dev;
 		skb->protocol = eth_type_trans(skb, dev);
 		priv->stats.rx_packets++;
 		priv->stats.rx_bytes += len;
+		dev->last_rx = jiffies;
 		netif_receive_skb(skb);
 
 	} while (--budget > 0);
@@ -565,6 +569,7 @@ static int bcm_enet_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	priv->stats.tx_bytes += skb->len;
 	priv->stats.tx_packets++;
+	dev->trans_start = jiffies;
 	ret = NETDEV_TX_OK;
 
 out_unlock:
@@ -602,7 +607,7 @@ static int bcm_enet_set_mac_address(struct net_device *dev, void *p)
 static void bcm_enet_set_multicast_list(struct net_device *dev)
 {
 	struct bcm_enet_priv *priv;
-	struct netdev_hw_addr *ha;
+	struct dev_mc_list *mc_list;
 	u32 val;
 	int i;
 
@@ -617,7 +622,7 @@ static void bcm_enet_set_multicast_list(struct net_device *dev)
 
 	/* only 3 perfect match registers left, first one is used for
 	 * own mac address */
-	if ((dev->flags & IFF_ALLMULTI) || netdev_mc_count(dev) > 3)
+	if ((dev->flags & IFF_ALLMULTI) || dev->mc_count > 3)
 		val |= ENET_RXCFG_ALLMCAST_MASK;
 	else
 		val &= ~ENET_RXCFG_ALLMCAST_MASK;
@@ -629,22 +634,25 @@ static void bcm_enet_set_multicast_list(struct net_device *dev)
 		return;
 	}
 
-	i = 0;
-	netdev_for_each_mc_addr(ha, dev) {
+	for (i = 0, mc_list = dev->mc_list;
+	     (mc_list != NULL) && (i < dev->mc_count) && (i < 3);
+	     i++, mc_list = mc_list->next) {
 		u8 *dmi_addr;
 		u32 tmp;
 
-		if (i == 3)
-			break;
+		/* filter non ethernet address */
+		if (mc_list->dmi_addrlen != 6)
+			continue;
+
 		/* update perfect match registers */
-		dmi_addr = ha->addr;
+		dmi_addr = mc_list->dmi_addr;
 		tmp = (dmi_addr[2] << 24) | (dmi_addr[3] << 16) |
 			(dmi_addr[4] << 8) | dmi_addr[5];
 		enet_writel(priv, tmp, ENET_PML_REG(i + 1));
 
 		tmp = (dmi_addr[0] << 8 | dmi_addr[1]);
 		tmp |= ENET_PMH_DATAVALID_MASK;
-		enet_writel(priv, tmp, ENET_PMH_REG(i++ + 1));
+		enet_writel(priv, tmp, ENET_PMH_REG(i + 1));
 	}
 
 	for (; i < 3; i++) {
@@ -957,9 +965,7 @@ static int bcm_enet_open(struct net_device *dev)
 	/* all set, enable mac and interrupts, start dma engine and
 	 * kick rx dma channel */
 	wmb();
-	val = enet_readl(priv, ENET_CTL_REG);
-	val |= ENET_CTL_ENABLE_MASK;
-	enet_writel(priv, val, ENET_CTL_REG);
+	enet_writel(priv, ENET_CTL_ENABLE_MASK, ENET_CTL_REG);
 	enet_dma_writel(priv, ENETDMA_CFG_EN_MASK, ENETDMA_CFG_REG);
 	enet_dma_writel(priv, ENETDMA_CHANCFG_EN_MASK,
 			ENETDMA_CHANCFG_REG(priv->rx_chan));
@@ -1496,7 +1502,7 @@ static int bcm_enet_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 	if (priv->has_phy) {
 		if (!priv->phydev)
 			return -ENODEV;
-		return phy_mii_ioctl(priv->phydev, rq, cmd);
+		return phy_mii_ioctl(priv->phydev, if_mii(rq), cmd);
 	} else {
 		struct mii_if_info mii;
 
@@ -1646,6 +1652,7 @@ static int __devinit bcm_enet_probe(struct platform_device *pdev)
 	if (!dev)
 		return -ENOMEM;
 	priv = netdev_priv(dev);
+	memset(priv, 0, sizeof(*priv));
 
 	ret = compute_hw_mtu(priv, dev->mtu);
 	if (ret)

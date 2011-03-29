@@ -1,14 +1,14 @@
 /* linux/drivers/media/video/samsung/jpeg_v2/jpg_misc.h
  *
- * Driver header file for Samsung JPEG Encoder/Decoder
+ * Copyright (c) 2010 Samsung Electronics Co., Ltd.
+ * http://www.samsung.com/
  *
- * Peter Oh,Hyunmin kwak, Copyright (c) 2009 Samsung Electronics
- * 	http://www.samsungsemi.com/
+ * Definition for Operation of Jpeg encoder/docoder with mutex
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
- */
+*/
 
 #ifndef __JPG_MISC_H__
 #define __JPG_MISC_H__
@@ -31,8 +31,4 @@ DWORD lock_jpg_mutex(void);
 DWORD unlock_jpg_mutex(void);
 void delete_jpg_mutex(void);
 
-#ifdef CONFIG_CPU_S5PC100
-unsigned int get_fb0_addr(void);
-void get_lcd_size(int *width, int *height);
-#endif
 #endif

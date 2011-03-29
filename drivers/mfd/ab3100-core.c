@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2010 ST-Ericsson
+ * Copyright (C) 2007-2009 ST-Ericsson
  * License terms: GNU General Public License (GPL) version 2
  * Low-level core for exclusive access to the AB3100 IC on the I2C bus
  * and some basic chip-configuration.
@@ -10,16 +10,14 @@
 #include <linux/mutex.h>
 #include <linux/list.h>
 #include <linux/notifier.h>
-#include <linux/slab.h>
 #include <linux/err.h>
 #include <linux/platform_device.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>
-#include <linux/random.h>
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
 #include <linux/uaccess.h>
-#include <linux/mfd/abx500.h>
+#include <linux/mfd/ab3100.h>
 
 /* These are the only registers inside AB3100 used in this main file */
 
@@ -59,15 +57,24 @@
  * The AB3100 is usually assigned address 0x48 (7-bit)
  * The chip is defined in the platform i2c_board_data section.
  */
-static int ab3100_get_chip_id(struct device *dev)
+
+u8 ab3100_get_chip_type(struct ab3100 *ab3100)
 {
-	struct ab3100 *ab3100 = dev_get_drvdata(dev->parent);
+	u8 chip = ABUNKNOWN;
 
-	return (int)ab3100->chip_id;
+	switch (ab3100->chip_id & 0xf0) {
+	case  0xa0:
+		chip = AB3000;
+		break;
+	case  0xc0:
+		chip = AB3100;
+		break;
+	}
+	return chip;
 }
+EXPORT_SYMBOL(ab3100_get_chip_type);
 
-static int ab3100_set_register_interruptible(struct ab3100 *ab3100,
-	u8 reg, u8 regval)
+int ab3100_set_register_interruptible(struct ab3100 *ab3100, u8 reg, u8 regval)
 {
 	u8 regandval[2] = {reg, regval};
 	int err;
@@ -99,14 +106,8 @@ static int ab3100_set_register_interruptible(struct ab3100 *ab3100,
 	mutex_unlock(&ab3100->access_mutex);
 	return err;
 }
+EXPORT_SYMBOL(ab3100_set_register_interruptible);
 
-static int set_register_interruptible(struct device *dev,
-	u8 bank, u8 reg, u8 value)
-{
-	struct ab3100 *ab3100 = dev_get_drvdata(dev->parent);
-
-	return ab3100_set_register_interruptible(ab3100, reg, value);
-}
 
 /*
  * The test registers exist at an I2C bus address up one
@@ -145,8 +146,8 @@ static int ab3100_set_test_register_interruptible(struct ab3100 *ab3100,
 	return err;
 }
 
-static int ab3100_get_register_interruptible(struct ab3100 *ab3100,
-	u8 reg, u8 *regval)
+
+int ab3100_get_register_interruptible(struct ab3100 *ab3100, u8 reg, u8 *regval)
 {
 	int err;
 
@@ -200,16 +201,10 @@ static int ab3100_get_register_interruptible(struct ab3100 *ab3100,
 	mutex_unlock(&ab3100->access_mutex);
 	return err;
 }
+EXPORT_SYMBOL(ab3100_get_register_interruptible);
 
-static int get_register_interruptible(struct device *dev, u8 bank, u8 reg,
-	u8 *value)
-{
-	struct ab3100 *ab3100 = dev_get_drvdata(dev->parent);
 
-	return ab3100_get_register_interruptible(ab3100, reg, value);
-}
-
-static int ab3100_get_register_page_interruptible(struct ab3100 *ab3100,
+int ab3100_get_register_page_interruptible(struct ab3100 *ab3100,
 			     u8 first_reg, u8 *regvals, u8 numregs)
 {
 	int err;
@@ -263,17 +258,10 @@ static int ab3100_get_register_page_interruptible(struct ab3100 *ab3100,
 	mutex_unlock(&ab3100->access_mutex);
 	return err;
 }
+EXPORT_SYMBOL(ab3100_get_register_page_interruptible);
 
-static int get_register_page_interruptible(struct device *dev, u8 bank,
-	u8 first_reg, u8 *regvals, u8 numregs)
-{
-	struct ab3100 *ab3100 = dev_get_drvdata(dev->parent);
 
-	return ab3100_get_register_page_interruptible(ab3100,
-			first_reg, regvals, numregs);
-}
-
-static int ab3100_mask_and_set_register_interruptible(struct ab3100 *ab3100,
+int ab3100_mask_and_set_register_interruptible(struct ab3100 *ab3100,
 				 u8 reg, u8 andmask, u8 ormask)
 {
 	u8 regandval[2] = {reg, 0};
@@ -341,15 +329,8 @@ static int ab3100_mask_and_set_register_interruptible(struct ab3100 *ab3100,
 	mutex_unlock(&ab3100->access_mutex);
 	return err;
 }
+EXPORT_SYMBOL(ab3100_mask_and_set_register_interruptible);
 
-static int mask_and_set_register_interruptible(struct device *dev, u8 bank,
-	u8 reg, u8 bitmask, u8 bitvalues)
-{
-	struct ab3100 *ab3100 = dev_get_drvdata(dev->parent);
-
-	return ab3100_mask_and_set_register_interruptible(ab3100,
-			reg, bitmask, (bitmask & bitvalues));
-}
 
 /*
  * Register a simple callback for handling any AB3100 events.
@@ -374,54 +355,35 @@ int ab3100_event_unregister(struct ab3100 *ab3100,
 EXPORT_SYMBOL(ab3100_event_unregister);
 
 
-static int ab3100_event_registers_startup_state_get(struct device *dev,
-					     u8 *event)
+int ab3100_event_registers_startup_state_get(struct ab3100 *ab3100,
+					     u32 *fatevent)
 {
-	struct ab3100 *ab3100 = dev_get_drvdata(dev->parent);
 	if (!ab3100->startup_events_read)
 		return -EAGAIN; /* Try again later */
-	memcpy(event, ab3100->startup_events, 3);
+	*fatevent = ab3100->startup_events;
 	return 0;
 }
+EXPORT_SYMBOL(ab3100_event_registers_startup_state_get);
 
-static struct abx500_ops ab3100_ops = {
-	.get_chip_id = ab3100_get_chip_id,
-	.set_register = set_register_interruptible,
-	.get_register = get_register_interruptible,
-	.get_register_page = get_register_page_interruptible,
-	.set_register_page = NULL,
-	.mask_and_set_register = mask_and_set_register_interruptible,
-	.event_registers_startup_state_get =
-		ab3100_event_registers_startup_state_get,
-	.startup_irq_enabled = NULL,
-};
-
-/*
- * This is a threaded interrupt handler so we can make some
- * I2C calls etc.
- */
-static irqreturn_t ab3100_irq_handler(int irq, void *data)
+/* Interrupt handling worker */
+static void ab3100_work(struct work_struct *work)
 {
-	struct ab3100 *ab3100 = data;
+	struct ab3100 *ab3100 = container_of(work, struct ab3100, work);
 	u8 event_regs[3];
 	u32 fatevent;
 	int err;
 
-	add_interrupt_randomness(irq);
-
 	err = ab3100_get_register_page_interruptible(ab3100, AB3100_EVENTA1,
 				       event_regs, 3);
 	if (err)
-		goto err_event;
+		goto err_event_wq;
 
 	fatevent = (event_regs[0] << 16) |
 		(event_regs[1] << 8) |
 		event_regs[2];
 
 	if (!ab3100->startup_events_read) {
-		ab3100->startup_events[0] = event_regs[0];
-		ab3100->startup_events[1] = event_regs[1];
-		ab3100->startup_events[2] = event_regs[2];
+		ab3100->startup_events = fatevent;
 		ab3100->startup_events_read = true;
 	}
 	/*
@@ -436,11 +398,29 @@ static irqreturn_t ab3100_irq_handler(int irq, void *data)
 	dev_dbg(ab3100->dev,
 		"IRQ Event: 0x%08x\n", fatevent);
 
-	return IRQ_HANDLED;
+	/* By now the IRQ should be acked and deasserted so enable it again */
+	enable_irq(ab3100->i2c_client->irq);
+	return;
 
- err_event:
+ err_event_wq:
 	dev_dbg(ab3100->dev,
-		"error reading event status\n");
+		"error in event workqueue\n");
+	/* Enable the IRQ anyway, what choice do we have? */
+	enable_irq(ab3100->i2c_client->irq);
+	return;
+}
+
+static irqreturn_t ab3100_irq_handler(int irq, void *data)
+{
+	struct ab3100 *ab3100 = data;
+	/*
+	 * Disable the IRQ and dispatch a worker to handle the
+	 * event. Since the chip resides on I2C this is slow
+	 * stuff and we will re-enable the interrupts once th
+	 * worker has finished.
+	 */
+	disable_irq_nosync(irq);
+	schedule_work(&ab3100->work);
 	return IRQ_HANDLED;
 }
 
@@ -734,8 +714,7 @@ static int __init ab3100_setup(struct ab3100 *ab3100)
 		dev_warn(ab3100->dev,
 			 "AB3100 P1E variant detected, "
 			 "forcing chip to 32KHz\n");
-		err = ab3100_set_test_register_interruptible(ab3100,
-			0x02, 0x08);
+		err = ab3100_set_test_register_interruptible(ab3100, 0x02, 0x08);
 	}
 
  exit_no_setup:
@@ -756,7 +735,10 @@ static struct platform_device ab3100_##devname##_device = {	\
 	.id		= -1,					\
 }
 
-/* This lists all the subdevices */
+/*
+ * This lists all the subdevices and corresponding register
+ * ranges.
+ */
 AB3100_DEVICE(dac, "ab3100-dac");
 AB3100_DEVICE(leds, "ab3100-leds");
 AB3100_DEVICE(power, "ab3100-power");
@@ -918,21 +900,21 @@ static int __init ab3100_probe(struct i2c_client *client,
 		goto exit_no_testreg_client;
 	}
 
+	strlcpy(ab3100->testreg_client->name, id->name,
+		sizeof(ab3100->testreg_client->name));
+
 	err = ab3100_setup(ab3100);
 	if (err)
 		goto exit_no_setup;
 
-	err = request_threaded_irq(client->irq, NULL, ab3100_irq_handler,
-				IRQF_ONESHOT, "ab3100-core", ab3100);
-	/* This real unpredictable IRQ is of course sampled for entropy */
-	rand_initialize_irq(client->irq);
+	INIT_WORK(&ab3100->work, ab3100_work);
 
+	/* This real unpredictable IRQ is of course sampled for entropy */
+	err = request_irq(client->irq, ab3100_irq_handler,
+			  IRQF_DISABLED | IRQF_SAMPLE_RANDOM,
+			  "AB3100 IRQ", ab3100);
 	if (err)
 		goto exit_no_irq;
-
-	err = abx500_register_ops(&client->dev, &ab3100_ops);
-	if (err)
-		goto exit_no_ops;
 
 	/* Set parent and a pointer back to the container in device data */
 	for (i = 0; i < ARRAY_SIZE(ab3100_platform_devs); i++) {
@@ -951,7 +933,6 @@ static int __init ab3100_probe(struct i2c_client *client,
 
 	return 0;
 
- exit_no_ops:
  exit_no_irq:
  exit_no_setup:
 	i2c_unregister_device(ab3100->testreg_client);

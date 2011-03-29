@@ -1,11 +1,11 @@
 /* linux/arch/arm/plat-s5pc1xx/include/plat/irqs.h
  *
- * Copyright 2008 Openmoko, Inc.
- * Copyright 2008 Simtec Electronics
- *      Ben Dooks <ben@simtec.co.uk>
- *      http://armlinux.simtec.co.uk/
+ * Copyright 2009 Samsung Electronics Co.
+ *      Byungho Min <bhmin@samsung.com>
  *
  * S5PC1XX - Common IRQ support
+ *
+ * Based on plat-s3c64xx/include/plat/irqs.h
  */
 
 #ifndef __ASM_PLAT_S5PC1XX_IRQS_H
@@ -27,7 +27,6 @@
 #define S3C_VIC0_BASE		S3C_IRQ(0)
 #define S3C_VIC1_BASE		S3C_IRQ(32)
 #define S3C_VIC2_BASE		S3C_IRQ(64)
-#define S3C_VIC3_BASE		S3C_IRQ(96)
 
 /* UART interrupts, each UART has 4 intterupts per channel so
  * use the space between the ISA and S3C main interrupts. Note, these
@@ -64,7 +63,7 @@
 #define S5PC1XX_IRQ_VIC0(x)	(S3C_VIC0_BASE + (x))
 #define S5PC1XX_IRQ_VIC1(x)	(S3C_VIC1_BASE + (x))
 #define S5PC1XX_IRQ_VIC2(x)	(S3C_VIC2_BASE + (x))
-#define S5PC1XX_IRQ_VIC3(x)	(S3C_VIC3_BASE + (x))
+
 /*
  * VIC0: system, DMA, timer
  */
@@ -89,17 +88,17 @@
 #define IRQ_MDMA		S5PC1XX_IRQ_VIC0(18)
 #define IRQ_PDMA0		S5PC1XX_IRQ_VIC0(19)
 #define IRQ_PDMA1		S5PC1XX_IRQ_VIC0(20)
-#define IRQ_TIMER0		S5PC1XX_IRQ_VIC0(21)
-#define IRQ_TIMER1		S5PC1XX_IRQ_VIC0(22)
-#define IRQ_TIMER2		S5PC1XX_IRQ_VIC0(23)
-#define IRQ_TIMER3		S5PC1XX_IRQ_VIC0(24)
-#define IRQ_TIMER4		S5PC1XX_IRQ_VIC0(25)
+#define IRQ_TIMER0_VIC		S5PC1XX_IRQ_VIC0(21)
+#define IRQ_TIMER1_VIC		S5PC1XX_IRQ_VIC0(22)
+#define IRQ_TIMER2_VIC		S5PC1XX_IRQ_VIC0(23)
+#define IRQ_TIMER3_VIC		S5PC1XX_IRQ_VIC0(24)
+#define IRQ_TIMER4_VIC		S5PC1XX_IRQ_VIC0(25)
 #define IRQ_SYSTIMER		S5PC1XX_IRQ_VIC0(26)
 #define IRQ_WDT			S5PC1XX_IRQ_VIC0(27)
 #define IRQ_RTC_ALARM		S5PC1XX_IRQ_VIC0(28)
 #define IRQ_RTC_TIC		S5PC1XX_IRQ_VIC0(29)
 #define IRQ_GPIOINT		S5PC1XX_IRQ_VIC0(30)
-#define IRQ_FIMC3		S5PC1XX_IRQ_VIC0(31)
+
 /*
  * VIC1: ARM, power, memory, connectivity
  */
@@ -134,7 +133,7 @@
 #define IRQ_HSMMC2		S5PC1XX_IRQ_VIC1(28)
 #define IRQ_MIPICSI		S5PC1XX_IRQ_VIC1(29)
 #define IRQ_MIPIDSI		S5PC1XX_IRQ_VIC1(30)
-#define IRQ_ONENAND_AUDI	S5PC1XX_IRQ_VIC1(31)
+
 /*
  * VIC2: multimedia, audio, security
  */
@@ -172,25 +171,28 @@
 #define IRQ_SDMIRQ		S5PC1XX_IRQ_VIC2(30)
 #define IRQ_SDMFIQ		S5PC1XX_IRQ_VIC2(31)
 
-/*
- * VIC3: multimedia, audio, security
- */
-#define IRQ_IPC			S5PC1XX_IRQ_VIC3(0)
-#define IRQ_HOSTIF		S5PC1XX_IRQ_VIC3(1)
-#define IRQ_MMC3		S5PC1XX_IRQ_VIC3(2)
-#define IRQ_CEC			S5PC1XX_IRQ_VIC3(3)
-#define IRQ_TSI			S5PC1XX_IRQ_VIC3(4)
-#define IRQ_MDNIE0		S5PC1XX_IRQ_VIC3(5)
-#define IRQ_MDNIE1		S5PC1XX_IRQ_VIC3(6)
-#define IRQ_MDNIE2		S5PC1XX_IRQ_VIC3(7)
-#define IRQ_MDNIE3		S5PC1XX_IRQ_VIC3(8)
+#define IRQ_TIMER(x)		(IRQ_SDMFIQ + 1 + (x))
+#define IRQ_TIMER0		IRQ_TIMER(0)
+#define IRQ_TIMER1		IRQ_TIMER(1)
+#define IRQ_TIMER2		IRQ_TIMER(2)
+#define IRQ_TIMER3		IRQ_TIMER(3)
+#define IRQ_TIMER4		IRQ_TIMER(4)
 
-#define S3C_IRQ_EINT_BASE	(S5PC1XX_IRQ_VIC3(31) + 1)
+/* External interrupt */
+#define S3C_IRQ_EINT_BASE	(IRQ_SDMFIQ + 6)
 
 #define S3C_EINT(x)		(S3C_IRQ_EINT_BASE + (x - 16))
 #define IRQ_EINT(x)		(x < 16 ? IRQ_EINT0 + x : S3C_EINT(x))
+#define IRQ_EINT_BIT(x)		(x < IRQ_EINT16_31 ? x - IRQ_EINT0 : x - S3C_EINT(0))
 
-#define NR_IRQS 		(IRQ_EINT(31)+1)
+/* GPIO interrupt */
+#define S3C_IRQ_GPIO_BASE	(IRQ_EINT(31) + 1)
+#define S3C_IRQ_GPIO(x)		(S3C_IRQ_GPIO_BASE + (x))
+
+/*
+ * Until MP04 Groups -> 40 (exactly 39) Groups * 8 ~= 320 GPIOs
+ */
+#define NR_IRQS			(S3C_IRQ_GPIO(320) + 1)
 
 #endif /* __ASM_PLAT_S5PC1XX_IRQS_H */
 

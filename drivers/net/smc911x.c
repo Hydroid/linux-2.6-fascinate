@@ -203,7 +203,7 @@ static void smc911x_reset(struct net_device *dev)
 		SMC_SET_HW_CFG(lp, HW_CFG_SRST_);
 		timeout=10;
 		do {
-			udelay(30);
+			udelay(10);
 			reg = SMC_GET_HW_CFG(lp);
 			/* If chip indicates reset timeout then try again */
 			if (reg & HW_CFG_SRST_TO_) {
@@ -220,9 +220,9 @@ static void smc911x_reset(struct net_device *dev)
 
 	/* make sure EEPROM has finished loading before setting GPIO_CFG */
 	timeout=1000;
-	while ( timeout-- && (SMC_GET_E2P_CMD(lp) & E2P_CMD_EPC_BUSY_)) {
+	while (--timeout && (SMC_GET_E2P_CMD(lp) & E2P_CMD_EPC_BUSY_))
 		udelay(10);
-	}
+
 	if (timeout == 0){
 		PRINTK("%s: smc911x_reset timeout waiting for EEPROM busy\n", dev->name);
 		return;
@@ -439,7 +439,6 @@ static inline void	 smc911x_rcv(struct net_device *dev)
 
 		DBG(SMC_DEBUG_PKTS, "%s: Received packet\n", dev->name);
 		PRINT_PKT(data, ((pkt_len - 4) <= 64) ? pkt_len - 4 : 64);
-		dev->last_rx = jiffies;
 		skb->protocol = eth_type_trans(skb, dev);
 		netif_rx(skb);
 		dev->stats.rx_packets++;
@@ -554,7 +553,7 @@ static int smc911x_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		dev->stats.tx_dropped++;
 		spin_unlock_irqrestore(&lp->lock, flags);
 		dev_kfree_skb(skb);
-		return 0;
+		return NETDEV_TX_OK;
 	}
 
 #ifdef SMC_USE_DMA
@@ -567,7 +566,7 @@ static int smc911x_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 			lp->pending_tx_skb = skb;
 			netif_stop_queue(dev);
 			spin_unlock_irqrestore(&lp->lock, flags);
-			return 0;
+			return NETDEV_TX_OK;
 		} else {
 			DBG(SMC_DEBUG_TX | SMC_DEBUG_DMA, "%s: Activating Tx DMA\n", dev->name);
 			lp->txdma_active = 1;
@@ -578,7 +577,7 @@ static int smc911x_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	smc911x_hardware_send_pkt(dev);
 	spin_unlock_irqrestore(&lp->lock, flags);
 
-	return 0;
+	return NETDEV_TX_OK;
 }
 
 /*
@@ -861,13 +860,14 @@ static void smc911x_phy_check_media(struct net_device *dev, int init)
 		SMC_GET_MAC_CR(lp, cr);
 		if (lp->mii.full_duplex) {
 			DBG(SMC_DEBUG_MISC, "%s: Configuring for full-duplex mode\n", dev->name);
-			cr &= ~MAC_CR_RCVOWN_;
-			cr |= MAC_CR_FDPX_;
+			bmcr |= BMCR_FULLDPLX;
+			cr |= MAC_CR_RCVOWN_;
 		} else {
 			DBG(SMC_DEBUG_MISC, "%s: Configuring for half-duplex mode\n", dev->name);
+			bmcr &= ~BMCR_FULLDPLX;
 			cr &= ~MAC_CR_RCVOWN_;
-			cr &= ~MAC_CR_FDPX_;
 		}
+		SMC_SET_PHY_BMCR(lp, phyaddr, bmcr);
 		SMC_SET_MAC_CR(lp, cr);
 	}
 }
@@ -1230,7 +1230,6 @@ smc911x_rx_dma_irq(int dma, void *data)
 	BUG_ON(skb == NULL);
 	lp->current_rx_skb = NULL;
 	PRINT_PKT(skb->data, skb->len);
-	dev->last_rx = jiffies;
 	skb->protocol = eth_type_trans(skb, dev);
 	dev->stats.rx_packets++;
 	dev->stats.rx_bytes += skb->len;
@@ -1409,15 +1408,8 @@ static int
 smc911x_open(struct net_device *dev)
 {
 	struct smc911x_local *lp = netdev_priv(dev);
-	unsigned int bmcr; 
-	int phy = lp->mii.phy_id;
 
 	DBG(SMC_DEBUG_FUNC, "%s: --> %s\n", dev->name, __func__);
-
-	/* Re-Configure the Phy Control register */
-        SMC_GET_PHY_BMCR(lp, phy, bmcr);
-        bmcr &= ~BMCR_PDOWN;
-        SMC_SET_PHY_BMCR(lp, phy, bmcr);
 
 	/*
 	 * Check that the address is valid.  If its not, refuse
@@ -1553,7 +1545,7 @@ smc911x_ethtool_getdrvinfo(struct net_device *dev, struct ethtool_drvinfo *info)
 {
 	strncpy(info->driver, CARDNAME, sizeof(info->driver));
 	strncpy(info->version, version, sizeof(info->version));
-	strncpy(info->bus_info, dev->dev.parent->bus_id, sizeof(info->bus_info));
+	strncpy(info->bus_info, dev_name(dev->dev.parent), sizeof(info->bus_info));
 }
 
 static int smc911x_ethtool_nwayreset(struct net_device *dev)
@@ -1782,6 +1774,20 @@ static int __devinit smc911x_findirq(struct net_device *dev)
 	return probe_irq_off(cookie);
 }
 
+static const struct net_device_ops smc911x_netdev_ops = {
+	.ndo_open		= smc911x_open,
+	.ndo_stop		= smc911x_close,
+	.ndo_start_xmit		= smc911x_hard_start_xmit,
+	.ndo_tx_timeout		= smc911x_timeout,
+	.ndo_set_multicast_list	= smc911x_set_multicast_list,
+	.ndo_change_mtu		= eth_change_mtu,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address	= eth_mac_addr,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= smc911x_poll_controller,
+#endif
+};
+
 /*
  * Function: smc911x_probe(unsigned long ioaddr)
  *
@@ -1912,17 +1918,6 @@ static int __devinit smc911x_probe(struct net_device *dev)
 
 	spin_lock_init(&lp->lock);
 
-#if defined(CONFIG_MACH_SMDK6410)||defined(CONFIG_MACH_SMDK2450)||defined(CONFIG_MACH_SMDKC100)
-	dev->dev_addr[0] = 0x00;
-	dev->dev_addr[1] = 0x09;
-	dev->dev_addr[2] = 0xc0;
-	dev->dev_addr[3] = 0xff;
-	dev->dev_addr[4] = 0xec;
-	dev->dev_addr[5] = 0x48;
-
-	SMC_SET_MAC_ADDR(lp, dev->dev_addr);
-#endif
-
 	/* Get the MAC address */
 	SMC_GET_MAC_ADDR(lp, dev->dev_addr);
 
@@ -1959,16 +1954,9 @@ static int __devinit smc911x_probe(struct net_device *dev)
 	/* Fill in the fields of the device structure with ethernet values. */
 	ether_setup(dev);
 
-	dev->open = smc911x_open;
-	dev->stop = smc911x_close;
-	dev->hard_start_xmit = smc911x_hard_start_xmit;
-	dev->tx_timeout = smc911x_timeout;
+	dev->netdev_ops = &smc911x_netdev_ops;
 	dev->watchdog_timeo = msecs_to_jiffies(watchdog);
-	dev->set_multicast_list = smc911x_set_multicast_list;
 	dev->ethtool_ops = &smc911x_ethtool_ops;
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	dev->poll_controller = smc911x_poll_controller;
-#endif
 
 	INIT_WORK(&lp->phy_configure, smc911x_phy_configure);
 	lp->mii.phy_id_mask = 0x1f;
@@ -1986,7 +1974,7 @@ static int __devinit smc911x_probe(struct net_device *dev)
 
 	/* Set default parameters */
 	lp->msg_enable = NETIF_MSG_LINK;
-	lp->ctl_rfduplx = 0;
+	lp->ctl_rfduplx = 1;
 	lp->ctl_rspeed = 100;
 
 #ifdef SMC_DYNAMIC_BUS_CONFIG
@@ -2067,9 +2055,6 @@ err_out:
  */
 static int __devinit smc911x_drv_probe(struct platform_device *pdev)
 {
-#ifdef SMC_DYNAMIC_BUS_CONFIG
-	struct smc911x_platdata *pd = pdev->dev.platform_data;
-#endif
 	struct net_device *ndev;
 	struct resource *res;
 	struct smc911x_local *lp;
@@ -2104,11 +2089,14 @@ static int __devinit smc911x_drv_probe(struct platform_device *pdev)
 	lp = netdev_priv(ndev);
 	lp->netdev = ndev;
 #ifdef SMC_DYNAMIC_BUS_CONFIG
-	if (!pd) {
-		ret = -EINVAL;
-		goto release_both;
+	{
+		struct smc911x_platdata *pd = pdev->dev.platform_data;
+		if (!pd) {
+			ret = -EINVAL;
+			goto release_both;
+		}
+		memcpy(&lp->cfg, pd, sizeof(lp->cfg));
 	}
-	memcpy(&lp->cfg, pd, sizeof(lp->cfg));
 #endif
 
 	addr = ioremap(res->start, SMC911X_IO_EXTENT);

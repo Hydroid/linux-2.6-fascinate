@@ -20,3 +20,18 @@ config OPTICAL_GP2A
 	  It is optimized for s3c6410.
 	  
 
+if OPTICAL_GP2A
+
+config OPTICAL_GP2A_ATLAS
+
+        tristate "Select Atlas optical Sensor"
+        depends on OPTICAL
+        help
+        Atlas optical sensor
+
+config  OPTICAL_GP2A_VICTORY
+        tristate "select Victory optical Sensor"
+        depends on OPTICAL
+        help
+        Victory optical sensor
+endif

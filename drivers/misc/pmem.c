@@ -1,4 +1,4 @@
-/* drivers/android/pmem.c
+/* drivers/misc/pmem.c
  *
  * Copyright (C) 2007 Google, Inc.
  *
@@ -31,7 +31,7 @@
 #define PMEM_MAX_ORDER 128
 #define PMEM_MIN_ALLOC PAGE_SIZE
 
-#define PMEM_DEBUG 0
+#define PMEM_DEBUG 1
 
 /* indicates that a refernce to this file has been taken via get_pmem_file,
  * the file should not be released until put_pmem_file is called */
@@ -1087,11 +1087,8 @@ static long pmem_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 				region.offset = pmem_start_addr(id, data);
 				region.len = pmem_len(id, data);
 			}
-
-#if PMEM_DEBUG
 			printk(KERN_INFO "pmem: request for physical address of pmem region "
 					"from process %d.\n", current->pid);
-#endif
 			if (copy_to_user((void __user *)arg, &region,
 						sizeof(struct pmem_region)))
 				return -EFAULT;
@@ -1151,6 +1148,16 @@ static long pmem_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		DLOG("connect\n");
 		return pmem_connect(arg, file);
 		break;
+	case PMEM_CACHE_FLUSH:
+		{
+			struct pmem_region region;
+			DLOG("flush\n");
+			if (copy_from_user(&region, (void __user *)arg,
+					   sizeof(struct pmem_region)))
+				return -EFAULT;
+			flush_pmem_file(file, region.offset, region.len);
+			break;
+		}
 #if 1
 	// added by jamie (2009.10.20)
 	// to provide cache invalidate function
@@ -1164,16 +1171,6 @@ static long pmem_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		}
 		break;
 #endif
-	case PMEM_CACHE_FLUSH:
-		{
-			struct pmem_region region;
-			DLOG("flush\n");
-			if (copy_from_user(&region, (void __user *)arg,
-					   sizeof(struct pmem_region)))
-				return -EFAULT;
-			flush_pmem_file(file, region.offset, region.len);
-			break;
-		}
 	default:
 		if (pmem[id].ioctl)
 			return pmem[id].ioctl(file, cmd, arg);

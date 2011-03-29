@@ -20,7 +20,10 @@
 static inline void led_set_brightness(struct led_classdev *led_cdev,
 					enum led_brightness value)
 {
-	if (value > LED_FULL)
+	/* Merged from Eclair */
+	/*if (value > led_cdev->max_brightness)
+		value = led_cdev->max_brightness;*/
+	if(value > LED_FULL)
 		value = LED_FULL;
 	led_cdev->brightness = value;
 	if (!(led_cdev->flags & LED_SUSPENDED))

@@ -35,6 +35,33 @@ const char* gkernel_sec_build_info_date_time[] =
 #define DEBUG_LEVEL_WR	1
 static int debuglevel;
 
+// klaatu
+sched_log_t gExcpTaskLog[SCHED_LOG_MAX];
+unsigned int gExcpTaskLogIdx = 0;
+
+typedef enum {	
+	__SERIAL_SPEED,	
+	__LOAD_RAMDISK,	
+	__BOOT_DELAY,	
+	__LCD_LEVEL,	
+	__SWITCH_SEL,	
+	__PHONE_DEBUG_ON,	
+	__LCD_DIM_LEVEL,	
+	__MELODY_MODE,	
+	__REBOOT_MODE,	
+	__NATION_SEL,	
+	__SET_DEFAULT_PARAM,	
+	__PARAM_INT_11,	
+	__PARAM_INT_12,	
+	__PARAM_INT_13,	
+	__PARAM_INT_14,	
+	__VERSION,	
+	__CMDLINE,	
+	__PARAM_STR_2,	
+	__PARAM_STR_3,	
+	__PARAM_STR_4
+} param_idx;
+
 char gkernel_sec_build_info[100];
 extern unsigned int HWREV;  
 unsigned char  kernel_sec_cause_str[KERNEL_SEC_DEBUG_CAUSE_STR_LEN];
@@ -42,6 +69,7 @@ unsigned char  kernel_sec_cause_str[KERNEL_SEC_DEBUG_CAUSE_STR_LEN];
 /*
  *  Function
  */
+
 void __iomem * kernel_sec_viraddr_wdt_reset_reg;
 __used t_kernel_sec_arm_core_regsiters kernel_sec_core_reg_dump;
 __used t_kernel_sec_mmu_info           kernel_sec_mmu_reg_dump;
@@ -52,6 +80,25 @@ volatile unsigned int *onedram_sem;
 volatile unsigned int *onedram_mailboxAB;		//received mail
 volatile unsigned int *onedram_mailboxBA;		//send mail
 unsigned int received_cp_ack = 0;
+
+extern void (*sec_set_param_value)(int idx, void *value);
+extern void (*sec_get_param_value)(int idx, void *value);
+
+unsigned int kernel_sec_cable_attach = 0;
+
+void kernel_sec_set_cable_attach(void)
+{
+	kernel_sec_cable_attach = 1;
+}
+EXPORT_SYMBOL(kernel_sec_set_cable_attach);
+
+void kernel_sec_clear_cable_attach(void)
+{
+	kernel_sec_cable_attach = 0;
+}
+EXPORT_SYMBOL(kernel_sec_clear_cable_attach);
+
+
 
 void kernel_sec_set_cp_upload(void)
 {
@@ -92,11 +139,12 @@ void kernel_sec_set_cp_ack(void)   //is set by dpram - dpram_irq_handler
 EXPORT_SYMBOL(kernel_sec_set_cp_ack);
 
 
+
 void kernel_sec_set_upload_magic_number(void)
 {
 	int *magic_virt_addr = (int*) LOKE_BOOT_USB_DWNLD_V_ADDR;
 
-#if 0 //suik_Check
+#if 0
 	if( (KERNEL_SEC_DEBUG_LEVEL_MID == kernel_sec_get_debug_level()) || 
 		  (KERNEL_SEC_DEBUG_LEVEL_HIGH == kernel_sec_get_debug_level()) )
 	{
@@ -108,14 +156,14 @@ void kernel_sec_set_upload_magic_number(void)
 		*magic_virt_addr = 0;	
 		printk(KERN_EMERG"KERNEL:magic_number=0x%x DEBUG LEVEL low!!\n",*magic_virt_addr);
 	}
-
 #endif
 
-    *magic_virt_addr = 0;
-    printk(KERN_EMERG"KERNEL:magic_number=0x%x DEBUG LEVEL low!!\n",*magic_virt_addr);
+   *magic_virt_addr = 0;
+   printk(KERN_EMERG"KERNEL:magic_number=0x%x DEBUG LEVEL low!!\n",*magic_virt_addr);
 
 
 }
+EXPORT_SYMBOL(kernel_sec_set_upload_magic_number);
 
 void kernel_sec_set_upload_magic_number_final(void)
 {
@@ -133,8 +181,7 @@ void kernel_sec_set_upload_magic_number_final(void)
 		printk(KERN_EMERG"KERNEL:magic_number=0x%x DEBUG LEVEL low!!\n",*magic_virt_addr);
 	}
 }
-
-EXPORT_SYMBOL(kernel_sec_set_upload_magic_number);
+EXPORT_SYMBOL(kernel_sec_set_upload_magic_number_final);
 
 
 void kernel_sec_get_debug_level_from_boot(void)
@@ -153,7 +200,8 @@ void kernel_sec_get_debug_level_from_boot(void)
 	else
 	{
 		printk(KERN_EMERG"KERNEL:kernel_sec_get_debug_level_from_boot (reg value is incorrect.)\n");
-		debuglevel = KERNEL_SEC_DEBUG_LEVEL_LOW;
+		//debuglevel = KERNEL_SEC_DEBUG_LEVEL_LOW;
+		debuglevel = KERNEL_SEC_DEBUG_LEVEL_MID;
 	}
 
 	printk(KERN_EMERG"KERNEL:kernel_sec_get_debug_level_from_boot=0x%x\n",debuglevel);
@@ -165,7 +213,7 @@ void kernel_sec_clear_upload_magic_number(void)
 	int *magic_virt_addr = (int*) LOKE_BOOT_USB_DWNLD_V_ADDR;
 
 	*magic_virt_addr = 0;  // CLEAR
-	printk(KERN_EMERG"KERNEL:magic_number=0x%x CLEAR_UPLOAD_MAGIC_NUMBER\n",*magic_virt_addr);
+	printk(KERN_EMERG"KERNEL:magic_number=%x CLEAR_UPLOAD_MAGIC_NUMBER\n",*magic_virt_addr);
 }
 EXPORT_SYMBOL(kernel_sec_clear_upload_magic_number);
 
@@ -190,7 +238,7 @@ void kernel_sec_set_upload_cause(kernel_sec_upload_cause_type uploadType)
 	temp |= uploadType;                // KERNEL_SEC_UPLOAD_CAUSE_MASK    0x000000FF
 	__raw_writel( temp , S5P_INFORM6);
 	
-	printk(KERN_EMERG"(kernel_sec_set_upload_cause) : upload_cause set 0x%x\n",uploadType);	
+	printk(KERN_EMERG"(kernel_sec_set_upload_cause) : upload_cause set %x\n",uploadType);	
 }
 EXPORT_SYMBOL(kernel_sec_set_upload_cause);
 
@@ -231,11 +279,24 @@ EXPORT_SYMBOL(kernel_sec_set_build_info);
 void kernel_sec_init(void)
 {
        // set the onedram mailbox virtual address
-	dpram_base =(void __iomem *) ONEDRAM1G_SHARED_AREA_VIRT;
-	onedram_sem =  dpram_base + 0xFFF800 ; 
-	onedram_mailboxAB = dpram_base + 0xFFF800 + 0x20;
-	onedram_mailboxBA = dpram_base + 0xFFF800 + 0x40;
-
+#if defined CONFIG_S5PV210_VICTORY	
+	dpram_base = ioremap_nocache(0x30000000 + 0x05000000 + 0xFFF800, 0x60); //DPRAM_START_ADDRESS_PHYS + DPRAM_SHARED_BANK + DPRAM_SMP 
+	
+	if (dpram_base == NULL) {
+		printk(KERN_EMERG"failed ioremap\n");
+	}
+	onedram_sem = dpram_base ; 
+	onedram_mailboxAB = dpram_base + 0x20;
+	onedram_mailboxBA = dpram_base + 0x40;
+#elif defined CONFIG_S5PV210_ATLAS
+	dpram_base = ioremap_nocache(0x30000000 + 0x05000000, 0x01000000); //DPRAM_START_ADDRESS_PHYS + DPRAM_SHARED_BANK, DPRAM_SHARED_BANK_SIZE
+	if (dpram_base == NULL) {
+		printk(KERN_EMERG"failed ioremap\n");
+	}
+	onedram_sem = dpram_base + 0xFFF800; 
+	onedram_mailboxAB = dpram_base +0xFFF800 + 0x20;
+	onedram_mailboxBA = dpram_base+0xFFF800 + 0x40;
+#endif
 	kernel_sec_get_debug_level_from_boot();
 	kernel_sec_set_upload_magic_number();
 	kernel_sec_set_upload_cause(UPLOAD_CAUSE_INIT);	
@@ -426,8 +487,6 @@ void kernel_sec_hw_reset(bool bSilentReset)
 {
 //	Ap_Cp_Switch_Config(0);
 	
-	int i=0;
-
 	if (bSilentReset || (KERNEL_SEC_DEBUG_LEVEL_LOW == kernel_sec_get_debug_level()))
 	{
 		kernel_sec_clear_upload_magic_number();
@@ -436,9 +495,16 @@ void kernel_sec_hw_reset(bool bSilentReset)
 	else
 	{
 		kernel_sec_set_upload_magic_number_final();
-		printk(KERN_EMERG "(kernel_sec_hw_reset) Upload Magic Code is set for Upload Mode.\n");        
-	}	
-	
+		printk(KERN_EMERG "(kernel_sec_hw_reset) Upload Magic Code is set for Upload Mode.\n");  
+
+		if (gkernel_sec_upload_cause != UPLOAD_CAUSE_FORCED_UPLOAD)
+		{
+			if (kernel_sec_cable_attach)
+			{
+				kernel_sec_clear_upload_magic_number();
+			}
+		}
+	}
 
 	printk(KERN_EMERG "(kernel_sec_hw_reset) %s\n", gkernel_sec_build_info);
 	
@@ -447,22 +513,61 @@ void kernel_sec_hw_reset(bool bSilentReset)
 	/* flush cache back to ram */
 	flush_cache_all();
 	
-	__raw_writel(0x0,kernel_sec_viraddr_wdt_reset_reg);
-
-	for(i=0; i<2; i++){
 	__raw_writel(0x8000,kernel_sec_viraddr_wdt_reset_reg +0x4 );
 	__raw_writel(0x1,   kernel_sec_viraddr_wdt_reset_reg +0x4 );
 	__raw_writel(0x8,   kernel_sec_viraddr_wdt_reset_reg +0x8 );
 	__raw_writel(0x8021,kernel_sec_viraddr_wdt_reset_reg);
-
-	mdelay(500);
-	}
 
     /* Never happened because the reset will occur before this. */
 	while(1);	
 }
 EXPORT_SYMBOL(kernel_sec_hw_reset);
 
+
+bool kernel_set_debug_level(int level)
+{
+	if (sec_set_param_value)
+	{
+		if( (level == KERNEL_SEC_DEBUG_LEVEL_LOW) ||
+			( level == KERNEL_SEC_DEBUG_LEVEL_MID ) )
+		{
+			sec_set_param_value(__PHONE_DEBUG_ON, (void*)&level);
+			printk(KERN_NOTICE "(kernel_set_debug_level) The debug value is %x !!\n", level);	
+			return 1;
+		}
+		else
+		{
+			printk(KERN_NOTICE "(kernel_set_debug_level) The debug value is invalid (%x) !!\n", level);	
+			return 0;
+		}
+	}
+	else
+	{
+		printk(KERN_NOTICE "(kernel_set_debug_level) sec_set_param_value is not intialized !!\n");
+		return 0;
+	}
+}
+EXPORT_SYMBOL(kernel_set_debug_level);
+
+int kernel_get_debug_level()
+{
+	int debug_level = -1;
+
+	if (sec_get_param_value)
+	{
+		sec_get_param_value(__PHONE_DEBUG_ON, &debug_level);
+	}
+	
+	if( (debug_level == KERNEL_SEC_DEBUG_LEVEL_LOW) ||
+			( debug_level == KERNEL_SEC_DEBUG_LEVEL_MID ) )
+	{
+		printk(KERN_NOTICE "(kernel_get_debug_level) kernel debug level is %x !!\n", debug_level);
+		return debug_level;
+	}
+	printk(KERN_NOTICE "(kernel_get_debug_level) kernel debug level is invalid (%x) !!\n", debug_level);
+	return debug_level;
+}
+EXPORT_SYMBOL(kernel_get_debug_level);
 
 int kernel_sec_lfs_debug_level_op(int dir, int flags)
 {
@@ -551,7 +656,8 @@ int kernel_sec_get_debug_level_from_param()
 		/*In case of invalid debug level, default (debug level low)*/
 		printk(KERN_NOTICE "(kernel_sec_get_debug_level_from_param) The debug value is \
 				invalid(0x%x)!! Set default level(LOW)\n", debuglevel);	
-		debuglevel = KERNEL_SEC_DEBUG_LEVEL_LOW;
+		//debuglevel = KERNEL_SEC_DEBUG_LEVEL_LOW;
+		debuglevel = KERNEL_SEC_DEBUG_LEVEL_MID;
 	}
 	return debuglevel;
 }

@@ -31,11 +31,9 @@ obj-$(CONFIG_VIDEO_TUNER) += tuner.o
 obj-$(CONFIG_VIDEO_TVAUDIO) += tvaudio.o
 obj-$(CONFIG_VIDEO_TDA7432) += tda7432.o
 obj-$(CONFIG_VIDEO_TDA9875) += tda9875.o
-
 obj-$(CONFIG_VIDEO_SAA6588) += saa6588.o
 obj-$(CONFIG_VIDEO_SAA5246A) += saa5246a.o
 obj-$(CONFIG_VIDEO_SAA5249) += saa5249.o
-
 obj-$(CONFIG_VIDEO_TDA9840) += tda9840.o
 obj-$(CONFIG_VIDEO_TEA6415C) += tea6415c.o
 obj-$(CONFIG_VIDEO_TEA6420) += tea6420.o
@@ -47,6 +45,7 @@ obj-$(CONFIG_VIDEO_SAA7185) += saa7185.o
 obj-$(CONFIG_VIDEO_SAA7191) += saa7191.o
 obj-$(CONFIG_VIDEO_ADV7170) += adv7170.o
 obj-$(CONFIG_VIDEO_ADV7175) += adv7175.o
+obj-$(CONFIG_VIDEO_ADV7180) += adv7180.o
 obj-$(CONFIG_VIDEO_ADV7343) += adv7343.o
 obj-$(CONFIG_VIDEO_VPX3220) += vpx3220.o
 obj-$(CONFIG_VIDEO_BT819) += bt819.o
@@ -70,13 +69,26 @@ obj-$(CONFIG_VIDEO_UPD64031A) += upd64031a.o
 obj-$(CONFIG_VIDEO_UPD64083) += upd64083.o
 obj-$(CONFIG_VIDEO_OV7670) 	+= ov7670.o
 obj-$(CONFIG_VIDEO_TCM825X) += tcm825x.o
-obj-$(CONFIG_VIDEO_S5K3BA)	+= s5k3ba.o
-obj-$(CONFIG_VIDEO_S5K4BA)	+= s5k4ba.o
-obj-$(CONFIG_VIDEO_S5K4EA)	+= s5k4ea.o
-obj-$(CONFIG_VIDEO_S5K6AA)	+= s5k6aa.o
-obj-$(CONFIG_VIDEO_CE147)	+= ce147.o
-obj-$(CONFIG_VIDEO_S5KA3DFX)	+= s5ka3dfx.o
 obj-$(CONFIG_VIDEO_TVEEPROM) += tveeprom.o
+obj-$(CONFIG_VIDEO_MT9V011) += mt9v011.o
+obj-$(CONFIG_VIDEO_S5K3BA)		+= s5k3ba.o
+obj-$(CONFIG_VIDEO_S5K4BA)		+= s5k4ba.o
+obj-$(CONFIG_VIDEO_S5K4EA)		+= s5k4ea.o
+obj-$(CONFIG_VIDEO_S5K6AA)		+= s5k6aa.o
+obj-$(CONFIG_VIDEO_ISX005)	+= isx005.o
+obj-$(CONFIG_VIDEO_S5K6AAFX)	+= s5k6aafx.o
+
+ifeq ($(CONFIG_VIDEO_CE147_VICTORY),y)
+obj-$(CONFIG_VIDEO_CE147) += victory/ce147.o
+endif
+ifeq ($(CONFIG_VIDEO_CE147_ATLAS),y)
+obj-$(CONFIG_VIDEO_CE147) += atlas/ce147.o
+endif
+
+ifeq ($(CONFIG_VIDEO_S5KA3DFX_VICTORY),y)
+obj-$(CONFIG_VIDEO_S5KA3DFX) += victory/s5ka3dfx.o
+endif
+
 obj-$(CONFIG_SOC_CAMERA_MT9M001)	+= mt9m001.o
 obj-$(CONFIG_SOC_CAMERA_MT9M111)	+= mt9m111.o
 obj-$(CONFIG_SOC_CAMERA_MT9T031)	+= mt9t031.o
@@ -85,7 +97,7 @@ obj-$(CONFIG_SOC_CAMERA_OV772X)		+= ov772x.o
 obj-$(CONFIG_SOC_CAMERA_TW9910)		+= tw9910.o
 
 # And now the v4l2 drivers:
- 
+
 obj-$(CONFIG_VIDEO_BT848) += bt8xx/
 obj-$(CONFIG_VIDEO_ZORAN) += zoran/
 obj-$(CONFIG_VIDEO_CQCAM) += c-qcam.o
@@ -122,7 +134,6 @@ obj-$(CONFIG_VIDEO_M32R_AR_M64278) += arv.o
 obj-$(CONFIG_VIDEO_CX2341X) += cx2341x.o
 
 obj-$(CONFIG_VIDEO_CAFE_CCIC) += cafe_ccic.o
-obj-$(CONFIG_VIDEO_OV7670) 	+= ov7670.o
 
 obj-$(CONFIG_USB_DABUSB)        += dabusb.o
 obj-$(CONFIG_USB_OV511)         += ov511.o
@@ -161,12 +172,17 @@ obj-$(CONFIG_VIDEO_MX3)			+= mx3_camera.o
 obj-$(CONFIG_VIDEO_PXA27x)		+= pxa_camera.o
 obj-$(CONFIG_VIDEO_SH_MOBILE_CEU)	+= sh_mobile_ceu_camera.o
 
+obj-$(CONFIG_ARCH_DAVINCI)		+= davinci/
+
 obj-$(CONFIG_VIDEO_AU0828) += au0828/
-obj-$(CONFIG_VIDEO_SAMSUNG)     += samsung/
+obj-$(CONFIG_VIDEO_SAMSUNG)	+= samsung/
 
 obj-$(CONFIG_USB_VIDEO_CLASS)	+= uvc/
+obj-$(CONFIG_VIDEO_SAA7164)     += saa7164/
 
 obj-$(CONFIG_VIDEO_IR_I2C)  += ir-kbd-i2c.o
+
+obj-$(CONFIG_ARCH_DAVINCI)	+= davinci/
 
 EXTRA_CFLAGS += -Idrivers/media/dvb/dvb-core
 EXTRA_CFLAGS += -Idrivers/media/dvb/frontends

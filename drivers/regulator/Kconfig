@@ -1,6 +1,6 @@
 menuconfig REGULATOR
 	bool "Voltage and Current Regulator Support"
-	default n
+	default y
 	help
 	  Generic Voltage and Current Regulator support.
 
@@ -61,15 +61,41 @@ config REGULATOR_MAX8698
           regulator via I2C bus. The provided regulator is suitable
           for S5PC1XX chips to control VCC_CORE and VCC_USIM voltages.
 
-config REGULATOR_MAX8998
+menuconfig REGULATOR_MAX8998
         tristate "Maxim 8998 voltage regulator"
-        depends on I2C && (MACH_S5PC110_JUPITER || MACH_S5PC110_P1P2)
+        depends on I2C && (MACH_S5PC110_JUPITER || MACH_S5PC110_P1P2 || MACH_S5PC110_ARIES)
         default n
         help
           This driver controls a Maxim 8998 voltage output
           regulator via emulated gpio I2C . The provided regulator is suitable
           for S5PC1XX chips to control VCC_CORE and VCC_USIM voltages.
 
+
+if REGULATOR_MAX8998
+
+config REGULATOR_MAX8998_ATLAS
+        depends on REGULATOR_MAX8998
+        tristate "Atlas Maxim 8998 voltage regulator"
+        help
+        Atlas Product
+
+config REGULATOR_MAX8998_VICTORY
+        depends on REGULATOR_MAX8998
+        bool "Victory Maxim 8998 voltage regulator"
+        help
+        Victory Product
+endif
+
+
+
+config REGULATOR_MAX8893
+        tristate "Maxim 8893 voltage regulator"
+        depends on I2C && (MACH_S5PC110_JUPITER || MACH_S5PC110_P1P2 || MACH_S5PC110_ARIES)
+        default n
+        help
+          This driver controls a Maxim 8893 voltage output
+          regulator via emulated gpio I2C . The provided regulator is suitable
+          for S5PC1XX chips to control VCC_CORE and VCC_USIM voltages.
 
 config REGULATOR_WM8350
 	tristate "Wolfson Microelectroncis WM8350 AudioPlus PMIC"

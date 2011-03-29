@@ -15,10 +15,13 @@
 #include <linux/string.h>
 #include <linux/platform_device.h>
 #include <linux/fb.h>
-#include <linux/gfp.h>
-
-#include <mach/irqs.h>
+#if defined CONFIG_S5PV210_VICTORY
+#include <mach/victory/irqs.h>
+#elif defined CONFIG_S5PV210_ATLAS
+#include <mach/atlas/irqs.h>
+#endif
 #include <mach/map.h>
+#include <mach/regs-fb.h>
 
 #include <plat/fb.h>
 #include <plat/devs.h>

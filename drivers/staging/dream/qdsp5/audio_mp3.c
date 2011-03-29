@@ -23,7 +23,6 @@
 #include <linux/kthread.h>
 #include <linux/wait.h>
 #include <linux/dma-mapping.h>
-#include <linux/gfp.h>
 
 #include <linux/delay.h>
 
@@ -651,7 +650,8 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 						       &audio->read_phys,
 						       GFP_KERNEL);
 				if (!audio->read_data) {
-					pr_err("audio_mp3: malloc pcm buf failed\n");
+					pr_err("audio_mp3: malloc pcm \
+					buf failed\n");
 					rc = -1;
 				} else {
 					uint8_t index;

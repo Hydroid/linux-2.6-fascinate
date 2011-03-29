@@ -388,8 +388,6 @@ struct rds_sock {
 
 	/* flag indicating we were congested or not */
 	int			rs_congested;
-	/* seen congestion (ENOBUFS) when sending? */
-	int			rs_seen_congestion;
 
 	/* rs_lock protects all these adjacent members before the newline */
 	spinlock_t		rs_lock;
@@ -492,7 +490,7 @@ void rds_sock_put(struct rds_sock *rs);
 void rds_wake_sk_sleep(struct rds_sock *rs);
 static inline void __rds_wake_sk_sleep(struct sock *sk)
 {
-	wait_queue_head_t *waitq = sk_sleep(sk);
+	wait_queue_head_t *waitq = sk->sk_sleep;
 
 	if (!sock_flag(sk, SOCK_DEAD) && waitq)
 		wake_up(waitq);

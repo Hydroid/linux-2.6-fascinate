@@ -14,7 +14,7 @@
 #include <linux/interrupt.h>
 
 #include "smb_acc.h"
-
+#include "smb380calib.h"
 /* add by inter.park */
 //extern void enable_acc_pins(void);
 
@@ -64,6 +64,8 @@ int smb_ioctl(struct inode *inode, struct file *filp, unsigned int ioctl_num,  u
 {
 	smb380acc_t accels;
 	unsigned char arg_data; 
+	int temp;
+	unsigned char data[6];
 	int err = 0;
 	
 	switch( ioctl_num )
@@ -101,7 +103,17 @@ int smb_ioctl(struct inode *inode, struct file *filp, unsigned int ioctl_num,  u
 			}
 		break;
 
-
+	/* offset calibration routine */
+	case BMA150_CALIBRATION:
+		if(copy_from_user((smb380acc_t*)data,(smb380acc_t*)arg,6)!=0)
+		{
+			printk("copy_from_user error\n");
+			return -EFAULT;
+		}
+		/* iteration time 20 */
+		temp = 20;
+		err = smb380_calibrate(*(smb380acc_t*)data, &temp);
+		printk( "BMA150_CALIBRATION status: %d\n", err);
 		default : 
 			break;
 	}
@@ -121,6 +133,10 @@ struct file_operations acc_fops =
 	.release = smb_release,
 };
 
+static inline void bma150_i2c_delay(unsigned int msec)
+{
+	mdelay(msec);
+}
 void smb_chip_init(void)
 {
 	/*assign register memory to smb380 object */
@@ -128,6 +144,7 @@ void smb_chip_init(void)
 
 	smb380.smb_bus_write = i2c_acc_smb_write;
 	smb380.smb_bus_read  = i2c_acc_smb_read;
+	smb380.delay_msec  = bma150_i2c_delay;
 
 	/*call init function to set read write functions, read registers */
 	smb380_init( &smb380 );
@@ -172,6 +189,65 @@ static ssize_t smb380_fs_write(struct device *dev, struct device_attribute *attr
 	return size;
 }
 static DEVICE_ATTR(acc_file, S_IRUGO | S_IWUSR | S_IWOTH | S_IXOTH, smb380_fs_read, smb380_fs_write);
+
+static ssize_t smb380_calibration(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
+{
+	int err;
+	smb380acc_t data;
+	/* iteration time 20 */
+	int temp = 20;
+	int i = 0;
+
+	//buf[size]=0;
+	printk("input data --> %s\n", buf);
+	if(*(buf+i) == '-')
+	{
+		i++;
+		data.x = -(*(buf+i) - '0');
+		i++;
+	}
+	else
+	{
+		data.x =(*(buf+i) - '0');
+		i++;
+	}
+	if(*(buf+i) == '-')
+	{
+		i++;
+		data.y = -(*(buf+i) - '0');
+		i++;
+	}
+	else
+	{
+		data.y = (*(buf+i) - '0');
+		i++;
+	}
+	if(*(buf+i) == '-')
+	{
+		i++;
+		data.z = -(*(buf+i) - '0');
+		i++;
+	}
+	else
+	{
+		data.z = (*(buf+i) - '0');
+		i++;
+	}
+	if((data.x >= -1 && data.x <=1) && (data.y >= -1 && data.y <=1) && (data.z >= -1 && data.z <=1) )
+	{
+		/* iteration time 20 */
+		err = smb380_calibrate(data, &temp);
+		printk( "BMA150_CALIBRATION status: %d\n", err);
+	}
+	else
+	{
+		printk( "BMA150_CALIBRATION data err \n");
+	}
+	return size;
+}
+
+static DEVICE_ATTR(calibration, S_IRUGO | S_IWUSR | S_IWOTH | S_IXOTH, NULL, smb380_calibration);
+
 //TEST
 int smb_acc_start(void)
 {
@@ -202,6 +278,9 @@ int smb_acc_start(void)
 	if (device_create_file(dev_t, &dev_attr_acc_file) < 0)
 		printk("Failed to create device file(%s)!\n", dev_attr_acc_file.attr.name);
 //TEST
+
+	if (device_create_file(dev_t, &dev_attr_calibration) < 0)
+		printk("Failed to create device file(%s)!\n", dev_attr_calibration.attr.name);
 
 	if (IS_ERR(dev_t)) 
 	{

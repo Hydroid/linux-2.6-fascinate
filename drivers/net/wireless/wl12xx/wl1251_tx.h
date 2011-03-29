@@ -26,7 +26,6 @@
 #define __WL1251_TX_H__
 
 #include <linux/bitops.h>
-#include "wl1251_acx.h"
 
 /*
  *
@@ -109,12 +108,12 @@ struct tx_control {
 	unsigned xfer_pad:1;
 
 	unsigned reserved:7;
-} __packed;
+} __attribute__ ((packed));
 
 
 struct tx_double_buffer_desc {
 	/* Length of payload, including headers. */
-	__le16 length;
+	u16 length;
 
 	/*
 	 * A bit mask that specifies the initial rate to be used
@@ -133,10 +132,10 @@ struct tx_double_buffer_desc {
 	 * 0x0800 - 48Mbits
 	 * 0x1000 - 54Mbits
 	 */
-	__le16 rate;
+	u16 rate;
 
 	/* Time in us that a packet can spend in the target */
-	__le32 expiry_time;
+	u32 expiry_time;
 
 	/* index of the TX queue used for this packet */
 	u8 xmit_queue;
@@ -150,13 +149,13 @@ struct tx_double_buffer_desc {
 	 * The FW should cut the packet into fragments
 	 * of this size.
 	 */
-	__le16 frag_threshold;
+	u16 frag_threshold;
 
 	/* Numbers of HW queue blocks to be allocated */
 	u8 num_mem_blocks;
 
 	u8 reserved;
-} __packed;
+} __attribute__ ((packed));
 
 enum {
 	TX_SUCCESS              = 0,
@@ -208,23 +207,7 @@ struct tx_result {
 
 	/* See done_1 */
 	u8 done_2;
-} __packed;
-
-static inline int wl1251_tx_get_queue(int queue)
-{
-	switch (queue) {
-	case 0:
-		return QOS_AC_VO;
-	case 1:
-		return QOS_AC_VI;
-	case 2:
-		return QOS_AC_BE;
-	case 3:
-		return QOS_AC_BK;
-	default:
-		return QOS_AC_BE;
-	}
-}
+} __attribute__ ((packed));
 
 void wl1251_tx_work(struct work_struct *work);
 void wl1251_tx_complete(struct wl1251 *wl);

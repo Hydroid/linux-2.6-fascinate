@@ -1,3 +1,15 @@
+/* linux/drivers/media/video/samsung/rotator/rotator_v2xx.h
+ *
+ * Copyright (c) 2010 Samsung Electronics Co., Ltd.
+ * http://www.samsung.com/
+ *
+ * Header file for Samsung Image Rotator
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
 #ifndef _S3C_ROTATOR_COMMON_H_
 #define _S3C_ROTATOR_COMMON_H_
 
@@ -6,7 +18,7 @@
 #define ROTATOR_MINOR			230
 #define ROTATOR_TIMEOUT			100	// normally 800 * 480 * 2 rotation takes about 20ms
 
-#define S3C_ROT_CLK_NAME		"rot"
+#define S3C_ROT_CLK_NAME		"rotator"
 
 #define ROTATOR_90			_IO(ROTATOR_IOCTL_MAGIC, 0)
 #define ROTATOR_180			_IO(ROTATOR_IOCTL_MAGIC, 1)

@@ -1,14 +1,14 @@
 /* linux/drivers/media/video/samsung/jpeg_v2/jpg_opr.h
  *
- * Driver header file for Samsung JPEG Encoder/Decoder
+ * Copyright (c) 2010 Samsung Electronics Co., Ltd.
+ * http://www.samsung.com/
  *
- * Peter Oh,Hyunmin kwak, Copyright (c) 2009 Samsung Electronics
- * 	http://www.samsungsemi.com/
+ * Definition for Operation of Jpeg encoder/docoder
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
- */
+*/
 
 #ifndef __JPG_OPR_H__
 #define __JPG_OPR_H__
@@ -112,11 +112,6 @@ typedef struct {
 	UINT32			file_size;
 } jpg_dec_proc_param;
 
-typedef enum {
-        JPG_MOD_ENCODE,
-        JPG_MOD_DECODE
-}jpg_mod;
-
 typedef struct {
 	sample_mode_t		sample_mode;
 	encode_type_t		enc_type;
@@ -126,8 +121,6 @@ typedef struct {
 	UINT32			height;
 	UINT32			data_size;
 	UINT32			file_size;
- 	//added by padma
- 	UINT32                  set_framebuf;
 } jpg_enc_proc_param;
 
 typedef struct {
@@ -149,17 +142,12 @@ typedef struct {
 	jpg_enc_proc_param	*thumb_enc_param;
 } jpg_args;
 
-
-jpg_return_status decode_jpg(sspc100_jpg_ctx *jpg_ctx, jpg_dec_proc_param *dec_param);
 void reset_jpg(sspc100_jpg_ctx *jpg_ctx);
-#ifdef CONFIG_CPU_S5PC100
-void decode_header(sspc100_jpg_ctx *jpg_ctx, jpg_dec_proc_param *dec_param);
-void decode_body(sspc100_jpg_ctx *jpg_ctx);
-#endif
+jpg_return_status decode_jpg(sspc100_jpg_ctx *jpg_ctx, jpg_dec_proc_param *dec_param);
+jpg_return_status encode_jpg(sspc100_jpg_ctx *jpg_ctx, jpg_enc_proc_param *enc_param);
+jpg_return_status wait_for_interrupt(void);
 sample_mode_t get_sample_type(sspc100_jpg_ctx *jpg_ctx);
 void get_xy(sspc100_jpg_ctx *jpg_ctx, UINT32 *x, UINT32 *y);
-UINT32 get_yuv_size(sample_mode_t sample_mode,out_mode_t out_format, UINT32 width, UINT32 height);
-jpg_return_status encode_jpg(sspc100_jpg_ctx *jpg_ctx, jpg_enc_proc_param    *enc_param);
-jpg_return_status wait_for_interrupt(void);
+UINT32 get_yuv_size(out_mode_t out_format, UINT32 width, UINT32 height);
 
 #endif

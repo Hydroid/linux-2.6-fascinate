@@ -19,6 +19,7 @@
 #include <asm/io.h>
 
 #include <linux/interrupt.h>
+#include <linux/sched.h>
 #include <linux/wait.h>
 #include <linux/poll.h>
 #include <linux/usb/cdc.h>

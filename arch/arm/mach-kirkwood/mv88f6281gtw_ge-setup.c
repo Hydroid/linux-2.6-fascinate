@@ -74,9 +74,9 @@ static struct gpio_keys_button mv88f6281gtw_ge_button_pins[] = {
 		.desc		= "SWR Button",
 		.active_low	= 1,
 	}, {
-		.code		= KEY_WPS_BUTTON,
+		.code		= KEY_F1,
 		.gpio		= 46,
-		.desc		= "WPS Button",
+		.desc		= "WPS Button(F1)",
 		.active_low	= 1,
 	},
 };
@@ -155,7 +155,7 @@ static void __init mv88f6281gtw_ge_init(void)
 static int __init mv88f6281gtw_ge_pci_init(void)
 {
 	if (machine_is_mv88f6281gtw_ge())
-		kirkwood_pcie_init(KW_PCIE0);
+		kirkwood_pcie_init();
 
 	return 0;
 }

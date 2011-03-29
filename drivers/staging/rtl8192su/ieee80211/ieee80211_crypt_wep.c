@@ -9,6 +9,7 @@
  * more details.
  */
 
+//#include <linux/config.h>
 #include <linux/version.h>
 #include <linux/module.h>
 #include <linux/init.h>
@@ -42,9 +43,10 @@ static void * prism2_wep_init(int keyidx)
 {
 	struct prism2_wep_data *priv;
 
-	priv = kzalloc(sizeof(*priv), GFP_ATOMIC);
+	priv = kmalloc(sizeof(*priv), GFP_ATOMIC);
 	if (priv == NULL)
 		goto fail;
+	memset(priv, 0, sizeof(*priv));
 	priv->key_idx = keyidx;
 
 	priv->tx_tfm = crypto_alloc_blkcipher("ecb(arc4)", 0, CRYPTO_ALG_ASYNC);
@@ -278,17 +280,18 @@ static struct ieee80211_crypto_ops ieee80211_crypt_wep = {
 	.owner			= THIS_MODULE,
 };
 
-int ieee80211_crypto_wep_init(void)
+int __init ieee80211_crypto_wep_init(void)
 {
 	return ieee80211_register_crypto_ops(&ieee80211_crypt_wep);
 }
 
-void ieee80211_crypto_wep_exit(void)
+void __exit ieee80211_crypto_wep_exit(void)
 {
 	ieee80211_unregister_crypto_ops(&ieee80211_crypt_wep);
 }
 
 void ieee80211_wep_null(void)
 {
+//	printk("============>%s()\n", __FUNCTION__);
         return;
 }

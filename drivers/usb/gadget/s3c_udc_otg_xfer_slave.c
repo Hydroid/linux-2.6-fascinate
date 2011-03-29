@@ -27,7 +27,7 @@
 
 u32 tx_ep_num = 2;
 
-static int set_interface_first = 0;
+static int set_interface_first;
 
 /*-------------------------------------------------------------------------*/
 
@@ -49,7 +49,7 @@ static int read_fifo(struct s3c_ep *ep, struct s3c_request *req)
 	if(!count_bytes) {
 		DEBUG_OUT_EP("%s: count_bytes %d bytes\n", __FUNCTION__, count_bytes);
 
-		// Unmask USB OTG 2.0 interrupt source : INT_RX_FIFO_NOT_EMPTY
+		/* Unmask USB OTG 2.0 interrupt source : INT_RX_FIFO_NOT_EMPTY */
 		writel(gintmsk | INT_RX_FIFO_NOT_EMPTY, S3C_UDC_OTG_GINTMSK);
 		return 0;
 	}
@@ -59,7 +59,8 @@ static int read_fifo(struct s3c_ep *ep, struct s3c_request *req)
 	bufferspace = req->req.length - req->req.actual;
 
 	count = count_bytes / 4;
-	if(count_bytes%4) count = count + 1;
+	if (count_bytes%4)
+		count = count + 1;
 
 	req->req.actual += min(count_bytes, bufferspace);
 
@@ -86,7 +87,7 @@ static int read_fifo(struct s3c_ep *ep, struct s3c_request *req)
 		}
  	 }
 
-	// Unmask USB OTG 2.0 interrupt source : INT_RX_FIFO_NOT_EMPTY
+	/* Unmask USB OTG 2.0 interrupt source : INT_RX_FIFO_NOT_EMPTY */
 	writel(gintmsk | INT_RX_FIFO_NOT_EMPTY, S3C_UDC_OTG_GINTMSK);
 
 	/* completion */
@@ -166,9 +167,9 @@ static __inline__ int write_packet(struct s3c_ep *ep,
 		BUG();
 	}
 
-	for (count=0;count<length;count+=4) {
+	for (count = 0; count < length; count += 4)
 	  	writel(*buf++, fifo);
-	}
+
 	return length;
 }
 
@@ -217,7 +218,7 @@ static int write_fifo(struct s3c_ep *ep, struct s3c_request *req)
 		return 1;
 	}
 
-	// Unmask USB OTG 2.0 interrupt source : INT_NP_TX_FIFO_EMPTY
+	/* Unmask USB OTG 2.0 interrupt source : INT_NP_TX_FIFO_EMPTY */
 	writel(gintmsk | INT_NP_TX_FIFO_EMPTY, S3C_UDC_OTG_GINTMSK);
 	return 0;
 }
@@ -269,8 +270,7 @@ static void s3c_in_epn(struct s3c_udc *dev, u32 ep_idx)
 	if (unlikely(!req)) {
 		DEBUG_IN_EP("%s: NULL REQ on IN EP-%d\n", __FUNCTION__, ep_idx);
 		return;
-	}
-	else {
+	} else {
 		write_fifo(ep, req);
 	}
 
@@ -371,7 +371,7 @@ static irqreturn_t s3c_udc_irq(int irq, void *_dev)
 	if (intr_status & INT_RX_FIFO_NOT_EMPTY) {
 		u32 grx_status, packet_status, ep_num, fifoCntByte = 0;
 
-		// Mask USB OTG 2.0 interrupt source : INT_RX_FIFO_NOT_EMPTY
+		/* Mask USB OTG 2.0 interrupt source : INT_RX_FIFO_NOT_EMPTY */
 		gintmsk &= ~INT_RX_FIFO_NOT_EMPTY;
 		writel(gintmsk, S3C_UDC_OTG_GINTMSK);
 
@@ -388,11 +388,10 @@ static irqreturn_t s3c_udc_irq(int irq, void *_dev)
 				DEBUG_EP0("      => A SETUP data packet received : %d bytes\n", fifoCntByte);
 				s3c_handle_ep0(dev);
 
-				// Unmask USB OTG 2.0 interrupt source : INT_RX_FIFO_NOT_EMPTY
+				/* Unmask USB OTG 2.0 interrupt source : INT_RX_FIFO_NOT_EMPTY */
 				gintmsk |= INT_RX_FIFO_NOT_EMPTY;
 
 			} else if (packet_status == OUT_PKT_RECEIVED) {
-
 				if(ep_num == EP1_OUT) {
 					ep_ctrl = readl(S3C_UDC_OTG_DOEPCTL1);
 					DEBUG_ISR("      => A Bulk OUT data packet received : %d bytes, (DOEPCTL1):0x%x\n",
@@ -413,7 +412,7 @@ static irqreturn_t s3c_udc_irq(int irq, void *_dev)
 			} else {
 				grx_status = readl(S3C_UDC_OTG_GRXSTSP);
 
-				// Unmask USB OTG 2.0 interrupt source : INT_RX_FIFO_NOT_EMPTY
+				/* Unmask USB OTG 2.0 interrupt source : INT_RX_FIFO_NOT_EMPTY */
 				gintmsk |= INT_RX_FIFO_NOT_EMPTY;
 
 				DEBUG_ISR("      => A reserved packet received : %d bytes\n", fifoCntByte);
@@ -450,12 +449,12 @@ static irqreturn_t s3c_udc_irq(int irq, void *_dev)
 
 			grx_status = readl(S3C_UDC_OTG_GRXSTSP);
 
-			// Unmask USB OTG 2.0 interrupt source : INT_RX_FIFO_NOT_EMPTY
+			/* Unmask USB OTG 2.0 interrupt source : INT_RX_FIFO_NOT_EMPTY */
 			gintmsk |= INT_RX_FIFO_NOT_EMPTY;
 
 		}
 
-		// Un/Mask USB OTG 2.0 interrupt sources
+		/* Un/Mask USB OTG 2.0 interrupt sources */
 		writel(gintmsk, S3C_UDC_OTG_GINTMSK);
 
 		spin_unlock(&dev->lock);
@@ -490,8 +489,7 @@ static int s3c_queue(struct usb_ep *_ep, struct usb_request *_req,
 
 	req = container_of(_req, struct s3c_request, req);
 	if (unlikely(!_req || !_req->complete || !_req->buf
-			|| !list_empty(&req->queue)))
-	{
+			|| !list_empty(&req->queue))) {
 		DEBUG("%s: bad params\n", __FUNCTION__);
 		return -EINVAL;
 	}
@@ -597,9 +595,8 @@ static int write_fifo_ep0(struct s3c_ep *ep, struct s3c_request *req)
 		  is_last ? "/L" : "", req->req.length - req->req.actual, req);
 
 	/* requests complete when all IN data is in the FIFO */
-	if (is_last) {
+	if (is_last)
 		return 1;
-	}
 
 	return 0;
 }
@@ -614,12 +611,11 @@ static __inline__ int s3c_fifo_read(struct s3c_ep *ep, u32 *cp, int max)
 	DEBUG_EP0("%s: GRXSTSP=0x%x, bytes=%d, ep_index=%d, fifo=0x%x\n",
 			__FUNCTION__, grx_status, bytes, ep_index(ep), ep->fifo);
 
-	// 32 bits interface
+	/* 32 bits interface */
 	count = bytes / 4;
 
-	while (count--) {
+	while (count--)
 		*cp++ = (u32) readl(S3C_UDC_OTG_EP0_FIFO);
-	}
 
 	return bytes;
 }
@@ -645,7 +641,7 @@ static int read_fifo_ep0(struct s3c_ep *ep, struct s3c_request *req)
 		count = bytes / 4;
 		req->req.actual += min(bytes, bufferspace);
 
-	} else	{		// zlp
+	} else	{		/* zlp */
 		count = 0;
 		bytes = 0;
 	}
@@ -675,9 +671,8 @@ static int read_fifo_ep0(struct s3c_ep *ep, struct s3c_request *req)
 	}
 
 	/* completion */
-	if (is_short || req->req.actual == req->req.length) {
+	if (is_short || req->req.actual == req->req.length)
 		return 1;
-	}
 
 	return 0;
 }
@@ -717,7 +712,7 @@ static void s3c_ep0_read(struct s3c_udc *dev)
 		req = list_entry(ep->queue.next, struct s3c_request, queue);
 	else {
 		printk("%s: ---> BUG\n", __FUNCTION__);
-		BUG();	//logic ensures		-jassi
+		BUG();	/* logic ensures		-jassi */
 		return;
 	}
 
@@ -731,7 +726,7 @@ static void s3c_ep0_read(struct s3c_udc *dev)
 		return;
 	}
 
-	if(!req->req.actual && first_time){	//for SetUp packet
+	if (!req->req.actual && first_time) {	/* for SetUp packet */
 		first_time = 0;
 		return;
 	}

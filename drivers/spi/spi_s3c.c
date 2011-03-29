@@ -18,7 +18,7 @@
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <asm/dma.h>
-
+#include <plat/spi.h>
 #include "spi_s3c.h"
 
 //#define DEBUGSPI
@@ -69,7 +69,7 @@ static void dump_spidevice_info(struct spi_device *spi)
 	dbg_printk("Clk Phs = %d\n", spi->mode & SPI_CPHA);
 	dbg_printk("Clk Pol = %d\n", spi->mode & SPI_CPOL);
 	dbg_printk("ActiveCS = %s\n", (spi->mode & (1<<2)) ? "high" : "low" );
-	dbg_printk("Our Mode = %s\n", (spi->mode & SPI_SLAVE) ? "Slave" : "Master");
+	dbg_printk("Our Mode = %s\n", "Master");
 }
 #else
 
@@ -111,7 +111,7 @@ static inline void flush_spi(struct s3cspi_bus *sspi)
 	val = readl(sspi->regs + S3C_SPI_CH_CFG);
 	val |= SPI_CH_SW_RST;
 	val &= ~SPI_CH_HS_EN;
-	if((sspi->cur_speed > 30000000UL) && !(sspi->cur_mode & SPI_SLAVE)) /* TODO ??? */
+	if((sspi->cur_speed > 30000000UL)) /* TODO ??? */
 	   val |= SPI_CH_HS_EN;
 	writel(val, sspi->regs + S3C_SPI_CH_CFG);
 
@@ -145,10 +145,8 @@ static inline void enable_spichan(struct s3cspi_bus *sspi, struct spi_transfer *
 	   val |= SPI_CH_TXCH_ON;
 	}
 	if(xfer->rx_buf != NULL){
-	   if(!(sspi->cur_mode & SPI_SLAVE)){
 	      writel((xfer->len & 0xffff) | SPI_PACKET_CNT_EN, 
 			sspi->regs + S3C_SPI_PACKET_CNT); /* XXX TODO Bytes or number of SPI-Words? */
-	   }
 	   val |= SPI_CH_RXCH_ON;
 	}
 	writel(val, sspi->regs + S3C_SPI_CH_CFG);
@@ -160,7 +158,6 @@ static inline void enable_spiintr(struct s3cspi_bus *sspi, struct spi_transfer *
 
 	if(xfer->tx_buf != NULL){
 	   val |= SPI_INT_TX_OVERRUN_EN;
-	   if(!(sspi->cur_mode & SPI_SLAVE))
 	      val |= SPI_INT_TX_UNDERRUN_EN;
 	}
 	if(xfer->rx_buf != NULL){
@@ -173,12 +170,12 @@ static inline void enable_spienqueue(struct s3cspi_bus *sspi, struct spi_transfe
 {
 	if(xfer->rx_buf != NULL){
 	   sspi->rx_done = BUSY;
-	   s3c2410_dma_config(sspi->rx_dmach, sspi->cur_bpw/8, 0);
+	   s3c2410_dma_config(sspi->rx_dmach, sspi->cur_bpw/8);
 	   s3c2410_dma_enqueue(sspi->rx_dmach, (void *)sspi, xfer->rx_dma, xfer->len);
 	}
 	if(xfer->tx_buf != NULL){
 	   sspi->tx_done = BUSY;
-	   s3c2410_dma_config(sspi->tx_dmach, sspi->cur_bpw/8, 0);
+	   s3c2410_dma_config(sspi->tx_dmach, sspi->cur_bpw/8);
 	   s3c2410_dma_enqueue(sspi->tx_dmach, (void *)sspi, xfer->tx_dma, xfer->len);
 	}
 }
@@ -205,10 +202,6 @@ static inline void enable_cs(struct s3cspi_bus *sspi, struct spi_device *spi)
 
 	spd = &sspi->spi_mstinfo->spd[spi->chip_select];
 	val = readl(sspi->regs + S3C_SPI_SLAVE_SEL);	
-	if(sspi->cur_mode & SPI_SLAVE){
-	   val |= SPI_SLAVE_AUTO; /* Auto Mode */
-	   val |= SPI_SLAVE_SIG_INACT;
-	}else{ /* Master Mode */
 	   val &= ~SPI_SLAVE_AUTO; /* Manual Mode */
 	   val &= ~SPI_SLAVE_SIG_INACT; /* Activate CS */
 	   if(spi->mode & SPI_CS_HIGH){
@@ -218,7 +211,6 @@ static inline void enable_cs(struct s3cspi_bus *sspi, struct spi_device *spi)
 	      spd->cs_set(spd->cs_pin, CS_LOW);
 	      spd->cs_level = CS_LOW;
 	   }
-	}
 
 	writel(val, sspi->regs + S3C_SPI_SLAVE_SEL);
 }
@@ -232,9 +224,6 @@ static inline void disable_cs(struct s3cspi_bus *sspi, struct spi_device *spi)
 
 	val = readl(sspi->regs + S3C_SPI_SLAVE_SEL);
 
-	if(sspi->cur_mode & SPI_SLAVE){
-	   val |= SPI_SLAVE_AUTO; /* Auto Mode */
-	}else{ /* Master Mode */
 	   val &= ~SPI_SLAVE_AUTO; /* Manual Mode */
 	   val |= SPI_SLAVE_SIG_INACT; /* DeActivate CS */
 	   if(spi->mode & SPI_CS_HIGH){
@@ -244,7 +233,6 @@ static inline void disable_cs(struct s3cspi_bus *sspi, struct spi_device *spi)
 	      spd->cs_set(spd->cs_pin, CS_HIGH);
 	      spd->cs_level = CS_HIGH;
 	   }
-	}
 
 	writel(val, sspi->regs + S3C_SPI_SLAVE_SEL);
 }
@@ -255,8 +243,6 @@ static inline void set_polarity(struct s3cspi_bus *sspi)
 
 	val = readl(sspi->regs + S3C_SPI_CH_CFG);
 	val &= ~(SPI_CH_SLAVE | SPI_CPOL_L | SPI_CPHA_B);
-	if(sspi->cur_mode & SPI_SLAVE)
-	   val |= SPI_CH_SLAVE;
 	if(sspi->cur_mode & SPI_CPOL)
 	   val |= SPI_CPOL_L;
 	if(sspi->cur_mode & SPI_CPHA)
@@ -272,10 +258,8 @@ static inline void set_clock(struct s3cspi_bus *sspi)
 	val = readl(sspi->regs + S3C_SPI_CLK_CFG);
 	val &= ~(SPI_CLKSEL_SRCMSK | SPI_ENCLK_ENABLE | 0xff);
 	val |= SPI_CLKSEL_SRC;
-	if(!(sspi->cur_mode & SPI_SLAVE)){
 	   val |= ((smi->spiclck_getrate(smi) / sspi->cur_speed / 2 - 1) << 0);	// PCLK and PSR
 	   val |= SPI_ENCLK_ENABLE;
-	}
 	writel(val, sspi->regs + S3C_SPI_CLK_CFG);
 }
 
@@ -428,9 +412,6 @@ static int wait_for_xfer(struct s3cspi_bus *sspi, struct spi_transfer *xfer)
 	u32 val;
 
 	val = msecs_to_jiffies(xfer->len / (sspi->min_speed / 8 / 1000)); /* time to xfer data at min. speed */
-	if(sspi->cur_mode & SPI_SLAVE)
-	   val += msecs_to_jiffies(5000); /* 5secs to switch on the Master */
-	else
 	   val += msecs_to_jiffies(10); /* just some more */
 	status = wait_for_completion_interruptible_timeout(&sspi->xfer_completion, val);
 
@@ -542,14 +523,19 @@ static void handle_msg(struct s3cspi_bus *sspi, struct spi_message *msg)
 	int status = 0;
 	struct spi_transfer *xfer;
 	struct spi_device *spi = msg->spi;
+	struct s3c_spi_mstr_info *smi = sspi->spi_mstinfo; 
+
+	/*enable clock of spi*/
+	smi->spiclck_en(smi);	
 
 	/* Change pull-up only when switching between Master-Slave modes */
+	#if 0
 	if((sspi->cur_mode & SPI_SLAVE) ^ (spi->mode & SPI_SLAVE)) {
 	   sspi->cur_mode &= ~SPI_SLAVE;
 	   sspi->cur_mode |= (spi->mode & SPI_SLAVE);
 	   S3C_SETGPIOPULL(sspi);
 	}
-
+	#endif
 	/* Write to regs only if necessary */
 	if((sspi->cur_speed != spi->max_speed_hz)
 		||(sspi->cur_mode != spi->mode)
@@ -590,7 +576,6 @@ static void handle_msg(struct s3cspi_bus *sspi, struct spi_message *msg)
 		/* Enable Interrupts */
 		enable_spiintr(sspi, xfer);
 
-		if(!(sspi->cur_mode & SPI_SLAVE))
 		   flush_spi(sspi);
 
 		/* Enqueue data on DMA */
@@ -654,7 +639,7 @@ static void handle_msg(struct s3cspi_bus *sspi, struct spi_message *msg)
 		if(xfer->delay_usecs)
 		   udelay(xfer->delay_usecs);
 
-		if(!(sspi->cur_mode & SPI_SLAVE) && xfer->cs_change){
+		if(xfer->cs_change){
 		   if(list_is_last(&xfer->transfer_list, &msg->transfers))  /* Hint that the next mssg is gonna be for the same device */
 		      sspi->spi_mstinfo->spd[spi->chip_select].cs_level = CS_TOGGLE;
 		   else
@@ -669,17 +654,9 @@ static void handle_msg(struct s3cspi_bus *sspi, struct spi_message *msg)
 
 out:
 	/* Slave Deselect in Master mode only if _not_ hinted for next mssg to the same device */
-	if(!(sspi->cur_mode & SPI_SLAVE)){
 	   if((sspi->spi_mstinfo->spd[spi->chip_select].cs_level != CS_TOGGLE) || status){ /* De-select the device in case of some error */
 	      disable_cs(sspi, spi);
-	   }else{
-	      val = readl(sspi->regs + S3C_SPI_SLAVE_SEL);
-	      val &= ~SPI_SLAVE_AUTO; /* Manual Mode */
-	      val |= SPI_SLAVE_SIG_INACT; /* DeActivate CS */
-	      writel(val, sspi->regs + S3C_SPI_SLAVE_SEL);
-	      sspi->tgl_spi = spi;
 	   }
-	}
 
 	/* Disable Interrupts */
 	writel(0, sspi->regs + S3C_SPI_INT_EN);
@@ -693,6 +670,9 @@ out:
 	val = readl(sspi->regs + S3C_SPI_MODE_CFG);
 	val &= ~(SPI_MODE_TXDMA_ON | SPI_MODE_RXDMA_ON);
 	writel(val, sspi->regs + S3C_SPI_MODE_CFG);
+
+	/*disable clock of spi*/
+	smi->spiclck_dis(smi);
 
 	msg->status = status;
 	if(msg->complete)
@@ -752,7 +732,7 @@ static int s3c_spi_transfer(struct spi_device *spi, struct spi_message *msg)
 }
 
 /* the spi->mode bits understood by this driver: */
-#define MODEBITS	(SPI_CPOL | SPI_CPHA | SPI_SLAVE | SPI_CS_HIGH)
+#define MODEBITS	(SPI_CPOL | SPI_CPHA |/* SPI_SLAVE |*/ SPI_CS_HIGH)
 /*
  * Here we only check the validity of requested configuration and 
  * save the configuration in a local data-structure.
@@ -767,8 +747,10 @@ static int s3c_spi_setup(struct spi_device *spi)
 	struct s3cspi_bus *sspi = spi_master_get_devdata(spi->master);
 	struct s3c_spi_mstr_info *smi = sspi->spi_mstinfo;
 	struct s3c_spi_pdata *spd = &sspi->spi_mstinfo->spd[spi->chip_select];
-
-
+	
+	/*enable clock for setup*/
+	smi->spiclck_en(smi);
+	
 	spin_lock_irqsave(&sspi->lock, flags);
 
 	list_for_each_entry(msg, &sspi->queue, queue){
@@ -820,21 +802,25 @@ static int s3c_spi_setup(struct spi_device *spi)
 			|| spi->max_speed_hz < sspi->min_speed){
 		dev_err(&spi->dev, "setup: req speed(%u) out of range[%u-%u]\n", 
 				spi->max_speed_hz, sspi->min_speed, sspi->max_speed);
-		return -EINVAL;
+		goto setup_err;	
 	}
 
 	if (spi->mode & ~MODEBITS) {
 		dev_err(&spi->dev, "setup: unsupported mode bits %x\n",	spi->mode & ~MODEBITS);
-		return -EINVAL;
+		goto setup_err;
 	}
 
-	if(!(spi->mode & SPI_SLAVE)){
 	   if(spd->cs_level == CS_FLOAT)
 	      spd->cs_config(spd->cs_pin, spd->cs_mode, (spi->mode & SPI_CS_HIGH) ? CS_LOW : CS_HIGH);
 	   disable_cs(sspi, spi);
-	}
-
+	
+	/*disable clock*/
+	smi->spiclck_dis(smi);
 	return 0;
+
+setup_err :
+	smi->spiclck_dis(smi);
+	return -EINVAL;
 }
 
 static int __init s3c_spi_probe(struct platform_device *pdev)
@@ -930,7 +916,7 @@ static int __init s3c_spi_probe(struct platform_device *pdev)
 		ret = -EBUSY;
 		goto lb9;
 	}
-	sspi->workqueue = create_singlethread_workqueue(master->dev.parent->bus_id);
+	sspi->workqueue = create_singlethread_workqueue("spi_s3c"/*master->dev.parent->bus_id*/);
 	if(!sspi->workqueue){
 		dev_err(&pdev->dev, "cannot create workqueue\n");
 		ret = -EBUSY;
@@ -951,8 +937,8 @@ static int __init s3c_spi_probe(struct platform_device *pdev)
 		goto lb11;
 	}
 	s3c2410_dma_set_buffdone_fn(sspi->rx_dmach, s3c_spi_dma_rxcb);
-	s3c2410_dma_devconfig(sspi->rx_dmach, S3C2410_DMASRC_HW, 0, sspi->sfr_phyaddr + S3C_SPI_RX_DATA);
-	s3c2410_dma_config(sspi->rx_dmach, sspi->cur_bpw/8, 0);
+	s3c2410_dma_devconfig(sspi->rx_dmach, S3C2410_DMASRC_HW, sspi->sfr_phyaddr + S3C_SPI_RX_DATA);
+	s3c2410_dma_config(sspi->rx_dmach, sspi->cur_bpw/8);
 	s3c2410_dma_setflags(sspi->rx_dmach, S3C2410_DMAF_AUTOSTART);
 
 	if(s3c2410_dma_request(sspi->tx_dmach, &s3c_spi_dma_client, NULL)){
@@ -961,8 +947,8 @@ static int __init s3c_spi_probe(struct platform_device *pdev)
 		goto lb12;
 	}
 	s3c2410_dma_set_buffdone_fn(sspi->tx_dmach, s3c_spi_dma_txcb);
-	s3c2410_dma_devconfig(sspi->tx_dmach, S3C2410_DMASRC_MEM, 0, sspi->sfr_phyaddr + S3C_SPI_TX_DATA);
-	s3c2410_dma_config(sspi->tx_dmach, sspi->cur_bpw/8, 0);
+	s3c2410_dma_devconfig(sspi->tx_dmach, S3C2410_DMASRC_MEM, sspi->sfr_phyaddr + S3C_SPI_TX_DATA);
+	s3c2410_dma_config(sspi->tx_dmach, sspi->cur_bpw/8);
 	s3c2410_dma_setflags(sspi->tx_dmach, S3C2410_DMAF_AUTOSTART);
 
 	/* Setup Deufult Mode */
@@ -979,6 +965,9 @@ static int __init s3c_spi_probe(struct platform_device *pdev)
 		ret = -EBUSY;
 		goto lb13;
 	}
+
+	/*enable clock only when transmitting data*/
+	smi->spiclck_dis(smi);
 
 	printk("Samsung SoC SPI Driver loaded for Bus SPI-%d with %d Slaves attached\n", pdev->id, master->num_chipselect);
 	printk("\tMax,Min-Speed [%d, %d]Hz\n", sspi->max_speed, sspi->min_speed);
@@ -1111,8 +1100,8 @@ static int s3c_spi_resume(struct platform_device *pdev)
 	   return val;
 	}
 	s3c2410_dma_set_buffdone_fn(sspi->rx_dmach, s3c_spi_dma_rxcb);
-	s3c2410_dma_devconfig(sspi->rx_dmach, S3C2410_DMASRC_HW, 0, sspi->sfr_phyaddr + S3C_SPI_RX_DATA);
-	s3c2410_dma_config(sspi->rx_dmach, sspi->cur_bpw/8, 0);
+	s3c2410_dma_devconfig(sspi->rx_dmach, S3C2410_DMASRC_HW, sspi->sfr_phyaddr + S3C_SPI_RX_DATA);
+	s3c2410_dma_config(sspi->rx_dmach, sspi->cur_bpw/8);
 	s3c2410_dma_setflags(sspi->rx_dmach, S3C2410_DMAF_AUTOSTART);
 
 	val = s3c2410_dma_request(sspi->tx_dmach, &s3c_spi_dma_client, NULL);
@@ -1122,8 +1111,8 @@ static int s3c_spi_resume(struct platform_device *pdev)
 	   return val;
 	}
 	s3c2410_dma_set_buffdone_fn(sspi->tx_dmach, s3c_spi_dma_txcb);
-	s3c2410_dma_devconfig(sspi->tx_dmach, S3C2410_DMASRC_MEM, 0, sspi->sfr_phyaddr + S3C_SPI_TX_DATA);
-	s3c2410_dma_config(sspi->tx_dmach, sspi->cur_bpw/8, 0);
+	s3c2410_dma_devconfig(sspi->tx_dmach, S3C2410_DMASRC_MEM, sspi->sfr_phyaddr + S3C_SPI_TX_DATA);
+	s3c2410_dma_config(sspi->tx_dmach, sspi->cur_bpw/8);
 	s3c2410_dma_setflags(sspi->tx_dmach, S3C2410_DMAF_AUTOSTART);
 
 	return 0;

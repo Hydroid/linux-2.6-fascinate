@@ -34,9 +34,9 @@ enum {
 	MAX8698_LDO7,
 	MAX8698_LDO8,
 	MAX8698_LDO9,
-	MAX8698_DCDC1,
-	MAX8698_DCDC2,
-	MAX8698_DCDC3,
+	MAX8698_BUCK1,
+	MAX8698_BUCK2,
+	MAX8698_BUCK3,
 };
 
 /**
@@ -44,15 +44,9 @@ enum {
  * @id: regulator Id
  * @initdata: regulator init data (contraints, supplies, ...)
  */
-/* old structure
 struct max8698_subdev_data {
 	int				id;
 	struct regulator_init_data	*initdata;
-};*/
-struct max8698_subdev_data {
-	int		id;
-//        const char      *name;
-        void            *platform_data;
 };
 
 /**
@@ -63,6 +57,19 @@ struct max8698_subdev_data {
 struct max8698_platform_data {
 	int num_regulators;
 	struct max8698_subdev_data *regulators;
+	
+	int		_irq;
+	int		_ono;
+
+	int		dvsarm1;
+	int		dvsarm2;
+	int		dvsarm3;
+	int		dvsarm4;
+	int		dvsint1;
+	int		dvsint2;
+	int		set1;
+	int		set2;
+	int		set3;
 };
 
 #endif

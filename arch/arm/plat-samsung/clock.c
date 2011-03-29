@@ -69,6 +69,7 @@ static int clk_null_enable(struct clk *clk, int enable)
 
 struct clk *clk_get(struct device *dev, const char *id)
 {
+	unsigned long flags;
 	struct clk *p;
 	struct clk *clk = ERR_PTR(-ENOENT);
 	int idno;
@@ -78,7 +79,7 @@ struct clk *clk_get(struct device *dev, const char *id)
 	else
 		idno = to_platform_device(dev)->id;
 
-	spin_lock(&clocks_lock);
+	spin_lock_irqsave(&clocks_lock, flags);
 
 	list_for_each_entry(p, &clocks, list) {
 		if (p->id == idno &&
@@ -102,7 +103,7 @@ struct clk *clk_get(struct device *dev, const char *id)
 		}
 	}
 
-	spin_unlock(&clocks_lock);
+	spin_unlock_irqrestore(&clocks_lock, flags);
 	return clk;
 }
 
@@ -113,31 +114,35 @@ void clk_put(struct clk *clk)
 
 int clk_enable(struct clk *clk)
 {
+	unsigned long flags;
+
 	if (IS_ERR(clk) || clk == NULL)
 		return -EINVAL;
 
 	clk_enable(clk->parent);
 
-	spin_lock(&clocks_lock);
+	spin_lock_irqsave(&clocks_lock, flags);
 
 	if ((clk->usage++) == 0)
 		(clk->enable)(clk, 1);
 
-	spin_unlock(&clocks_lock);
+	spin_unlock_irqrestore(&clocks_lock, flags);
 	return 0;
 }
 
 void clk_disable(struct clk *clk)
 {
+	unsigned long flags;
+
 	if (IS_ERR(clk) || clk == NULL)
 		return;
 
-	spin_lock(&clocks_lock);
+	spin_lock_irqsave(&clocks_lock, flags);
 
 	if ((--clk->usage) == 0)
 		(clk->enable)(clk, 0);
 
-	spin_unlock(&clocks_lock);
+	spin_unlock_irqrestore(&clocks_lock, flags);
 	clk_disable(clk->parent);
 }
 
@@ -169,6 +174,7 @@ long clk_round_rate(struct clk *clk, unsigned long rate)
 
 int clk_set_rate(struct clk *clk, unsigned long rate)
 {
+	unsigned long flags;
 	int ret;
 
 	if (IS_ERR(clk))
@@ -184,9 +190,9 @@ int clk_set_rate(struct clk *clk, unsigned long rate)
 	if (clk->ops == NULL || clk->ops->set_rate == NULL)
 		return -EINVAL;
 
-	spin_lock(&clocks_lock);
+	spin_lock_irqsave(&clocks_lock, flags);
 	ret = (clk->ops->set_rate)(clk, rate);
-	spin_unlock(&clocks_lock);
+	spin_unlock_irqrestore(&clocks_lock, flags);
 
 	return ret;
 }
@@ -198,17 +204,18 @@ struct clk *clk_get_parent(struct clk *clk)
 
 int clk_set_parent(struct clk *clk, struct clk *parent)
 {
+	unsigned long flags;
 	int ret = 0;
 
 	if (IS_ERR(clk))
 		return -EINVAL;
 
-	spin_lock(&clocks_lock);
+	spin_lock_irqsave(&clocks_lock, flags);
 
 	if (clk->ops && clk->ops->set_parent)
 		ret = (clk->ops->set_parent)(clk, parent);
 
-	spin_unlock(&clocks_lock);
+	spin_unlock_irqrestore(&clocks_lock, flags);
 
 	return ret;
 }
@@ -315,6 +322,7 @@ struct clk s3c24xx_uclk = {
  */
 int s3c24xx_register_clock(struct clk *clk)
 {
+	unsigned long flags;
 	if (clk->enable == NULL)
 		clk->enable = clk_null_enable;
 
@@ -323,9 +331,9 @@ int s3c24xx_register_clock(struct clk *clk)
 	/* Quick check to see if this clock has already been registered. */
 	BUG_ON(clk->list.prev != clk->list.next);
 
-	spin_lock(&clocks_lock);
+	spin_lock_irqsave(&clocks_lock, flags);
 	list_add(&clk->list, &clocks);
-	spin_unlock(&clocks_lock);
+	spin_unlock_irqrestore(&clocks_lock, flags);
 
 	return 0;
 }
@@ -376,22 +384,7 @@ void __init s3c_register_clocks(struct clk *clkp, int nr_clks)
 	}
 }
 
-/**
- * s3c_disable_clocks() - disable an array of clocks
- * @clkp: Pointer to the first clock in the array.
- * @nr_clks: Number of clocks to register.
- *
- * for internal use only at initialisation time. disable the clocks in the
- * @clkp array.
- */
-
-void __init s3c_disable_clocks(struct clk *clkp, int nr_clks)
-{
-	for (; nr_clks > 0; nr_clks--, clkp++)
-		(clkp->enable)(clkp, 0);
-}
-
-/* initialise all the clocks */
+/* initalise all the clocks */
 
 int __init s3c24xx_register_baseclocks(unsigned long xtal)
 {

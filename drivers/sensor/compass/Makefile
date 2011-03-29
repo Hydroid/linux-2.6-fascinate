@@ -5,9 +5,8 @@
 # VERSION&DATE	: Version 1.00	2007/12/25 (Throughc)
 ##############################################################################
 
+obj-$(CONFIG_COMPASS_YAMAHA_ATLAS)    += atlas/yamaha.o
 
-obj-$(CONFIG_COMPASS_AK8973B)	+= ak8973b.o
-obj-$(CONFIG_COMPASS_YAMAHA)	+= yamaha.o
-
+obj-$(CONFIG_COMPASS_YAMAHA_VICTORY)    += victory/yamaha.o
 
 

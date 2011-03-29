@@ -55,7 +55,6 @@ static char banner[] __initdata = KERN_INFO "S3C MDNIE Driver, (c) 2010 Samsung 
 struct clk		*mdnie_clock;
 
 //#define MDNIE_TUNING
-#define MDNIE_TUNINGMODE_FOR_BACKLIGHT
 
 /*********** for debug **********************************************************/
 #if 0 
@@ -99,23 +98,6 @@ struct device *switch_mdnieset_outdoor_dev;
 
 mDNIe_data_type mDNIe_Video[]= 
 {
-#ifdef CONFIG_VOODOO_MDNIE
-	// Voodoo color: mDNIe settings optimized for most video
-	// standard response curve
-	// nice sharpness filter and very light color saturation boost
-	0x0084, 0x0040,
-	0x0090, 0x0000,
-	0x0094, 0x0FFF,
-	0x0098, 0x005C,
-	0x009C, 0x0FF5,
-	0x00AC, 0x0007,
-	0x00B4, 0x0500,
-	0x00C0, 0x0400,
-	0x00C4, 0x7200,
-	0x00C8, 0x008D,
-	0x00D0, 0x00C0,
-	END_SEQ, 0x0000,
-#else
 	0x0084, 0x0040,
 	0x0090, 0x0000,
 	0x0094, 0x0fff,
@@ -128,7 +110,6 @@ mDNIe_data_type mDNIe_Video[]=
 	0x00C8, 0x008d, 
 	0x00D0, 0x0100, 
 	END_SEQ, 0x0000,
-#endif
 };
 
 mDNIe_data_type mDNIe_Camera[]= 
@@ -164,23 +145,14 @@ mDNIe_data_type mDNIe_Camera_Outdoor_Mode[]=
 
 mDNIe_data_type mDNIe_UI[]= 
 {
-#ifdef CONFIG_VOODOO_MDNIE
-	// Voodoo color: optimized UI mode
-	// reduce the sharpness filter radius to make it much closer
-	// to the real fuzzyness introduced by the SAMOLED Pentile pattern
-	// color saturation boost on everything is also disabled because
-	// it causes harm on stock settings (exaggerated colors)
-	0x0084, 0x0040,
+#if 0
+	0x0084, 0x0000,
 	0x0090, 0x0000,
-	0x0094, 0x0FFF,
-	0x0098, 0x005C,
-	0x009C, 0x0613,
+	0x0094, 0x0fff,
+	0x0098, 0x005c,
+	0x009C, 0x0010,
 	0x00AC, 0x0000,
-	0x00B4, 0x0A00,
-	0x00C0, 0x0400,
-	0x00C4, 0x7200,
-	0x00C8, 0x008D,
-	0x00D0, 0x00C0,
+	0x00B4, 0x03ff,
 	END_SEQ, 0x0000,
 #else
 	0x0084, 0x0040,
@@ -201,22 +173,6 @@ mDNIe_data_type mDNIe_UI[]=
 
 mDNIe_data_type mDNIe_Video_Warm[]= 
 {
-#ifdef CONFIG_VOODOO_MDNIE_VIDEOS_ALT_PRESETS
-	// Voodoo color: high vibrance/saturation and sharpening
-	// Boost mode for videos
-	0x0084, 0x0040,
-	0x0090, 0x0000,
-	0x0094, 0x0FFF,
-	0x0098, 0x005C,
-	0x009C, 0x0FFF,
-	0x00AC, 0x0200,
-	0x00B4, 0x0800,
-	0x00C0, 0x0400,
-	0x00C4, 0x7200,
-	0x00C8, 0x008D,
-	0x00D0, 0x00C0,
-	END_SEQ, 0x0000,
-#else
 	0x0084, 0x0020,
 	0x0090, 0x0000,
 	0x0094, 0x0fff,
@@ -228,7 +184,6 @@ mDNIe_data_type mDNIe_Video_Warm[]=
 	0x0138, 0x7600,
 	0x0140, 0x0090,
 	END_SEQ, 0x0000,
-#endif
 };
 
 mDNIe_data_type mDNIe_Video_WO_Mode[]= 
@@ -248,22 +203,6 @@ mDNIe_data_type mDNIe_Video_WO_Mode[]=
 
 mDNIe_data_type mDNIe_Video_Cold[]= 
 {
-#ifdef CONFIG_VOODOO_MDNIE_VIDEOS_ALT_PRESETS
-	// Voodoo color : sharpness filter at minimum, unmodified color
-	// Soft mode. Useful to counter artifacts on bad or noisy videos
-	0x0084, 0x0040,
-	0x0090, 0x0000,
-	0x0094, 0x0FFF,
-	0x0098, 0x005C,
-	0x009C, 0x0010,
-	0x00AC, 0x0000,
-	0x00B4, 0x0000,
-	0x00C0, 0x0400,
-	0x00C4, 0x7200,
-	0x00C8, 0x008D,
-	0x00D0, 0x00C0,
-	END_SEQ, 0x0000,
-#else
 	0x0084, 0x0020,
 	0x0090, 0x0000,
 	0x0094, 0x0fff,
@@ -275,7 +214,6 @@ mDNIe_data_type mDNIe_Video_Cold[]=
 	0x0140, 0x9400,
 	0x0148, 0x006D,
 	END_SEQ, 0x0000,
-#endif
 };
 
 mDNIe_data_type mDNIe_Video_CO_Mode[]= 
@@ -316,7 +254,7 @@ u8 current_mDNIe_OutDoor_OnOff = FALSE;
 
 int mDNIe_Tuning_Mode = FALSE;
 
-#ifdef MDNIE_TUNINGMODE_FOR_BACKLIGHT
+#ifdef CONFIG_FB_S3C_MDNIE_TUNINGMODE_FOR_BACKLIGHT
 #if 0
 u16 mDNIe_data_ui[50] = {0};
 u16 mDNIe_data_300cd_level1[50] = {0};
@@ -545,7 +483,7 @@ int s3c_mdnie_hw_init(void)
 
 	/* clock */
 
-	mdnie_clock = clk_get(NULL,"mdnie_sel"); //to change sclk
+	mdnie_clock = clk_get(NULL,"sclk_mdnie"); //to change sclk
 	if (IS_ERR(mdnie_clock)) {
 		printk("failed to get mdnie clock source\n");
 		return -EINVAL;
@@ -721,7 +659,9 @@ void mDNIe_Set_Mode(Lcd_mDNIe_UI mode, u8 mDNIe_Outdoor_OnOff)
 
 
 	pre_0x0100 = 0;
+#ifdef CONFIG_FB_S3C_MDNIE_TUNINGMODE_FOR_BACKLIGHT
 	pre_val = -1;
+#endif	/* CONFIG_FB_S3C_MDNIE_TUNINGMODE_FOR_BACKLIGHT */
 
 	gprintk("[mDNIe] mDNIe_Set_Mode: current_mDNIe_UI(%d), current_mDNIe_OutDoor_OnOff(%d)  \n",current_mDNIe_UI, current_mDNIe_OutDoor_OnOff);	
 }
@@ -1159,7 +1099,7 @@ void mDNIe_txtbuf_to_parsing(void)
 EXPORT_SYMBOL(mDNIe_txtbuf_to_parsing);
 #endif
 
-#ifdef MDNIE_TUNINGMODE_FOR_BACKLIGHT
+#ifdef CONFIG_FB_S3C_MDNIE_TUNINGMODE_FOR_BACKLIGHT
 int mdnie_tuning_backlight = 0;
 
 extern int IsLDIEnabled(void);

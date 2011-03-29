@@ -9,7 +9,6 @@
  */
 
 #include <linux/types.h>
-#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/errno.h>
@@ -174,6 +173,7 @@ static unsigned long mq_get(struct Qdisc *sch, u32 classid)
 
 static void mq_put(struct Qdisc *sch, unsigned long cl)
 {
+	return;
 }
 
 static int mq_dump_class(struct Qdisc *sch, unsigned long cl,

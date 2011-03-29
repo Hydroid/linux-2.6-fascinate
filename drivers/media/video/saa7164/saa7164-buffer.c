@@ -19,8 +19,6 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <linux/slab.h>
-
 #include "saa7164.h"
 
 /* The PCI address space for buffer handling looks like this:

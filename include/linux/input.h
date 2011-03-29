@@ -53,6 +53,7 @@ struct input_absinfo {
 	__s32 maximum;
 	__s32 fuzz;
 	__s32 flat;
+	__s32 resolution;
 };
 
 #define EVIOCGVERSION		_IOR('E', 0x01, int)			/* get driver version */
@@ -449,6 +450,7 @@ struct input_absinfo {
 #define BTN_STYLUS2		0x14c
 #define BTN_TOOL_DOUBLETAP	0x14d
 #define BTN_TOOL_TRIPLETAP	0x14e
+#define BTN_TOOL_QUADTAP	0x14f	/* Four fingers on trackpad */
 
 #define BTN_WHEEL		0x150
 #define BTN_GEAR_DOWN		0x150
@@ -648,19 +650,18 @@ struct input_absinfo {
 #define ABS_TOOL_WIDTH		0x1c
 #define ABS_VOLUME		0x20
 #define ABS_MISC		0x28
-#ifdef _SUPPORT_MULTITOUCH_
-#define ABS_MT_TOUCH           0x30    /* Diameter of touching circle */ 
-#define ABS_MT_TOUCH_MAJOR     0x30    /* Major axis of touching ellipse */ 
-#define ABS_MT_TOUCH_MINOR     0x31    /* Minor axis of touching ellipse */ 
-#define ABS_MT_WIDTH           0x32    /* Diameter of approaching circle */ 
-#define ABS_MT_WIDTH_MAJOR     0x32    /* Major axis of approaching ellipse */ 
-#define ABS_MT_WIDTH_MINOR     0x33    /* Minor axis of approaching ellipse */ 
-#define ABS_MT_ORIENTATION     0x34    /* Ellipse orientation */ 
-#define ABS_MT_POSITION_X      0x35    /* Center X ellipse position */ 
-#define ABS_MT_POSITION_Y      0x36    /* Center Y ellipse position */ 
-#define ABS_MT_TOOL_TYPE       0x37    /* Type of touching device */ 
-#define ABS_MT_BLOB_ID         0x38    /* Group a set of packets as a blob */ 
-#endif
+
+#define ABS_MT_TOUCH_MAJOR	0x30	/* Major axis of touching ellipse */
+#define ABS_MT_TOUCH_MINOR	0x31	/* Minor axis (omit if circular) */
+#define ABS_MT_WIDTH_MAJOR	0x32	/* Major axis of approaching ellipse */
+#define ABS_MT_WIDTH_MINOR	0x33	/* Minor axis (omit if circular) */
+#define ABS_MT_ORIENTATION	0x34	/* Ellipse orientation */
+#define ABS_MT_POSITION_X	0x35	/* Center X ellipse position */
+#define ABS_MT_POSITION_Y	0x36	/* Center Y ellipse position */
+#define ABS_MT_TOOL_TYPE	0x37	/* Type of touching device */
+#define ABS_MT_BLOB_ID		0x38	/* Group a set of packets as a blob */
+#define ABS_MT_TRACKING_ID	0x39	/* Unique ID of initiated contact */
+
 #define ABS_MAX			0x3f
 #define ABS_CNT			(ABS_MAX+1)
 
@@ -678,6 +679,7 @@ struct input_absinfo {
 #define SW_DOCK			0x05  /* set = plugged into dock */
 #define SW_LINEOUT_INSERT	0x06  /* set = inserted */
 #define SW_JACK_PHYSICAL_INSERT 0x07  /* set = mechanical switch set */
+#define SW_VIDEOOUT_INSERT	0x08  /* set = inserted */
 #define SW_MAX			0x0f
 #define SW_CNT			(SW_MAX+1)
 
@@ -758,25 +760,26 @@ struct input_absinfo {
 #define BUS_GSC			0x1A
 #define BUS_ATARI		0x1B
 
-#ifdef _SUPPORT_MULTITOUCH_
-/* 
- * MT_TOOL types 
- */ 
-#define MT_TOOL_FINGER         0 
-#define MT_TOOL_PEN            1 
-#define MT_TOOL_MAX            9 
-#define MT_TOOL_CNT            (MT_TOOL_MAX + 1) 
-#endif
+/*
+ * MT_TOOL types
+ */
+#define MT_TOOL_FINGER		0
+#define MT_TOOL_PEN		1
 
 #ifdef CONFIG_KERNEL_DEBUG_SEC
-#define KERNEL_SEC_FORCED_UPLOAD_1ST_KEY  42       /*UP KEY*/
-#define KERNEL_SEC_FORCED_UPLOAD_2ND_KEY  26       /* POWER KEY*/
-
-#ifdef orignal_S1
-//#define KERNEL_SEC_FORCED_UPLOAD_1ST_KEY  50       /*OK KEY*/
-//#define KERNEL_SEC_FORCED_UPLOAD_2ND_KEY  42       /*UP KEY*/
-#endif 
-
+#ifdef CONFIG_S5PV210_ATLAS
+#define KERNEL_SEC_FORCED_UPLOAD_1ST_KEY  42       /*UP KEY LIKE ECLAIR OK KEY 52*/
+#define KERNEL_SEC_FORCED_UPLOAD_2ND_KEY  26       /*UP KEY 17*/
+#elif  CONFIG_S5PV210_VICTORY
+#define KERNEL_SEC_FORCED_UPLOAD_1ST_KEY  52       /*UP KEY LIKE ECLAIR OK KEY 52*/
+#define KERNEL_SEC_FORCED_UPLOAD_2ND_KEY  17       /*UP KEY 17*/
+#endif
+#if defined CONFIG_S5PV210_VICTORY
+//Thomas Ryu, Define the KYEs for HARD Reset
+#define KERNEL_SEC_HARDRESET_KEY1  51 //Volume Up
+#define KERNEL_SEC_HARDRESET_KEY2  58 //PWR 
+#define KERNEL_SEC_HARDRESET_KEY3  46 //Camera
+#endif
 #endif // CONFIG_KERNEL_DEBUG_SEC
 
 /*
@@ -1126,6 +1129,7 @@ struct input_dev {
 	int absmin[ABS_MAX + 1];
 	int absfuzz[ABS_MAX + 1];
 	int absflat[ABS_MAX + 1];
+	int absres[ABS_MAX + 1];
 
 	int (*open)(struct input_dev *dev);
 	void (*close)(struct input_dev *dev);
@@ -1138,7 +1142,7 @@ struct input_dev {
 	struct mutex mutex;
 
 	unsigned int users;
-	int going_away;
+	bool going_away;
 
 	struct device dev;
 
@@ -1348,12 +1352,10 @@ static inline void input_sync(struct input_dev *dev)
 	input_event(dev, EV_SYN, SYN_REPORT, 0);
 }
 
-#ifdef _SUPPORT_MULTITOUCH_
-static inline void input_mt_sync(struct input_dev *dev) 
-{ 
-	input_event(dev, EV_SYN, SYN_MT_REPORT, 0); 
-} 
-#endif
+static inline void input_mt_sync(struct input_dev *dev)
+{
+	input_event(dev, EV_SYN, SYN_MT_REPORT, 0);
+}
 
 void input_set_capability(struct input_dev *dev, unsigned int type, unsigned int code);
 
@@ -1394,6 +1396,10 @@ extern struct class input_class;
  * methods; erase() is optional. set_gain() and set_autocenter() need
  * only be implemented if driver sets up FF_GAIN and FF_AUTOCENTER
  * bits.
+ *
+ * Note that playback(), set_gain() and set_autocenter() are called with
+ * dev->event_lock spinlock held and interrupts off and thus may not
+ * sleep.
  */
 struct ff_device {
 	int (*upload)(struct input_dev *dev, struct ff_effect *effect,

@@ -5,8 +5,11 @@
 #define _ASM_MC146818RTC_H
 
 #include <linux/io.h>
-#include <mach/irqs.h>
-
+#if defined CONFIG_S5PV210_VICTORY
+#include <mach/victory/irqs.h>
+#elif defined CONFIG_S5PV210_ATLAS
+#include <mach/atlas/irqs.h>
+#endif
 #ifndef RTC_PORT
 #define RTC_PORT(x)	(0x70 + (x))
 #define RTC_ALWAYS_BCD	1	/* RTC operates in binary mode */

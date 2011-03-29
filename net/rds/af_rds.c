@@ -33,7 +33,6 @@
 #include <linux/module.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
-#include <linux/gfp.h>
 #include <linux/in.h>
 #include <linux/poll.h>
 #include <net/sock.h>
@@ -158,10 +157,9 @@ static unsigned int rds_poll(struct file *file, struct socket *sock,
 	unsigned int mask = 0;
 	unsigned long flags;
 
-	poll_wait(file, sk_sleep(sk), wait);
+	poll_wait(file, sk->sk_sleep, wait);
 
-	if (rs->rs_seen_congestion)
-		poll_wait(file, &rds_poll_waitq, wait);
+	poll_wait(file, &rds_poll_waitq, wait);
 
 	read_lock_irqsave(&rs->rs_recv_lock, flags);
 	if (!rs->rs_cong_monitor) {
@@ -176,16 +174,12 @@ static unsigned int rds_poll(struct file *file, struct socket *sock,
 			mask |= (POLLIN | POLLRDNORM);
 		spin_unlock(&rs->rs_lock);
 	}
-	if (!list_empty(&rs->rs_recv_queue) ||
-	    !list_empty(&rs->rs_notify_queue))
+	if (!list_empty(&rs->rs_recv_queue)
+	 || !list_empty(&rs->rs_notify_queue))
 		mask |= (POLLIN | POLLRDNORM);
 	if (rs->rs_snd_bytes < rds_sk_sndbuf(rs))
 		mask |= (POLLOUT | POLLWRNORM);
 	read_unlock_irqrestore(&rs->rs_recv_lock, flags);
-
-	/* clear state any time we wake a seen-congested socket */
-	if (mask)
-		rs->rs_seen_congestion = 0;
 
 	return mask;
 }
@@ -271,9 +265,6 @@ static int rds_setsockopt(struct socket *sock, int level, int optname,
 	case RDS_GET_MR:
 		ret = rds_get_mr(rs, optval, optlen);
 		break;
-	case RDS_GET_MR_FOR_DEST:
-		ret = rds_get_mr_for_dest(rs, optval, optlen);
-		break;
 	case RDS_FREE_MR:
 		ret = rds_free_mr(rs, optval, optlen);
 		break;
@@ -314,8 +305,8 @@ static int rds_getsockopt(struct socket *sock, int level, int optname,
 		if (len < sizeof(int))
 			ret = -EINVAL;
 		else
-		if (put_user(rs->rs_recverr, (int __user *) optval) ||
-		    put_user(sizeof(int), optlen))
+		if (put_user(rs->rs_recverr, (int __user *) optval)
+		 || put_user(sizeof(int), optlen))
 			ret = -EFAULT;
 		else
 			ret = 0;
@@ -416,8 +407,7 @@ static int __rds_create(struct socket *sock, struct sock *sk, int protocol)
 	return 0;
 }
 
-static int rds_create(struct net *net, struct socket *sock, int protocol,
-		      int kern)
+static int rds_create(struct net *net, struct socket *sock, int protocol)
 {
 	struct sock *sk;
 
@@ -441,7 +431,7 @@ void rds_sock_put(struct rds_sock *rs)
 	sock_put(rds_rs_to_sk(rs));
 }
 
-static const struct net_proto_family rds_family_ops = {
+static struct net_proto_family rds_family_ops = {
 	.family =	AF_RDS,
 	.create =	rds_create,
 	.owner	=	THIS_MODULE,
@@ -452,6 +442,7 @@ static void rds_sock_inc_info(struct socket *sock, unsigned int len,
 			      struct rds_info_lengths *lens)
 {
 	struct rds_sock *rs;
+	struct sock *sk;
 	struct rds_incoming *inc;
 	unsigned long flags;
 	unsigned int total = 0;
@@ -461,6 +452,7 @@ static void rds_sock_inc_info(struct socket *sock, unsigned int len,
 	spin_lock_irqsave(&rds_sock_lock, flags);
 
 	list_for_each_entry(rs, &rds_sock_list, rs_item) {
+		sk = rds_rs_to_sk(rs);
 		read_lock(&rs->rs_recv_lock);
 
 		/* XXX too lazy to maintain counts.. */

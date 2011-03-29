@@ -1,14 +1,14 @@
 /* linux/drivers/media/video/samsung/jpeg_v2/jpg_mem.c
  *
- * Driver file for Samsung JPEG Encoder/Decoder
+ * Copyright (c) 2010 Samsung Electronics Co., Ltd.
+ * http://www.samsung.com/
  *
- * Peter Oh, Hyunmin kwak, Copyright (c) 2009 Samsung Electronics
- * 	http://www.samsungsemi.com/
+ * Operation for Jpeg encoder/docoder with memory
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
- */
+*/
 
 #include <asm/io.h>
 #include <linux/string.h>
@@ -19,7 +19,6 @@
 
 #include "jpg_mem.h"
 #include "jpg_misc.h"
-#include "log_msg.h"
 #include "jpg_opr.h"
 
 /*----------------------------------------------------------------------------
@@ -36,7 +35,7 @@ void *phy_to_vir_addr(UINT32 phy_addr, int mem_size)
 	reserved_mem = (void *)ioremap((unsigned long)phy_addr, (int)mem_size);
 
 	if (reserved_mem == NULL) {
-		log_msg(LOG_ERROR, "phy_to_vir_addr", "DD::Phyical to virtual memory mapping was failed!\r\n");
+		jpg_err("phyical to virtual memory mapping was failed!\r\n");
 		return NULL;
 	}
 
@@ -55,7 +54,7 @@ void *mem_alloc(unsigned int size)
 	alloc_mem = (void *)kmalloc((int)size, GFP_KERNEL);
 
 	if (alloc_mem == NULL) {
-		log_msg(LOG_ERROR, "Mem_Alloc", "memory allocation failed!\r\n");
+		jpg_err("memory allocation failed!\r\n");
 		return NULL;
 	}
 

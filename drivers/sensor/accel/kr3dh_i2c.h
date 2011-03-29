@@ -17,6 +17,8 @@
 #include <asm/io.h>
 #include <linux/delay.h>
 #include <linux/platform_device.h>
+/* to debugg kr3dh  uncomment below macro*/
+//#define KR3DH_DEBUG 
 
 /* KR3DH I2C Address */
 #define	SENS_ADD		(0x19 << 1)
@@ -156,9 +158,6 @@ int kr3dh_read_accel_xyz(kr3dhacc_t *);
 
 char  i2c_acc_kr3dh_read (u8, u8 *, unsigned int);
 char  i2c_acc_kr3dh_write(u8 , u8 *);
-static int i2c_acc_kr3dh_detach_client(struct i2c_client *);
-static int i2c_acc_kr3dh_probe_client(struct i2c_adapter *, int , int );
-static int i2c_acc_kr3dh_attach_adapter(struct i2c_adapter *adapter);
 int  i2c_acc_kr3dh_init(void);
 void i2c_acc_kr3dh_exit(void);
 

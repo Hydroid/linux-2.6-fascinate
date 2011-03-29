@@ -11,7 +11,6 @@
 #ifndef __ARCH_POWERPC_ASM_FSLDMA_H__
 #define __ARCH_POWERPC_ASM_FSLDMA_H__
 
-#include <linux/slab.h>
 #include <linux/dmaengine.h>
 
 /*

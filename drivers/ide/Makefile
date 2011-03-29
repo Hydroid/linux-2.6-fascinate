@@ -5,9 +5,11 @@
 EXTRA_CFLAGS				+= -Idrivers/ide
 
 ide-core-y += ide.o ide-ioctls.o ide-io.o ide-iops.o ide-lib.o ide-probe.o \
-	      ide-taskfile.o ide-pm.o ide-park.o ide-pio-blacklist.o ide-sysfs.o
+	      ide-taskfile.o ide-pm.o ide-park.o ide-sysfs.o ide-devsets.o \
+	      ide-io-std.o ide-eh.o
 
 # core IDE code
+ide-core-$(CONFIG_IDE_XFER_MODE)	+= ide-pio-blacklist.o ide-xfer-mode.o
 ide-core-$(CONFIG_IDE_TIMINGS)		+= ide-timings.o
 ide-core-$(CONFIG_IDE_ATAPI)		+= ide-atapi.o
 ide-core-$(CONFIG_BLK_DEV_IDEPCI)	+= setup-pci.o
@@ -18,8 +20,6 @@ ide-core-$(CONFIG_BLK_DEV_IDEACPI)	+= ide-acpi.o
 ide-core-$(CONFIG_IDE_LEGACY)		+= ide-legacy.o
 
 obj-$(CONFIG_IDE)			+= ide-core.o
-
-obj-$(CONFIG_IDE_ARM)			+= ide_arm.o
 
 obj-$(CONFIG_BLK_DEV_ALI14XX)		+= ali14xx.o
 obj-$(CONFIG_BLK_DEV_UMC8672)		+= umc8672.o
@@ -64,6 +64,7 @@ obj-$(CONFIG_BLK_DEV_SIIMAGE)		+= siimage.o
 obj-$(CONFIG_BLK_DEV_SIS5513)		+= sis5513.o
 obj-$(CONFIG_BLK_DEV_SL82C105)		+= sl82c105.o
 obj-$(CONFIG_BLK_DEV_SLC90E66)		+= slc90e66.o
+obj-$(CONFIG_BLK_DEV_IDE_S3C)		+= s3c-ide.o
 obj-$(CONFIG_BLK_DEV_TC86C001)		+= tc86c001.o
 obj-$(CONFIG_BLK_DEV_TRIFLEX)		+= triflex.o
 obj-$(CONFIG_BLK_DEV_TRM290)		+= trm290.o

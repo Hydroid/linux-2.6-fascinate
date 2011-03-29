@@ -2,8 +2,6 @@
 #include "../sysfs.h"
 
 /* Accelerometer types of attribute */
-#define IIO_DEV_ATTR_ACCEL_OFFSET(_mode, _show, _store, _addr)	\
-	IIO_DEVICE_ATTR(accel_offset, _mode, _show, _store, _addr)
 
 #define IIO_DEV_ATTR_ACCEL_X_OFFSET(_mode, _show, _store, _addr)	\
 	IIO_DEVICE_ATTR(accel_x_offset, _mode, _show, _store, _addr)
@@ -23,26 +21,23 @@
 #define IIO_DEV_ATTR_ACCEL_Z_GAIN(_mode, _show, _store, _addr)		\
 	IIO_DEVICE_ATTR(accel_z_gain, _mode, _show, _store, _addr)
 
-#define IIO_DEV_ATTR_ACCEL(_show, _addr)			\
-	IIO_DEVICE_ATTR(accel_raw, S_IRUGO, _show, NULL, _addr)
-
 #define IIO_DEV_ATTR_ACCEL_X(_show, _addr)			\
-	IIO_DEVICE_ATTR(accel_x_raw, S_IRUGO, _show, NULL, _addr)
+	IIO_DEVICE_ATTR(accel_x, S_IRUGO, _show, NULL, _addr)
 
 #define IIO_DEV_ATTR_ACCEL_Y(_show, _addr)			\
-	IIO_DEVICE_ATTR(accel_y_raw, S_IRUGO, _show, NULL, _addr)
+	IIO_DEVICE_ATTR(accel_y, S_IRUGO, _show, NULL, _addr)
 
 #define IIO_DEV_ATTR_ACCEL_Z(_show, _addr)			\
-	IIO_DEVICE_ATTR(accel_z_raw, S_IRUGO, _show, NULL, _addr)
+	IIO_DEVICE_ATTR(accel_z, S_IRUGO, _show, NULL, _addr)
 
 /* Thresholds are somewhat chip dependent - may need quite a few defs here */
-/* For unified thresholds (shared across all directions */
+/* For unified thesholds (shared across all directions */
 
 /**
  * IIO_DEV_ATTR_ACCEL_THRESH: unified threshold
  * @_mode: read/write
  * @_show: read detector threshold value
- * @_store: write detector threshold value
+ * @_store: write detector theshold value
  * @_addr: driver specific data, typically a register address
  *
  * This one is for cases where as single threshold covers all directions
@@ -53,7 +48,7 @@
 /**
  * IIO_DEV_ATTR_ACCEL_THRESH_X: independant direction threshold, x axis
  * @_mode: readable / writable
- * @_show: read x axis detector threshold value
+ * @_show: read x axis detector theshold value
  * @_store: write x axis detector threshold value
  * @_addr: device driver dependant, typically a register address
  **/
@@ -65,6 +60,7 @@
 
 #define IIO_DEV_ATTR_ACCEL_THRESH_Z(_mode, _show, _store, _addr)	\
 	IIO_DEVICE_ATTR(thresh_accel_z, _mode, _show, _store, _addr)
+
 
 /**
  * IIO_EVENT_ATTR_ACCEL_X_HIGH: threshold event, x acceleration

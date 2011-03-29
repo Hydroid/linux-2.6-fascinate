@@ -21,7 +21,6 @@
 \*************************************/
 
 #include <linux/pci.h>
-#include <linux/slab.h>
 #include "ath5k.h"
 #include "reg.h"
 #include "debug.h"
@@ -102,18 +101,29 @@ static int ath5k_hw_post(struct ath5k_hw *ah)
  * -ENODEV if the device is not supported or prints an error msg if something
  * else went wrong.
  */
-int ath5k_hw_attach(struct ath5k_softc *sc)
+struct ath5k_hw *ath5k_hw_attach(struct ath5k_softc *sc)
 {
-	struct ath5k_hw *ah = sc->ah;
-	struct ath_common *common = ath5k_hw_common(ah);
+	struct ath5k_hw *ah;
 	struct pci_dev *pdev = sc->pdev;
 	struct ath5k_eeprom_info *ee;
 	int ret;
 	u32 srev;
 
+	/*If we passed the test malloc a ath5k_hw struct*/
+	ah = kzalloc(sizeof(struct ath5k_hw), GFP_KERNEL);
+	if (ah == NULL) {
+		ret = -ENOMEM;
+		ATH5K_ERR(sc, "out of memory\n");
+		goto err;
+	}
+
+	ah->ah_sc = sc;
+	ah->ah_iobase = sc->iobase;
+
 	/*
 	 * HW information
 	 */
+	ah->ah_op_mode = NL80211_IFTYPE_STATION;
 	ah->ah_radar.r_enabled = AR5K_TUNE_RADAR_ALERT;
 	ah->ah_turbo = false;
 	ah->ah_txpower.txp_tpc = AR5K_TUNE_TPC_TXPOWER;
@@ -123,10 +133,6 @@ int ath5k_hw_attach(struct ath5k_softc *sc)
 	ah->ah_cw_min = AR5K_TUNE_CWMIN;
 	ah->ah_limit_tx_retries = AR5K_INIT_TX_RETRY;
 	ah->ah_software_retry = false;
-	ah->ah_ant_mode = AR5K_ANTMODE_DEFAULT;
-	ah->ah_noise_floor = -95;	/* until first NF calibration is run */
-	sc->ani_state.ani_mode = ATH5K_ANI_MODE_AUTO;
-	ah->ah_current_channel = &sc->channels[0];
 
 	/*
 	 * Find the mac version
@@ -152,6 +158,7 @@ int ath5k_hw_attach(struct ath5k_softc *sc)
 	/* Get MAC, PHY and RADIO revisions */
 	ah->ah_mac_srev = srev;
 	ah->ah_mac_version = AR5K_REG_MS(srev, AR5K_SREV_VER);
+	ah->ah_mac_revision = AR5K_REG_MS(srev, AR5K_SREV_REV);
 	ah->ah_phy_revision = ath5k_hw_reg_read(ah, AR5K_PHY_CHIP_ID) &
 			0xffffffff;
 	ah->ah_radio_5ghz_revision = ath5k_hw_radio_revision(ah,
@@ -271,12 +278,12 @@ int ath5k_hw_attach(struct ath5k_softc *sc)
 		goto err_free;
 	}
 
-	ee = &ah->ah_capabilities.cap_eeprom;
-
 	/*
 	 * Write PCI-E power save settings
 	 */
 	if ((ah->ah_version == AR5K_AR5212) && (pdev->is_pcie)) {
+		struct ath5k_eeprom_info *ee = &ah->ah_capabilities.cap_eeprom;
+
 		ath5k_hw_reg_write(ah, 0x9248fc00, AR5K_PCIE_SERDES);
 		ath5k_hw_reg_write(ah, 0x24924924, AR5K_PCIE_SERDES);
 
@@ -314,6 +321,7 @@ int ath5k_hw_attach(struct ath5k_softc *sc)
 	}
 
 	/* Crypto settings */
+	ee = &ah->ah_capabilities.cap_eeprom;
 	ah->ah_aes_support = srev >= AR5K_SREV_AR5212_V4 &&
 		(ee->ee_version >= AR5K_EEPROM_VERSION_5_0 &&
 		 !AR5K_EEPROM_AES_DIS(ee->ee_misc5));
@@ -328,21 +336,20 @@ int ath5k_hw_attach(struct ath5k_softc *sc)
 	ath5k_hw_set_lladdr(ah, (u8[ETH_ALEN]){});
 
 	/* Set BSSID to bcast address: ff:ff:ff:ff:ff:ff for now */
-	memcpy(common->curbssid, ath_bcast_mac, ETH_ALEN);
-	ath5k_hw_set_associd(ah);
-	ath5k_hw_set_opmode(ah, sc->opmode);
+	memset(ah->ah_bssid, 0xff, ETH_ALEN);
+	ath5k_hw_set_associd(ah, ah->ah_bssid, 0);
+	ath5k_hw_set_opmode(ah);
 
 	ath5k_hw_rfgain_opt_init(ah);
-
-	ath5k_hw_init_nfcal_hist(ah);
 
 	/* turn on HW LEDs */
 	ath5k_hw_set_ledstate(ah, AR5K_LED_INIT);
 
-	return 0;
+	return ah;
 err_free:
 	kfree(ah);
-	return ret;
+err:
+	return ERR_PTR(ret);
 }
 
 /**
@@ -352,6 +359,8 @@ err_free:
  */
 void ath5k_hw_detach(struct ath5k_hw *ah)
 {
+	ATH5K_TRACE(ah->ah_sc);
+
 	__set_bit(ATH_STAT_INVALID, ah->ah_sc->status);
 
 	if (ah->ah_rf_banks != NULL)
@@ -360,4 +369,5 @@ void ath5k_hw_detach(struct ath5k_hw *ah)
 	ath5k_eeprom_detach(ah);
 
 	/* assume interrupts are down */
+	kfree(ah);
 }

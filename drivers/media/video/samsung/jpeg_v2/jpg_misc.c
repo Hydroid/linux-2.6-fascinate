@@ -1,9 +1,9 @@
 /* linux/drivers/media/video/samsung/jpeg_v2/jpg_misc.c
  *
- * Driver file for Samsung JPEG Encoder/Decoder
+ * Copyright (c) 2010 Samsung Electronics Co., Ltd.
+ * http://www.samsung.com/
  *
- * Peter Oh,Hyunmin kwak, Copyright (c) 2009 Samsung Electronics
- * 	http://www.samsungsemi.com/
+ * Operation for Jpeg encoder/docoder with mutex
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -19,7 +19,6 @@
 #include <linux/moduleparam.h>
 
 #include <linux/version.h>
-#include <plat/regs-lcd.h>
 
 #include <asm/io.h>
 #include <linux/interrupt.h>
@@ -78,22 +77,4 @@ void delete_jpg_mutex(void)
 
 	mutex_destroy(h_mutex);
 }
-#ifdef CONFIG_CPU_S5PC100
-unsigned int get_fb0_addr(void)
-{
-	return readl(S3C_VIDW00ADD0B0);
-}
-
-void get_lcd_size(int *width, int *height)
-{
-	unsigned int	tmp;
-
-	tmp		= readl(S3C_VIDTCON2);
-	*height	= ((tmp >> 11) & 0x7FF) + 1;
-	*width	= (tmp & 0x7FF) + 1;
-}
-#endif
-
-
-
 

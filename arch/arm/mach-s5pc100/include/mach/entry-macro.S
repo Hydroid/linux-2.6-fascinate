@@ -1,9 +1,9 @@
 /* arch/arm/mach-s5pc100/include/mach/entry-macro.S
  *
- * Copyright 2008 Openmoko, Inc.
- * Copyright 2008 Simtec Electronics
- *	http://armlinux.simtec.co.uk/
- *	Ben Dooks <ben@simtec.co.uk>
+ * Copyright 2009 Samsung Electronics Co.
+ *	Byungho Min <bhmin@samsung.com>
+ *
+ * Based on mach-s3c6400/include/mach/entry-macro.S
  *
  * Low-level IRQ helper macros for the Samsung S5PC1XX series
  *
@@ -38,7 +38,7 @@
 	addeq	\irqnr, \irqnr, #32
 	ldreq	\irqstat, [ \tmp, # VIC_IRQ_STATUS ]
 	teqeq	\irqstat, #0
-	
+
 	@ otherwise try vic2
 	addeq	\tmp, \base, #(S3C_VA_VIC2 - S3C_VA_VIC0)
 	addeq	\irqnr, \irqnr, #32

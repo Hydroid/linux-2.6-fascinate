@@ -770,7 +770,7 @@ const BYTE abyFirmware[] = {
 
 BOOL
 FIRMWAREbDownload(
-     PSDevice pDevice
+    IN PSDevice pDevice
     )
 {
     NDIS_STATUS NdisStatus;
@@ -801,7 +801,7 @@ FIRMWAREbDownload(
                                             &(pBuffer[ii])
                                             );
 
-            DBG_PRT(MSG_LEVEL_DEBUG, KERN_INFO"Download firmware...%d %zu\n", ii, sizeof(abyFirmware));
+            DBG_PRT(MSG_LEVEL_DEBUG, KERN_INFO"Download firmware...%d %ld\n", ii, sizeof(abyFirmware));
             if (NdisStatus != STATUS_SUCCESS) {
                 if (pBuffer)
                     kfree(pBuffer);
@@ -820,7 +820,7 @@ FIRMWAREbDownload(
 
 BOOL
 FIRMWAREbBrach2Sram(
-     PSDevice pDevice
+    IN PSDevice pDevice
     )
 {
     NDIS_STATUS NdisStatus;
@@ -845,10 +845,10 @@ FIRMWAREbBrach2Sram(
 
 BOOL
 FIRMWAREbCheckVersion(
-     PSDevice pDevice
+    IN PSDevice pDevice
     )
 {
-	int ntStatus;
+    NTSTATUS                ntStatus;
 
     ntStatus = CONTROLnsRequestIn(pDevice,
                                     MESSAGE_TYPE_READ,

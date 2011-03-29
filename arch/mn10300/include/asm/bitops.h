@@ -165,7 +165,7 @@ static inline __attribute__((const))
 unsigned long __ffs(unsigned long x)
 {
 	int bit;
-	asm("bsch %2,%0" : "=r"(bit) : "0"(0), "r"(x & -x) : "cc");
+	asm("bsch %2,%0" : "=r"(bit) : "0"(0), "r"(x & -x));
 	return bit;
 }
 
@@ -177,7 +177,7 @@ static inline __attribute__((const))
 int __ilog2_u32(u32 n)
 {
 	int bit;
-	asm("bsch %2,%0" : "=r"(bit) : "0"(0), "r"(n) : "cc");
+	asm("bsch %2,%0" : "=r"(bit) : "0"(0), "r"(n));
 	return bit;
 }
 
@@ -229,9 +229,9 @@ int ffs(int x)
 #include <asm-generic/bitops/hweight.h>
 
 #define ext2_set_bit_atomic(lock, nr, addr) \
-	test_and_set_bit((nr), (addr))
+	test_and_set_bit((nr) ^ 0x18, (addr))
 #define ext2_clear_bit_atomic(lock, nr, addr) \
-	test_and_clear_bit((nr), (addr))
+	test_and_clear_bit((nr) ^ 0x18, (addr))
 
 #include <asm-generic/bitops/ext2-non-atomic.h>
 #include <asm-generic/bitops/minix-le.h>

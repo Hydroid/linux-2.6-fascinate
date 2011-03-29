@@ -181,8 +181,10 @@ static void spi_gpio_chipselect(struct spi_device *spi, int is_active)
 	if (is_active)
 		setsck(spi, spi->mode & SPI_CPOL);
 
-	/* SPI is normally active-low */
-	gpio_set_value(cs, (spi->mode & SPI_CS_HIGH) ? is_active : !is_active);
+	if (cs != SPI_GPIO_NO_CHIPSELECT) {
+		/* SPI is normally active-low */
+		gpio_set_value(cs, (spi->mode & SPI_CS_HIGH) ? is_active : !is_active);
+	}
 }
 
 static int spi_gpio_setup(struct spi_device *spi)
@@ -194,15 +196,17 @@ static int spi_gpio_setup(struct spi_device *spi)
 		return -EINVAL;
 
 	if (!spi->controller_state) {
-		status = gpio_request(cs, spi->dev.bus_id);
-		if (status)
-			return status;
-		status = gpio_direction_output(cs, spi->mode & SPI_CS_HIGH);
+		if (cs != SPI_GPIO_NO_CHIPSELECT) {
+			status = gpio_request(cs, dev_name(&spi->dev));
+			if (status)
+				return status;
+			status = gpio_direction_output(cs, spi->mode & SPI_CS_HIGH);
+		}
 	}
 	if (!status)
 		status = spi_bitbang_setup(spi);
 	if (status) {
-		if (!spi->controller_state)
+		if (!spi->controller_state && cs != SPI_GPIO_NO_CHIPSELECT)
 			gpio_free(cs);
 	}
 	return status;
@@ -212,7 +216,8 @@ static void spi_gpio_cleanup(struct spi_device *spi)
 {
 	unsigned long	cs = (unsigned long) spi->controller_data;
 
-	gpio_free(cs);
+	if (cs != SPI_GPIO_NO_CHIPSELECT)
+		gpio_free(cs);
 	spi_bitbang_cleanup(spi);
 }
 
@@ -254,8 +259,7 @@ spi_gpio_request(struct spi_gpio_platform_data *pdata, const char *label)
 	goto done;
 
 free_miso:
-	if (gpio_is_valid(SPI_MISO_GPIO))
-		gpio_free(SPI_MISO_GPIO);
+	gpio_free(SPI_MISO_GPIO);
 free_mosi:
 	gpio_free(SPI_MOSI_GPIO);
 done:

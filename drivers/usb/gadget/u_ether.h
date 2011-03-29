@@ -64,8 +64,12 @@ struct gether {
 	 * we currently don't support multiple frames per SKB.
 	 */
 	u32				header_len;
-	struct sk_buff			*(*wrap)(struct sk_buff *skb);
-	int				(*unwrap)(struct sk_buff *skb);
+	struct sk_buff			*(*wrap)(struct gether *port,
+						struct sk_buff *skb);
+	int				(*unwrap)(struct gether *port,
+						struct sk_buff *skb,
+						struct sk_buff_head *list);// ansari_L&T_FROYO_CL534716
+
 
 	/* called on network open/close */
 	void				(*open)(struct gether *);

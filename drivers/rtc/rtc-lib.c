@@ -26,14 +26,13 @@ static const unsigned short rtc_ydays[2][13] = {
 };
 
 #define LEAPS_THRU_END_OF(y) ((y)/4 - (y)/100 + (y)/400)
-#define LEAP_YEAR(year) ((!(year % 4) && (year % 100)) || !(year % 400))
 
 /*
  * The number of days in the month.
  */
 int rtc_month_days(unsigned int month, unsigned int year)
 {
-	return rtc_days_in_month[month] + (LEAP_YEAR(year) && month == 1);
+	return rtc_days_in_month[month] + (is_leap_year(year) && month == 1);
 }
 EXPORT_SYMBOL(rtc_month_days);
 
@@ -42,7 +41,7 @@ EXPORT_SYMBOL(rtc_month_days);
  */
 int rtc_year_days(unsigned int day, unsigned int month, unsigned int year)
 {
-	return rtc_ydays[LEAP_YEAR(year)][month] + day-1;
+	return rtc_ydays[is_leap_year(year)][month] + day-1;
 }
 EXPORT_SYMBOL(rtc_year_days);
 
@@ -66,9 +65,13 @@ void rtc_time_to_tm(unsigned long time, struct rtc_time *tm)
 		- LEAPS_THRU_END_OF(1970 - 1);
 	if (days < 0) {
 		year -= 1;
-		days += 365 + LEAP_YEAR(year);
+		days += 365 + is_leap_year(year);
 	}
+#ifdef CONFIG_RTC_DRV_S3C
+	tm->tm_year = year - 2000;
+#else
 	tm->tm_year = year - 1900;
+#endif
 	tm->tm_yday = days + 1;
 
 	for (month = 0; month < 11; month++) {
@@ -94,6 +97,7 @@ EXPORT_SYMBOL(rtc_time_to_tm);
  */
 int rtc_valid_tm(struct rtc_time *tm)
 {
+#ifndef CONFIG_RTC_DRV_S3C
 	if (tm->tm_year < 70
 		|| ((unsigned)tm->tm_mon) >= 12
 		|| tm->tm_mday < 1
@@ -102,7 +106,7 @@ int rtc_valid_tm(struct rtc_time *tm)
 		|| ((unsigned)tm->tm_min) >= 60
 		|| ((unsigned)tm->tm_sec) >= 60)
 		return -EINVAL;
-
+#endif
 	return 0;
 }
 EXPORT_SYMBOL(rtc_valid_tm);
@@ -112,8 +116,13 @@ EXPORT_SYMBOL(rtc_valid_tm);
  */
 int rtc_tm_to_time(struct rtc_time *tm, unsigned long *time)
 {
+#ifdef CONFIG_RTC_DRV_S3C
+	*time = mktime(tm->tm_year + 2000, tm->tm_mon + 1, tm->tm_mday,
+			tm->tm_hour, tm->tm_min, tm->tm_sec);
+#else
 	*time = mktime(tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 			tm->tm_hour, tm->tm_min, tm->tm_sec);
+#endif
 	return 0;
 }
 EXPORT_SYMBOL(rtc_tm_to_time);

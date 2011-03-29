@@ -23,12 +23,29 @@
 #include <asm/page.h>
 #include <mach/irqs.h>
 #include <mach/gpio.h>
+#if defined(CONFIG_CPU_S5PV210) 
+#include <mach/map.h>
+#include <mach/regs-clock.h>
+#include <mach/regs-tsi.h>
+#else
 #include <plat/map.h>
 #include <plat/regs-clock.h>
 #include <plat/regs-tsi.h>
+#endif
 #include <plat/gpio-cfg.h>
 
+#if defined(CONFIG_CPU_S5PV210) 
+#include <linux/sched.h>
+#include <linux/wait.h>
+#include <linux/poll.h>  
+#endif
+
+#if defined(CONFIG_CPU_S5PV210) 
+#define TSI_BUF_SIZE	(128*1024)
+#define TSI_PKT_CNT      16
+#else
 #define TSI_BUF_SIZE	(256*1024)
+#endif
 
 enum filter_mode 
 {
@@ -162,8 +179,11 @@ void s3c_tsi_set_gpio(void)
 
 	for(i=2;i< 7; i++)
 	{
+		#ifndef CONFIG_CPU_S5PV210  //temporarily disable gpio settings for rev0.2 P1 board,
+					    //to prevent conflict with touch sreen.. Change asap. //mkh
 		s3c_gpio_cfgpin(S5PC11X_GPJ0(i), S3C_GPIO_SFN(5));
 		s3c_gpio_setpull(S5PC11X_GPJ0(i), S3C_GPIO_PULL_NONE);
+		#endif	
 	}
 }
 
@@ -242,7 +262,18 @@ static int s3c_tsi_start(tsi_dev *tsi)
 		return -1;
 	}
 	pkt_size = pkt1->len;
+#if defined(CONFIG_CPU_S5PV210) 
+	// when set the TS BUF SIZE to the S3C_TS_SIZE,
+	// if you want get a 10-block TS from TSIF,
+	// you should set the value of S3C_TS_SIZE as 47*10(not 188*10)
+	// This register get a value of word-multiple values.
+	// So, pkt_size which is counted to BYTES must be divided by 4(2 bit shift lefted)
+	// 
+	// Commented by sjinu, 2009_03_18
+	writel(pkt_size>>2,(tsi->tsi_base+S3C_TS_SIZE));
+#else
 	writel(pkt_size,(tsi->tsi_base+S3C_TS_SIZE));
+#endif
 	s3c_tsi_set_dest_addr(pkt1->addr,(u32)(tsi->tsi_base+S3C_TS_BASE));
 		
 	spin_lock_irqsave(&tsi->tsi_lock,flags);
@@ -369,6 +400,15 @@ void s3c_tsi_rx_int(tsi_dev *tsi)
 		}
 	list_move_tail(&pkt->list,&tsi->partial_list);
 
+#if defined(CONFIG_CPU_S5PV210) 
+	//namkh, request from Abraham
+	// If there arise a buffer-full interrupt,
+	// a new ts buffer address should be set.
+	//
+	// Commented by sjinu, 2009_03_18
+	s3c_tsi_set_dest_addr(pkt->addr,(u32)(tsi->tsi_base+S3C_TS_BASE));
+#endif
+
 #ifdef CONFIG_TSI_LIST_DEBUG
 	tsi_list_dbg("Debugging Full list \n");
 	list_debug(&tsi->full_list);
@@ -422,6 +462,23 @@ int s3c_tsi_mmap(struct file *filp, struct vm_area_struct *vma)
 	return 0;
 }
 
+#if defined(CONFIG_CPU_S5PV210) 
+static unsigned int	s3c_tsi_poll(struct file *file, poll_table *wait)
+{
+	unsigned int mask = 0;
+	tsi_dev *tsi = file->private_data;
+
+	poll_wait(file, &tsi->read_wq, wait);
+
+	if(tsi->new_pkt)
+	{
+		mask |= (POLLIN | POLLRDNORM);
+	}
+
+	return mask;
+}
+#endif
+
 static ssize_t s3c_tsi_read(struct file *file, char *buf, size_t count, loff_t *pos)
 {
 	unsigned long flags;
@@ -436,6 +493,41 @@ static ssize_t s3c_tsi_read(struct file *file, char *buf, size_t count, loff_t *
 	tsi_dbg("count is %d\n",count);
 	list_debug(&tsi->full_list);
 #endif
+
+#if defined(CONFIG_CPU_S5PV210)  
+	tsi_dbg("entered to s3c_tsi_read\n");
+				ret = wait_event_interruptible(tsi->read_wq,tsi->new_pkt);
+				if(ret < 0)
+				{
+					tsi_dbg("woken up from signal..returning\n");
+					return ret;
+				}
+				pkt = tsi_get_pkt(tsi,full);    
+				
+
+	pkt_size = pkt->len;		//pkt_size should be multiple of 188 bytes.
+
+	tsi_dbg("pkt_size is %d\n", pkt_size);
+		if(pkt_size > count)
+			pkt_size = count;
+
+		if (copy_to_user((buf+len), pkt->buf, pkt_size)) {
+					tsi_dbg("copy user fail\n");
+                                ret = -EFAULT;
+		return ret;
+                        }
+
+		len += pkt_size;		
+ 		count -= pkt_size;
+		tsi_dbg("len is%d count %d pkt_size %d\n",len,count,pkt_size);
+		ret = len;
+		spin_lock_irqsave(&tsi->tsi_lock,flags);
+		list_move(&pkt->list,&tsi->free_list);
+		spin_unlock_irqrestore(&tsi->tsi_lock,flags);
+		
+		if(list_empty(full))
+			tsi->new_pkt =0;
+#else
 	while(count > 0){
 //deque packet from full list	
 		pkt = tsi_get_pkt(tsi,full);	
@@ -475,6 +567,7 @@ static ssize_t s3c_tsi_read(struct file *file, char *buf, size_t count, loff_t *
 			tsi->new_pkt =0;
 
 	}
+#endif  //defined(CONFIG_CPU_S5PV210)
 
 #ifdef CONFIG_TSI_LIST_DEBUG1
 	tsi_list_dbg("Debugging Free list \n");
@@ -526,6 +619,9 @@ static int s3c_tsi_ioctl(struct inode *inode, struct file *file, unsigned int cm
 static int s3c_tsi_open(struct inode *inode, struct file *file)
 {
 	tsi_dev *s3c_tsi = platform_get_drvdata(s3c_tsi_dev);
+#if defined(CONFIG_CPU_S5PV210) // Fix the TSI data problem (Don't generated waking up sleep state)
+	s3c_tsi_setup(s3c_tsi);
+#endif
 	file->private_data = s3c_tsi;
 	return 0;
 }
@@ -536,6 +632,9 @@ static struct file_operations tsi_fops = {
 	release:	s3c_tsi_release,
 	ioctl:		s3c_tsi_ioctl,
 	read:		s3c_tsi_read,
+#if defined(CONFIG_CPU_S5PV210) 
+	poll:		s3c_tsi_poll,
+#endif
 	mmap:		s3c_tsi_mmap,
 };
 
@@ -558,15 +657,26 @@ static int tsi_setup_bufs(tsi_dev *dev, struct list_head *head)
 	tsi_virt =(u32) dev->tsi_buf_virt;
 	tsi_size = dev->tsi_buf_size;
 	//num_pkt*47*4
+#if defined(CONFIG_CPU_S5PV210) 
+	buf_size = dev->tsi_conf->num_packet * TS_PKT_SIZE*TSI_PKT_CNT; //TSI generates interrupt after filling this many bytes
+#else
 	buf_size = dev->tsi_conf->num_packet * TS_PKT_SIZE; //TSI generates interrupt after filling this many bytes
+#endif
 	num_buf = (tsi_size / buf_size);
 
  	for(i=0;i<num_buf;i++){
 		pkt = kmalloc(sizeof(tsi_pkt),GFP_KERNEL);	
 		if(!pkt)
 			return list_empty(head) ? -ENOMEM : 0 ;
+#if defined(CONFIG_CPU_S5PV210) 
+		// Address should be byte-aligned
+		// Commented by sjinu, 2009_03_18
+		pkt->addr =((u32)tsi_phy + i*buf_size);
+		pkt->buf = (void *)(u8 *)((u32)tsi_virt + i*buf_size);
+#else
 		pkt->addr = (tsi_phy + i*4*buf_size);
 		pkt->buf = (void *)(tsi_virt + i*4*buf_size);
+#endif
 		pkt->len = buf_size;
 		list_add_tail(&pkt->list,head);	
 	}
@@ -627,7 +737,16 @@ static int s3c_tsi_probe(struct platform_device *pdev)
 	conf->pid_flt_mode = BYPASS;
 	conf->byte_order = MSB2LSB; 
 	conf->sync_detect = S3C_TSI_SYNC_DET_MODE_TS_SYNC8;
+#if defined(CONFIG_CPU_S5PV210) 
+	// to avoid making interrupt during getting the TS from TS buffer,
+	// we use the burst-length as 8 beat.
+	// This burst-length may be changed next time.
+	// 
+	// Commented by sjinu, 2009_03_18
+	conf->burst_len = 2; 
+#else
         conf->burst_len = 0; 
+#endif
 	conf->byte_swap = 1; //little endian
 	conf->pad_pattern = 0;  //this might vary from bd to bd
 	conf->num_packet = TS_NUM_PKT;  //this might vary from bd to bd
@@ -635,16 +754,16 @@ static int s3c_tsi_probe(struct platform_device *pdev)
 	tsi_priv->tsi_conf = conf;
 	tsi_priv->tsi_buf_size = TSI_BUF_SIZE;
 
-
+#if 1
 	tsi_priv->tsi_clk = clk_get(NULL,"tsi");
 	if(tsi_priv->tsi_clk == NULL)
 		{
-			printk(KERN_ERR "Failed to get TSI clock\n");
+			printk("Failed to get TSI clock\n");
 			return -ENOENT;
 
 		}
 	clk_enable(tsi_priv->tsi_clk);
-	
+#endif	
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 
 	if (res == NULL) {
@@ -774,13 +893,37 @@ static int s3c_tsi_remove(struct platform_device *dev)
 }
 
 
+#ifdef CONFIG_PM
+static int s3c_tsi_suspend(struct platform_device *pdev, pm_message_t state)
+{
+	s3c_tsi_stop(tsi_priv);
+	clk_disable(tsi_priv->tsi_clk);
+	
+	return 0;	
+}
+
+static int s3c_tsi_resume(struct platform_device *pdev)
+{
+	clk_enable(tsi_priv->tsi_clk);
+	s3c_tsi_set_gpio();
+	s3c_tsi_setup(tsi_priv);
+
+	return 0;
+}
+
+#endif
 
 static struct platform_driver s3c_tsi_driver = {
 	.probe		= s3c_tsi_probe,
 	.remove		= s3c_tsi_remove,
 	.shutdown	= NULL,
+#ifndef CONFIG_PM
 	.suspend	= NULL,
 	.resume		= NULL,
+#else
+	.suspend	= s3c_tsi_suspend,
+	.resume		= s3c_tsi_resume,
+#endif
 	.driver		= {
 			.owner	= THIS_MODULE,
 			.name	= "s3c-tsi",

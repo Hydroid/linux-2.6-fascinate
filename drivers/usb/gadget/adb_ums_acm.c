@@ -1,6 +1,8 @@
 /*
  * Gadget Driver for Android, with ADB and UMS and ACM support
- *
+ * 
+ * Copyright (C) 2008 Google, Inc. Author: Mike Lockwood <lockwood@android.com>
+ * 
  * Copyright (C) 2009 Samsung Electronics, Seung-Soo Yang
  *
  * This software is licensed under the terms of the GNU General Public
@@ -307,9 +309,9 @@ static struct usb_composite_driver android_usb_driver = {
 };
 
 int UmsCDEnable=0;
-int currentusbstatus=0;
-int askonstatus=0;
-int oldusbstatus=0;
+extern int currentusbstatus;
+extern int askonstatus;
+extern int oldusbstatus;
 static void enable_adb(struct android_dev *dev, int enable)
 {
 	if (enable != dev->adb_enabled) {

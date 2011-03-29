@@ -16,7 +16,6 @@
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
-#include <linux/gfp.h>
 #include <sound/core.h>
 #include <sound/pcm.h>
 #include <sound/soc.h>
@@ -254,4 +253,3 @@ module_exit(txx9aclc_ac97_exit);
 MODULE_AUTHOR("Atsushi Nemoto <anemo@mba.ocn.ne.jp>");
 MODULE_DESCRIPTION("TXx9 ACLC AC97 driver");
 MODULE_LICENSE("GPL");
-MODULE_ALIAS("platform:txx9aclc-ac97");

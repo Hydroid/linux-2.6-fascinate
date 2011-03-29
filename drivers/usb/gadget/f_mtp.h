@@ -21,13 +21,15 @@
 #define MTP_MAX_PACKET_LEN_FROM_APP 22
 
 #define	MTP_ACM_ENABLE		0
-#define	MTP_ENABLE		1
+#define	MTP_ONLY_ENABLE		1
 #define	MTP_DISABLE		2
 #define	MTP_CLEAR_HALT		3
 #define	MTP_WRITE_INT_DATA	4
 #define SET_MTP_USER_PID 5
 #define GET_SETUP_DATA 6
 #define SET_SETUP_DATA 7
+//#define SET_ZLP_DATA 		9
+//#define GET_HIGH_FULL_SPEED 	10
 #define SIG_SETUP 44
 
 /*PIMA15740-2000 spec*/
@@ -38,16 +40,14 @@
 #define USB_PTPREQUEST_CANCELIO_SIZE 6
 #define USB_PTPREQUEST_GETSTATUS_SIZE 12
 
-// Vova: Connect/Disconnect events
-#define USB_CABLE_CONNECTED       0x101   /* USb cable was connected */
-#define USB_CABLE_DISCONNECTED    0x102	  /* USb cable was disconnected */
 
-// Vova: To be in sync with PV
-#define USB_PTPREQUEST_GETSTATUS_SIZE_SMALL 4
 
 int mtp_function_add(struct usb_configuration *c);
 int mtp_function_config_changed(struct usb_composite_dev *cdev,	struct usb_configuration *c);
 int mtp_enable();
+
+//void mtp_function_enable(int enable);
+
 
 struct usb_mtp_ctrlrequest {
 	struct usb_ctrlrequest	setup;

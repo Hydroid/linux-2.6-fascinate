@@ -1,11 +1,9 @@
 /* linux/arch/arm/plat-s5pc1xx/dev-uart.c
  *
- * Copyright 2008 Openmoko, Inc.
- * Copyright 2008 Simtec Electronics
- *	Ben Dooks <ben@simtec.co.uk>
- *	http://armlinux.simtec.co.uk/
+ * Copyright 2009 Samsung Electronics Co.
+ *	Byungho Min <bhmin@samsung.com>
  *
- * Base S5PC1XX UART resource and device definitions
+ * Based on plat-s3c64xx/dev-uart.c
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -20,7 +18,6 @@
 #include <linux/platform_device.h>
 
 #include <asm/mach/arch.h>
-#include <mach/dma.h>
 #include <asm/mach/irq.h>
 #include <mach/hardware.h>
 #include <mach/map.h>
@@ -52,16 +49,6 @@ static struct resource s5pc1xx_uart0_resource[] = {
 		.start	= IRQ_S3CUART_ERR0,
 		.end	= IRQ_S3CUART_ERR0,
 		.flags	= IORESOURCE_IRQ,
-	},
-	[4] = {
-		.start	= DMACH_UART0,
-		.end	= DMACH_UART0,
-		.flags	= IORESOURCE_DMA,
-	},
-	[5] = {
-		.start	= DMACH_UART0_SRC2,
-		.end	= DMACH_UART0_SRC2,
-		.flags	= IORESOURCE_DMA,
 	}
 };
 
@@ -86,16 +73,6 @@ static struct resource s5pc1xx_uart1_resource[] = {
 		.start	= IRQ_S3CUART_ERR1,
 		.end	= IRQ_S3CUART_ERR1,
 		.flags	= IORESOURCE_IRQ,
-	},
-	[4] = {
-		.start	= DMACH_UART1,
-		.end	= DMACH_UART1,
-		.flags	= IORESOURCE_DMA,
-	},
-	[5] = {
-		.start	= DMACH_UART1_SRC2,
-		.end	= DMACH_UART1_SRC2,
-		.flags	= IORESOURCE_DMA,
 	},
 };
 
@@ -166,32 +143,3 @@ struct s3c24xx_uart_resources s5pc1xx_uart_resources[] __initdata = {
 		.nr_resources	= ARRAY_SIZE(s5pc1xx_uart3_resource),
 	},
 };
-
-/* uart devices */
-
-static struct platform_device s3c24xx_uart_device0 = {
-	.id		= 0,
-};
-
-static struct platform_device s3c24xx_uart_device1 = {
-	.id		= 1,
-};
-
-static struct platform_device s3c24xx_uart_device2 = {
-	.id		= 2,
-};
-
-static struct platform_device s3c24xx_uart_device3 = {
-	.id		= 3,
-};
-
-struct platform_device *s3c24xx_uart_src[4] = {
-	&s3c24xx_uart_device0,
-	&s3c24xx_uart_device1,
-	&s3c24xx_uart_device2,
-	&s3c24xx_uart_device3,
-};
-
-struct platform_device *s3c24xx_uart_devs[4] = {
-};
-

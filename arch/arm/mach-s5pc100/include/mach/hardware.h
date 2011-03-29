@@ -1,11 +1,9 @@
 /* linux/arch/arm/mach-s5pc100/include/mach/hardware.h
  *
- * Copyright 2008 Openmoko, Inc.
- * Copyright 2008 Simtec Electronics
- *      Ben Dooks <ben@simtec.co.uk>
- *      http://armlinux.simtec.co.uk/
+ * Copyright 2009 Samsung Electronics Co.
+ *      Byungho Min <bhmin@samsung.com>
  *
- * S3C6400 - Hardware support
+ * S5PC100 - Hardware support
  */
 
 #ifndef __ASM_ARCH_HARDWARE_H

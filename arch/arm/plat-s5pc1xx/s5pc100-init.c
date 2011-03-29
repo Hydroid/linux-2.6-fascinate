@@ -1,9 +1,7 @@
 /* linux/arch/arm/plat-s5pc1xx/s5pc100-init.c
  *
- * Copyright 2008 Openmoko, Inc.
- * Copyright 2008 Simtec Electronics
- *      Ben Dooks <ben@simtec.co.uk>
- *      http://armlinux.simtec.co.uk/
+ * Copyright 2009 Samsung Electronics Co.
+ *      Byungho Min <bhmin@samsung.com>
  *
  * S5PC100 - CPU initialisation (common with other S5PC1XX chips)
  *
@@ -24,5 +22,6 @@
 
 void __init s5pc100_common_init_uarts(struct s3c2410_uartcfg *cfg, int no)
 {
-	s3c24xx_init_uartdevs("s5pc100-uart", s5pc1xx_uart_resources, cfg, no);
+	/* The driver name is s3c6400-uart to reuse s3c6400_serial_drv  */
+	s3c24xx_init_uartdevs("s3c6400-uart", s5pc1xx_uart_resources, cfg, no);
 }

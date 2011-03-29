@@ -11,8 +11,6 @@
 #define _IIO_RING_GENERIC_H_
 #include "iio.h"
 
-#ifdef CONFIG_IIO_RING_BUFFER
-
 struct iio_handler;
 struct iio_ring_buffer;
 struct iio_dev;
@@ -27,12 +25,9 @@ int iio_push_ring_event(struct iio_ring_buffer *ring_buf,
 			int event_code,
 			s64 timestamp);
 /**
- * iio_push_or_escallate_ring_event() -	escalate or add as appropriate
- * @ring_buf:		ring buffer that is the event source
- * @event_code:		event indentification code
- * @timestamp:		time of event
+ * iio_push_or_escallate_ring_event() -	escallate or add as appropriate
  *
- * Typical usecase is to escalate a 50% ring full to 75% full if noone has yet
+ * Typical usecase is to escallate a 50% ring full to 75% full if noone has yet
  * read the first event. Clearly the 50% full is no longer of interest in
  * typical use case.
  **/
@@ -42,6 +37,10 @@ int iio_push_or_escallate_ring_event(struct iio_ring_buffer *ring_buf,
 
 /**
  * struct iio_ring_access_funcs - access functions for ring buffers.
+ * @create:		perform allocation
+ * @init:		get ring buffer ready for use
+ * @_exit:		reverse steps in init
+ * @_free:		deallocate ring buffer
  * @mark_in_use:	reference counting, typically to prevent module removal
  * @unmark_in_use:	reduce reference count when no longer using ring buffer
  * @store_to:		actually store stuff to the ring buffer
@@ -61,7 +60,7 @@ int iio_push_or_escallate_ring_event(struct iio_ring_buffer *ring_buf,
  *
  * The purpose of this structure is to make the ring buffer element
  * modular as event for a given driver, different usecases may require
- * different ring designs (space efficiency vs speed for example).
+ * different ring designs (space efficiency vs speed for example.
  *
  * It is worth noting that a given ring implementation may only support a small
  * proportion of these functions.  The core code 'should' cope fine with any of
@@ -92,26 +91,23 @@ struct iio_ring_access_funcs {
 
 /**
  * struct iio_ring_buffer - general ring buffer structure
- * @dev:		ring buffer device struct
- * @access_dev:		system device struct for the chrdev
- * @indio_dev:		industrial I/O device structure
- * @owner:		module that owns the ring buffer (for ref counting)
- * @id:			unique id number
- * @access_id:		device id number
- * @length:		[DEVICE] number of datums in ring
- * @bpd:		[DEVICE] size of individual datum including timestamp
- * @bpe:		[DEVICE] size of individual channel value
- * @loopcount:		[INTERN] number of times the ring has looped
- * @access_handler:	[INTERN] chrdev access handling
- * @ev_int:		[INTERN] chrdev interface for the event chrdev
- * @shared_ev_pointer:	[INTERN] the shared event pointer to allow escalation of
+ * @length:		[DEVICE]number of datums in ring
+ * @bpd:		[DEVICE]size of individual datum including timestamp
+ * @loopcount:		[INTERN]number of times the ring has looped
+ * @access_minor_name:	[INTERN]store of name of the access chrdev minor number
+ *			sysfs attribute
+ * @access_handler:	[INTERN]chrdev access handling
+ * @event_minor_name:	[INTERN]store of name of the event chrdev minor number
+ *			sysfs attribute
+ * @ev_int:		[INTERN]chrdev interface for the event chrdev
+ * @shared_ev_pointer:	[INTERN]the shared event pointer to allow escalation of
  *			events
- * @access:		[DRIVER] ring access functions associated with the
+ * @ring_access:	[DRIVER]ring access functions associated with the
  *			implementation.
- * @preenable:		[DRIVER] function to run prior to marking ring enabled
- * @postenable:		[DRIVER] function to run after marking ring enabled
- * @predisable:		[DRIVER] function to run prior to marking ring disabled
- * @postdisable:	[DRIVER] function to run after marking ring disabled
+ * @ring_prenable:	[DRIVER] function to run prior to marking ring enabled
+ * @ring_postenable:	[DRIVER] function to run after marking ring enabled
+ * @ring_predisable:	[DRIVER] function to run prior to marking ring disabled
+ * @ring_postdisable:	[DRIVER] function to run after marking ring disabled
   **/
 struct iio_ring_buffer {
 	struct device dev;
@@ -122,7 +118,6 @@ struct iio_ring_buffer {
 	int				access_id;
 	int				length;
 	int				bpd;
-	int				bpe;
 	int				loopcount;
 	struct iio_handler		access_handler;
 	struct iio_event_interface	ev_int;
@@ -138,17 +133,17 @@ void iio_ring_buffer_init(struct iio_ring_buffer *ring,
 			  struct iio_dev *dev_info);
 
 /**
- * __iio_update_ring_buffer() - update common elements of ring buffers
- * @ring:		ring buffer that is the event source
- * @bytes_per_datum:	size of individual datum including timestamp
- * @length:		number of datums in ring
+ * __iio_init_ring_buffer() - initialize common elements of ring buffers.
  **/
-static inline void __iio_update_ring_buffer(struct iio_ring_buffer *ring,
-					    int bytes_per_datum, int length)
+static inline void __iio_init_ring_buffer(struct iio_ring_buffer *ring,
+				 int bytes_per_datum, int length)
 {
 	ring->bpd = bytes_per_datum;
 	ring->length = length;
 	ring->loopcount = 0;
+	ring->shared_ev_pointer.ev_p = 0;
+	ring->shared_ev_pointer.lock =
+		__SPIN_LOCK_UNLOCKED(ring->shared_ev_pointer->loc);
 }
 
 /**
@@ -176,11 +171,7 @@ struct iio_scan_el {
 	container_of(_dev_attr, struct iio_scan_el, dev_attr);
 
 /**
- * iio_scan_el_store() - sysfs scan element selection interface
- * @dev: the target device
- * @attr: the device attribute that is being processed
- * @buf: input from userspace
- * @len: length of input
+ * iio_scan_el_store() - sysfs scan element selection interface.
  *
  * A generic function used to enable various scan elements.  In some
  * devices explicit read commands for each channel mean this is merely
@@ -193,13 +184,29 @@ ssize_t iio_scan_el_store(struct device *dev, struct device_attribute *attr,
 			  const char *buf, size_t len);
 /**
  * iio_scal_el_show() -	sysfs interface to query whether a scan element is
- *			is enabled or not
- * @dev: the target device
- * @attr: the device attribute that is being processed
- * @buf: output buffer
+ *			is enabled or not.
  **/
 ssize_t iio_scan_el_show(struct device *dev, struct device_attribute *attr,
 			 char *buf);
+/**
+ * IIO_SCAN_EL: - declare and initialize a scan element without control func
+ * @_name:	identifying name. Resulting struct is iio_scan_el_##_name,
+ *		sysfs element, scan_en_##_name.
+ * @_number:	unique id number for the scan element.
+ * @_bits:	number of bits in the scan element result (used in mixed bit
+ *		length devices).
+ * @_label:	indentification variable used by drivers.  Often a reg address.
+ **/
+#define IIO_SCAN_EL(_name, _number, _bits, _label)			\
+	struct iio_scan_el iio_scan_el_##_name = {			\
+		.dev_attr = __ATTR(scan_en_##_name,			\
+				   S_IRUGO | S_IWUSR,			\
+				   iio_scan_el_show,			\
+				   iio_scan_el_store),			\
+		.mask = (1 << _number),					\
+		.bit_count = _bits,					\
+		.label = _label,					\
+	}
 
 ssize_t iio_scan_el_ts_store(struct device *dev, struct device_attribute *attr,
 			     const char *buf, size_t len);
@@ -207,19 +214,13 @@ ssize_t iio_scan_el_ts_store(struct device *dev, struct device_attribute *attr,
 ssize_t iio_scan_el_ts_show(struct device *dev, struct device_attribute *attr,
 			    char *buf);
 /**
- * IIO_SCAN_EL_C - declare and initialize a scan element with a control func
+ * IIO_SCAN_EL_C: - declare and initialize a scan element with a control func
  *
- * @_name:	identifying name. Resulting struct is iio_scan_el_##_name,
- *		sysfs element, _name##_en.
- * @_number:	unique id number for the scan element.
- * @_bits:	number of bits in the scan element result (used in mixed bit
- *		length devices).
- * @_label:	indentification variable used by drivers.  Often a reg address.
  * @_controlfunc: function used to notify hardware of whether state changes
  **/
-#define __IIO_SCAN_EL_C(_name, _number, _bits, _label, _controlfunc)	\
+#define IIO_SCAN_EL_C(_name, _number, _bits, _label, _controlfunc)	\
 	struct iio_scan_el iio_scan_el_##_name = {			\
-		.dev_attr = __ATTR(_number##_##_name##_en,		\
+		.dev_attr = __ATTR(scan_en_##_name,			\
 				   S_IRUGO | S_IWUSR,			\
 				   iio_scan_el_show,			\
 				   iio_scan_el_store),			\
@@ -228,31 +229,14 @@ ssize_t iio_scan_el_ts_show(struct device *dev, struct device_attribute *attr,
 		.label = _label,					\
 		.set_state = _controlfunc,				\
 	}
-
-#define IIO_SCAN_EL_C(_name, _number, _bits, _label, _controlfunc)	\
-	__IIO_SCAN_EL_C(_name, _number, _bits, _label, _controlfunc)
-
-#define __IIO_SCAN_NAMED_EL_C(_name, _string, _number, _bits, _label, _cf) \
-	struct iio_scan_el iio_scan_el_##_name = {			\
-		.dev_attr = __ATTR(_number##_##_string##_en,		\
-				   S_IRUGO | S_IWUSR,			\
-				   iio_scan_el_show,			\
-				   iio_scan_el_store),			\
-		.number =  _number,					\
-		.bit_count = _bits,					\
-		.label = _label,					\
-		.set_state = _cf,					\
-	}
-#define IIO_SCAN_NAMED_EL_C(_name, _string, _number, _bits, _label, _cf) \
-	__IIO_SCAN_NAMED_EL_C(_name, _string, _number, _bits, _label, _cf)
 /**
- * IIO_SCAN_EL_TIMESTAMP - declare a special scan element for timestamps
+ * IIO_SCAN_EL_TIMESTAMP: - declare a special scan element for timestamps
  *
  * Odd one out. Handled slightly differently from other scan elements.
  **/
-#define IIO_SCAN_EL_TIMESTAMP(number)				\
+#define IIO_SCAN_EL_TIMESTAMP					\
 	struct iio_scan_el iio_scan_el_timestamp = {		\
-		.dev_attr = __ATTR(number##_timestamp_en,	\
+		.dev_attr = __ATTR(scan_en_timestamp,		\
 				   S_IRUGO | S_IWUSR,		\
 				   iio_scan_el_ts_show,		\
 				   iio_scan_el_ts_store),	\
@@ -267,7 +251,7 @@ static inline void iio_put_ring_buffer(struct iio_ring_buffer *ring)
 	container_of(d, struct iio_ring_buffer, dev)
 #define access_dev_to_iio_ring_buffer(d)			\
 	container_of(d, struct iio_ring_buffer, access_dev)
-int iio_ring_buffer_register(struct iio_ring_buffer *ring, int id);
+int iio_ring_buffer_register(struct iio_ring_buffer *ring);
 void iio_ring_buffer_unregister(struct iio_ring_buffer *ring);
 
 ssize_t iio_read_ring_length(struct device *dev,
@@ -295,14 +279,5 @@ ssize_t iio_show_ring_enable(struct device *dev,
 #define IIO_RING_ENABLE_ATTR DEVICE_ATTR(ring_enable, S_IRUGO | S_IWUSR, \
 					 iio_show_ring_enable,		\
 					 iio_store_ring_enable)
-#else /* CONFIG_IIO_RING_BUFFER */
-static inline int iio_ring_buffer_register(struct iio_ring_buffer *ring, int id)
-{
-	return 0;
-};
-static inline void iio_ring_buffer_unregister(struct iio_ring_buffer *ring)
-{};
-
-#endif /* CONFIG_IIO_RING_BUFFER */
 
 #endif /* _IIO_RING_GENERIC_H_ */

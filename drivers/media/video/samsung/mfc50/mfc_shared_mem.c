@@ -62,7 +62,7 @@ void mfc_write_shared_mem(unsigned int host_wr_addr, MFC_SHARED_MEM *shared_mem)
 	mfc_write_shared_mem_item(host_wr_addr, ALLOCATED_MV_SIZE			, shared_mem->allocated_mv_size);
 	mfc_write_shared_mem_item(host_wr_addr, P720_LIMIT_ENABLE			, shared_mem->p720_limit_enable);
 	dmac_clean_range((void *)host_wr_addr, (void *)(host_wr_addr + SHARED_MEM_MAX));
-	
+
 #if	DEBUG_ENABLE	
 	mfc_print_shared_mem(host_wr_addr);
 #endif
@@ -84,7 +84,7 @@ void mfc_read_shared_mem(unsigned int host_wr_addr, MFC_SHARED_MEM *shared_mem)
 	shared_mem->metadata_display_index = mfc_read_shared_mem_item(host_wr_addr, METADATA_DISPLAY_INDEX);
 	shared_mem->dbg_info_output0       = mfc_read_shared_mem_item(host_wr_addr, DBG_INFO_OUTPUT0);
 	shared_mem->dbg_info_output1       = mfc_read_shared_mem_item(host_wr_addr, DBG_INFO_OUTPUT1);
-	
+
 #if	DEBUG_ENABLE	
 	mfc_print_shared_mem(host_wr_addr);
 #endif	

@@ -1,15 +1,16 @@
 #ifndef _KERNEL_SEC_COMMON_H_
 #define _KERNEL_SEC_COMMON_H_
 
-#ifdef CONFIG_KERNEL_DEBUG_SEC
-
 #include <asm/io.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <mach/map.h>
-#include <plat/regs-clock.h>
+#include <mach/regs-clock.h>
+#include <linux/sched.h>
 
 // MAGIC_CODE in LOKE
+// you have to use this vitrual address with consideration
+//#define LOKE_BOOT_USB_DWNLD_V_ADDR  0xC1000000
 #define LOKE_BOOT_USB_DWNLD_V_ADDR  0xD1000000
 #define LOKE_BOOT_USB_DWNLDMAGIC_NO 0x66262564
 
@@ -33,6 +34,27 @@
 
 //WDOG register
 #define S3C_PA_WDT                  0xE2700000		
+
+// klaatu - schedule log
+#define SCHED_LOG_MAX 1000
+
+typedef struct {
+    void * dummy;
+    void * fn;
+}irq_log_t;
+
+typedef union {
+    char task[TASK_COMM_LEN];
+    irq_log_t irq;
+}task_log_t;
+
+typedef struct {
+    unsigned long long time;
+    task_log_t log;
+}sched_log_t;
+
+extern sched_log_t gExcpTaskLog[SCHED_LOG_MAX];
+extern unsigned int gExcpTaskLogIdx;
 
 typedef struct tag_mmu_info
 {	
@@ -125,8 +147,8 @@ typedef enum
 	UPLOAD_CAUSE_KERNEL_PANIC   = 0x000000C8,
 	UPLOAD_CAUSE_FORCED_UPLOAD  = 0x00000022,
 	UPLOAD_CAUSE_CP_ERROR_FATAL = 0x000000CC,
-    UPLOAD_CAUSE_USER_FAULT 	= 0x0000002F,
-    	BLK_UART_MSG_FOR_FACTRST_2ND_ACK = 0x00000088,    
+    	UPLOAD_CAUSE_USER_FAULT 	= 0x0000002F,
+    	BLK_UART_MSG_FOR_FACTRST_2ND_ACK = 0x00000088,	  
 }kernel_sec_upload_cause_type;
 
 #define KERNEL_SEC_UPLOAD_CAUSE_MASK     0x000000FF
@@ -142,7 +164,7 @@ extern void kernel_sec_map_wdog_reg(void);
 extern void kernel_sec_set_cp_upload(void);
 extern void kernel_sec_set_cp_ack(void);
 extern void kernel_sec_set_upload_magic_number(void);
-extern void kernel_sec_set_upload_magic_number_final(void); //suik_Check
+extern void kernel_sec_set_upload_magic_number_final(void);  //suik_Check
 
 extern void kernel_sec_set_upload_cause(kernel_sec_upload_cause_type uploadType);
 extern void kernel_sec_set_cause_strptr(unsigned char* str_ptr, int size);
@@ -157,6 +179,10 @@ extern void kernel_sec_get_core_reg_dump(t_kernel_sec_arm_core_regsiters* regs);
 extern int  kernel_sec_get_mmu_reg_dump(t_kernel_sec_mmu_info *mmu_info);
 extern void kernel_sec_save_final_context(void);
 
+extern bool kernel_set_debug_level(int level);
+extern int kernel_get_debug_level(void);
+extern int kernel_get_debug_state(void);
+
 extern bool kernel_sec_set_debug_level(int level);
 extern int kernel_sec_get_debug_level_from_param(void);
 extern int kernel_sec_get_debug_level(void);
@@ -164,5 +190,4 @@ extern int kernel_sec_get_debug_level(void);
 #define KERNEL_SEC_LEN_BUILD_TIME 16
 #define KERNEL_SEC_LEN_BUILD_DATE 16
 
-#endif // CONFIG_KERNEL_DEBUG_SEC
 #endif /* _KERNEL_SEC_COMMON_H_ */

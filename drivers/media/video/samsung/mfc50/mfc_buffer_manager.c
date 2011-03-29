@@ -174,12 +174,12 @@ int mfc_init_buffer(void)
 		if (port_no)
 		{
 			free_node->start_addr = mfc_get_port1_buff_paddr();
-			free_node->size = s3c_get_media_memsize_node(S3C_MDEV_MFC, 1);
+			free_node->size = s3c_get_media_memsize_bank(S3C_MDEV_MFC, 1);
 		}
 		else
 		{
 			free_node->start_addr = mfc_get_port0_buff_paddr();
-			free_node->size = s3c_get_media_memsize(S3C_MDEV_MFC) -
+			free_node->size = s3c_get_media_memsize_bank(S3C_MDEV_MFC, 0) -
 				(mfc_get_port0_buff_paddr() - mfc_get_fw_buff_paddr());
 		}
 
@@ -365,7 +365,7 @@ MFC_ERROR_CODE mfc_allocate_buffer(mfc_inst_ctx *mfc_ctx, mfc_args *args, int po
 
 	alloc_node->size = (int)in_param->buff_size;
 	alloc_node->inst_no = inst_no;
-
+ 
 	list_add(&(alloc_node->list), &mfc_alloc_mem_head[port_no]);
 	ret = MFCINST_RET_OK;
 

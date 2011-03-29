@@ -13,7 +13,6 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/slab.h>
 #include <linux/usb.h>
 
 #include "audio.h"
@@ -34,7 +33,7 @@
 
 
 /* table of devices that work with this driver */
-static const struct usb_device_id line6_id_table[] = {
+static struct usb_device_id line6_id_table[] = {
 	{ USB_DEVICE(LINE6_VENDOR_ID, LINE6_DEVID_BASSPODXT) },
 	{ USB_DEVICE(LINE6_VENDOR_ID, LINE6_DEVID_BASSPODXTLIVE) },
 	{ USB_DEVICE(LINE6_VENDOR_ID, LINE6_DEVID_BASSPODXTPRO) },
@@ -169,19 +168,19 @@ static void line6_dump_urb(struct urb *urb)
 #endif
 
 /*
-	Send raw message in pieces of max_packet_size bytes.
+	Send raw message in pieces of wMaxPacketSize bytes.
 */
 int line6_send_raw_message(struct usb_line6 *line6, const char *buffer,
 			   int size)
 {
 	int i, done = 0;
-	int actual_size;
 
 #if DO_DUMP_URB_SEND
 	line6_write_hexdump(line6, 'S', buffer, size);
 #endif
 
-	for (i = 0; i < size; i += actual_size) {
+	for (i = 0; i < size; i += line6->max_packet_size) {
+		int partial;
 		const char *frag_buf = buffer + i;
 		int frag_size = min(line6->max_packet_size, size - i);
 		int retval;
@@ -190,7 +189,7 @@ int line6_send_raw_message(struct usb_line6 *line6, const char *buffer,
 					   usb_sndintpipe(line6->usbdev,
 							  line6->ep_control_write),
 					   (char *)frag_buf, frag_size,
-					   &actual_size, LINE6_TIMEOUT * HZ);
+					   &partial, LINE6_TIMEOUT * HZ);
 
 		if (retval) {
 			dev_err(line6->ifcdev,
@@ -198,7 +197,7 @@ int line6_send_raw_message(struct usb_line6 *line6, const char *buffer,
 			break;
 		}
 
-		done += actual_size;
+		done += frag_size;
 	}
 
 	return done;
@@ -396,44 +395,17 @@ static void line6_data_received(struct urb *urb)
 	line6_start_listen(line6);
 }
 
-static int line6_send(struct usb_line6 *line6, unsigned char *buf, size_t len)
-{
-	int retval;
-	int partial;
-
-#if DO_DUMP_URB_SEND
-	line6_write_hexdump(line6, 'S', buf, len);
-#endif
-
-	retval = usb_interrupt_msg(line6->usbdev,
-				   usb_sndintpipe(line6->usbdev,
-						  line6->ep_control_write),
-				   buf, len, &partial,
-				   LINE6_TIMEOUT * HZ);
-
-	if (retval) {
-		dev_err(line6->ifcdev,
-			"usb_interrupt_msg failed (%d)\n", retval);
-	}
-
-	if (partial != len) {
-		dev_err(line6->ifcdev,
-			"usb_interrupt_msg sent partial message (%d)\n",
-			 retval);
-	}
-
-	return retval;
-}
-
 /*
 	Send channel number (i.e., switch to a different sound).
 */
 int line6_send_program(struct usb_line6 *line6, int value)
 {
+	int retval;
 	unsigned char *buffer;
-	size_t len = 2;
+	unsigned int partial;
 
-	buffer = kmalloc(len, GFP_KERNEL);
+	buffer = kmalloc(2, GFP_KERNEL);
+
 	if (!buffer) {
 		dev_err(line6->ifcdev, "out of memory\n");
 		return -ENOMEM;
@@ -442,7 +414,20 @@ int line6_send_program(struct usb_line6 *line6, int value)
 	buffer[0] = LINE6_PROGRAM_CHANGE | LINE6_CHANNEL_HOST;
 	buffer[1] = value;
 
-	return line6_send(line6, buffer, len);
+#if DO_DUMP_URB_SEND
+	line6_write_hexdump(line6, 'S', buffer, 2);
+#endif
+
+	retval = usb_interrupt_msg(line6->usbdev,
+				   usb_sndintpipe(line6->usbdev,
+						  line6->ep_control_write),
+				   buffer, 2, &partial, LINE6_TIMEOUT * HZ);
+
+	if (retval)
+		dev_err(line6->ifcdev, "usb_interrupt_msg failed (%d)\n", retval);
+
+	kfree(buffer);
+	return retval;
 }
 
 /*
@@ -450,10 +435,12 @@ int line6_send_program(struct usb_line6 *line6, int value)
 */
 int line6_transmit_parameter(struct usb_line6 *line6, int param, int value)
 {
+	int retval;
 	unsigned char *buffer;
-	size_t len = 3;
+	unsigned int partial;
 
-	buffer = kmalloc(len, GFP_KERNEL);
+	buffer = kmalloc(3, GFP_KERNEL);
+
 	if (!buffer) {
 		dev_err(line6->ifcdev, "out of memory\n");
 		return -ENOMEM;
@@ -463,7 +450,19 @@ int line6_transmit_parameter(struct usb_line6 *line6, int param, int value)
 	buffer[1] = param;
 	buffer[2] = value;
 
-	return line6_send(line6, buffer, len);
+#if DO_DUMP_URB_SEND
+	line6_write_hexdump(line6, 'S', buffer, 3);
+#endif
+
+	retval = usb_interrupt_msg(line6->usbdev,
+														 usb_sndintpipe(line6->usbdev, line6->ep_control_write),
+														 buffer, 3, &partial, LINE6_TIMEOUT * HZ);
+
+	if (retval)
+		dev_err(line6->ifcdev, "usb_interrupt_msg failed (%d)\n", retval);
+
+	kfree(buffer);
+	return retval;
 }
 
 /*
@@ -477,10 +476,8 @@ int line6_read_data(struct usb_line6 *line6, int address, void *data, size_t dat
 
 	/* query the serial number: */
 	ret = usb_control_msg(usbdev, usb_sndctrlpipe(usbdev, 0), 0x67,
-				      USB_TYPE_VENDOR | USB_RECIP_DEVICE
-				      | USB_DIR_OUT,
-				      (datalen << 8) | 0x21, address,
-				      NULL, 0, LINE6_TIMEOUT * HZ);
+												USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_DIR_OUT,
+												(datalen << 8) | 0x21, address, NULL, 0, LINE6_TIMEOUT * HZ);
 
 	if (ret < 0) {
 		dev_err(line6->ifcdev, "read request failed (error %d)\n", ret);
@@ -499,7 +496,9 @@ int line6_read_data(struct usb_line6 *line6, int address, void *data, size_t dat
 				"receive length failed (error %d)\n", ret);
 			return ret;
 		}
-	} while (len == 0xff);
+	}
+	while (len == 0xff)
+		;
 
 	if (len != datalen) {
 		/* should be equal or something went wrong */
@@ -679,35 +678,25 @@ static int line6_probe(struct usb_interface *interface, const struct usb_device_
 	usb_get_dev(usbdev);
 
 	/* we don't handle multiple configurations */
-	if (usbdev->descriptor.bNumConfigurations != 1) {
-		ret = -ENODEV;
-		goto err_put;
-	}
+	if (usbdev->descriptor.bNumConfigurations != 1)
+		return -ENODEV;
 
 	/* check vendor and product id */
-	for (devtype = ARRAY_SIZE(line6_id_table) - 1; devtype--;) {
-		u16 idVendor = le16_to_cpu(usbdev->descriptor.idVendor);
-		u16 idProduct = le16_to_cpu(usbdev->descriptor.idProduct);
-
-		if (idVendor == line6_id_table[devtype].idVendor
-		     && idProduct == line6_id_table[devtype].idProduct)
+	for (devtype = ARRAY_SIZE(line6_id_table) - 1; devtype--;)
+		if ((le16_to_cpu(usbdev->descriptor.idVendor) == line6_id_table[devtype].idVendor) &&
+			 (le16_to_cpu(usbdev->descriptor.idProduct) == line6_id_table[devtype].idProduct))
 			break;
-	}
 
-	if (devtype < 0) {
-		ret = -ENODEV;
-		goto err_put;
-	}
+	if (devtype < 0)
+		return -ENODEV;
 
 	/* find free slot in device table: */
 	for (devnum = 0; devnum < LINE6_MAX_DEVICES; ++devnum)
 		if (line6_devices[devnum] == NULL)
 			break;
 
-	if (devnum == LINE6_MAX_DEVICES) {
-		ret = -ENODEV;
-		goto err_put;
-	}
+	if (devnum == LINE6_MAX_DEVICES)
+		return -ENODEV;
 
 	/* initialize device info: */
 	properties = &line6_properties_table[devtype];
@@ -768,14 +757,13 @@ static int line6_probe(struct usb_interface *interface, const struct usb_device_
 
 	default:
 		MISSING_CASE;
-		ret = -ENODEV;
-		goto err_put;
+		return -ENODEV;
 	}
 
 	ret = usb_set_interface(usbdev, interface_number, alternate);
 	if (ret < 0) {
 		dev_err(&interface->dev, "set_interface failed\n");
-		goto err_put;
+		return ret;
 	}
 
 	/* initialize device data based on product id: */
@@ -822,8 +810,7 @@ static int line6_probe(struct usb_interface *interface, const struct usb_device_
 			break;
 
 		default:
-			ret = -ENODEV;
-			goto err_put;
+			return -ENODEV;
 		}
 		break;
 
@@ -835,22 +822,19 @@ static int line6_probe(struct usb_interface *interface, const struct usb_device_
 
 	default:
 		MISSING_CASE;
-		ret = -ENODEV;
-		goto err_put;
+		return -ENODEV;
 	}
 
 	if (size == 0) {
 		dev_err(line6->ifcdev, "driver bug: interface data size not set\n");
-		ret = -ENODEV;
-		goto err_put;
+		return -ENODEV;
 	}
 
 	line6 = kzalloc(size, GFP_KERNEL);
 
 	if (line6 == NULL) {
 		dev_err(&interface->dev, "Out of memory\n");
-		ret = -ENODEV;
-		goto err_put;
+		return -ENOMEM;
 	}
 
 	/* store basic data: */
@@ -886,16 +870,16 @@ static int line6_probe(struct usb_interface *interface, const struct usb_device_
 
 		if (line6->buffer_listen == NULL) {
 			dev_err(&interface->dev, "Out of memory\n");
-			ret = -ENOMEM;
-			goto err_destruct;
+			line6_destruct(interface);
+			return -ENOMEM;
 		}
 
 		line6->buffer_message = kmalloc(LINE6_MESSAGE_MAXLEN, GFP_KERNEL);
 
 		if (line6->buffer_message == NULL) {
 			dev_err(&interface->dev, "Out of memory\n");
-			ret = -ENOMEM;
-			goto err_destruct;
+			line6_destruct(interface);
+			return -ENOMEM;
 		}
 
 		line6->urb_listen = usb_alloc_urb(0, GFP_KERNEL);
@@ -903,15 +887,15 @@ static int line6_probe(struct usb_interface *interface, const struct usb_device_
 		if (line6->urb_listen == NULL) {
 			dev_err(&interface->dev, "Out of memory\n");
 			line6_destruct(interface);
-			ret = -ENOMEM;
-			goto err_destruct;
+			return -ENOMEM;
 		}
 
 		ret = line6_start_listen(line6);
 		if (ret < 0) {
 			dev_err(&interface->dev, "%s: usb_submit_urb failed\n",
 				__func__);
-			goto err_destruct;
+			line6_destruct(interface);
+			return ret;
 		}
 	}
 
@@ -963,25 +947,22 @@ static int line6_probe(struct usb_interface *interface, const struct usb_device_
 		ret = -ENODEV;
 	}
 
-	if (ret < 0)
-		goto err_destruct;
+	if (ret < 0) {
+		line6_destruct(interface);
+		return ret;
+	}
 
 	ret = sysfs_create_link(&interface->dev.kobj, &usbdev->dev.kobj,
 				"usb_device");
-	if (ret < 0)
-		goto err_destruct;
+	if (ret < 0) {
+		line6_destruct(interface);
+		return ret;
+	}
 
 	dev_info(&interface->dev, "Line6 %s now attached\n",
 		 line6->properties->name);
 	line6_devices[devnum] = line6;
 	line6_list_devices();
-	return 0;
-
-err_destruct:
-	line6_destruct(interface);
-err_put:
-	usb_put_intf(interface);
-	usb_put_dev(usbdev);
 	return ret;
 }
 
@@ -1055,10 +1036,9 @@ static void line6_disconnect(struct usb_interface *interface)
 
 		dev_info(&interface->dev, "Line6 %s now disconnected\n", line6->properties->name);
 
-		for (i = LINE6_MAX_DEVICES; i--;) {
+		for (i = LINE6_MAX_DEVICES; i--;)
 			if (line6_devices[i] == line6)
 				line6_devices[i] = NULL;
-		}
 	}
 
 	line6_destruct(interface);

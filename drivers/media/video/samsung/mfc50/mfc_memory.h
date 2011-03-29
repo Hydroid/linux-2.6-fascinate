@@ -21,7 +21,7 @@
 #ifndef _MFC_MEMORY_H_
 #define _MFC_MEMORY_H_
 
-#include "mfc_opr.h"
+#include "victory/mfc_opr.h"
 
 #ifdef CONFIG_VIDEO_MFC_MAX_INSTANCE
 #define MFC_MAX_INSTANCE_NUM (CONFIG_VIDEO_MFC_MAX_INSTANCE)

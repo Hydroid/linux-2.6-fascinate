@@ -9,6 +9,7 @@
  * more details.
  */
 
+//#include <linux/config.h>
 #include <linux/version.h>
 #include <linux/module.h>
 #include <linux/init.h>
@@ -67,9 +68,10 @@ static void * ieee80211_ccmp_init(int key_idx)
 {
 	struct ieee80211_ccmp_data *priv;
 
-	priv = kzalloc(sizeof(*priv), GFP_ATOMIC);
+	priv = kmalloc(sizeof(*priv), GFP_ATOMIC);
 	if (priv == NULL)
 		goto fail;
+	memset(priv, 0, sizeof(*priv));
 	priv->key_idx = key_idx;
 
 	priv->tfm = (void *)crypto_alloc_cipher("aes", 0, CRYPTO_ALG_ASYNC);
@@ -130,6 +132,7 @@ static void ccmp_init_blocks(struct crypto_tfm *tfm,
 	qc_included = ((WLAN_FC_GET_TYPE(fc) == IEEE80211_FTYPE_DATA) &&
 		       (WLAN_FC_GET_STYPE(fc) & 0x08));
         */
+	// fixed by David :2006.9.6
 	qc_included = ((WLAN_FC_GET_TYPE(fc) == IEEE80211_FTYPE_DATA) &&
 		       (WLAN_FC_GET_STYPE(fc) & 0x80));
 	aad_len = 22;
@@ -208,6 +211,7 @@ static int ieee80211_ccmp_encrypt(struct sk_buff *skb, int hdr_len, void *priv)
 	pos = skb_push(skb, CCMP_HDR_LEN);
 	memmove(pos, pos + CCMP_HDR_LEN, hdr_len);
 	pos += hdr_len;
+//	mic = skb_put(skb, CCMP_MIC_LEN);
 
 	i = CCMP_PN_LEN - 1;
 	while (i >= 0) {
@@ -237,6 +241,7 @@ static int ieee80211_ccmp_encrypt(struct sk_buff *skb, int hdr_len, void *priv)
 		u8 *e = key->tx_e;
 		u8 *s0 = key->tx_s0;
 
+		//mic is moved to here by john
 		mic = skb_put(skb, CCMP_MIC_LEN);
 
 		ccmp_init_blocks(key->tfm, hdr, key->tx_pn, data_len, b0, b, s0);
@@ -283,7 +288,7 @@ static int ieee80211_ccmp_decrypt(struct sk_buff *skb, int hdr_len, void *priv)
 	if (!(keyidx & (1 << 5))) {
 		if (net_ratelimit()) {
 			printk(KERN_DEBUG "CCMP: received packet without ExtIV"
-			       " flag from %pM\n", hdr->addr2);
+			       " flag from " MAC_FMT "\n", MAC_ARG(hdr->addr2));
 		}
 		key->dot11RSNAStatsCCMPFormatErrors++;
 		return -2;
@@ -296,9 +301,9 @@ static int ieee80211_ccmp_decrypt(struct sk_buff *skb, int hdr_len, void *priv)
 	}
 	if (!key->key_set) {
 		if (net_ratelimit()) {
-			printk(KERN_DEBUG "CCMP: received packet from %pM"
+			printk(KERN_DEBUG "CCMP: received packet from " MAC_FMT
 			       " with keyid=%d that does not have a configured"
-			       " key\n", hdr->addr2, keyidx);
+			       " key\n", MAC_ARG(hdr->addr2), keyidx);
 		}
 		return -3;
 	}
@@ -313,9 +318,11 @@ static int ieee80211_ccmp_decrypt(struct sk_buff *skb, int hdr_len, void *priv)
 
 	if (memcmp(pn, key->rx_pn, CCMP_PN_LEN) <= 0) {
 		if (net_ratelimit()) {
-			printk(KERN_DEBUG "CCMP: replay detected: STA=%pM"
-			       " previous PN %pm received PN %pm\n",
-			       hdr->addr2, key->rx_pn, pn);
+			printk(KERN_DEBUG "CCMP: replay detected: STA=" MAC_FMT
+			       " previous PN %02x%02x%02x%02x%02x%02x "
+			       "received PN %02x%02x%02x%02x%02x%02x\n",
+			       MAC_ARG(hdr->addr2), MAC_ARG(key->rx_pn),
+			       MAC_ARG(pn));
 		}
 		key->dot11RSNAStatsCCMPReplays++;
 		return -4;
@@ -352,7 +359,7 @@ static int ieee80211_ccmp_decrypt(struct sk_buff *skb, int hdr_len, void *priv)
 		if (memcmp(mic, a, CCMP_MIC_LEN) != 0) {
 			if (net_ratelimit()) {
 				printk(KERN_DEBUG "CCMP: decrypt failed: STA="
-				"%pM\n", hdr->addr2);
+				MAC_FMT "\n", MAC_ARG(hdr->addr2));
 			}
 			key->dot11RSNAStatsCCMPDecryptErrors++;
 			return -5;
@@ -428,10 +435,11 @@ static char * ieee80211_ccmp_print_stats(char *p, void *priv)
 {
 	struct ieee80211_ccmp_data *ccmp = priv;
 	p += sprintf(p, "key[%d] alg=CCMP key_set=%d "
-		     "tx_pn=%pm rx_pn=%pm "
+		     "tx_pn=%02x%02x%02x%02x%02x%02x "
+		     "rx_pn=%02x%02x%02x%02x%02x%02x "
 		     "format_errors=%d replays=%d decrypt_errors=%d\n",
 		     ccmp->key_idx, ccmp->key_set,
-		     ccmp->tx_pn, ccmp->rx_pn,
+		     MAC_ARG(ccmp->tx_pn), MAC_ARG(ccmp->rx_pn),
 		     ccmp->dot11RSNAStatsCCMPFormatErrors,
 		     ccmp->dot11RSNAStatsCCMPReplays,
 		     ccmp->dot11RSNAStatsCCMPDecryptErrors);
@@ -441,6 +449,7 @@ static char * ieee80211_ccmp_print_stats(char *p, void *priv)
 
 void ieee80211_ccmp_null(void)
 {
+//    printk("============>%s()\n", __FUNCTION__);
 	return;
 }
 
@@ -465,7 +474,7 @@ int __init ieee80211_crypto_ccmp_init(void)
 	return ieee80211_register_crypto_ops(&ieee80211_crypt_ccmp);
 }
 
-void ieee80211_crypto_ccmp_exit(void)
+void __exit ieee80211_crypto_ccmp_exit(void)
 {
 	ieee80211_unregister_crypto_ops(&ieee80211_crypt_ccmp);
 }

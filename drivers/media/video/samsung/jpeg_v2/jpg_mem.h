@@ -1,14 +1,14 @@
 /* linux/drivers/media/video/samsung/jpeg_v2/jpg_mem.h
  *
- * Driver header file for Samsung JPEG Encoder/Decoder
+ * Copyright (c) 2010 Samsung Electronics Co., Ltd.
+ * http://www.samsung.com/
  *
- * Peter Oh, Hyunmin kwak,Copyright (c) 2009 Samsung Electronics
- * 	http://www.samsungsemi.com/
+ * Definition for Operation of Jpeg encoder/docoder with memory
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
- */
+*/
 
 #ifndef __JPG_MEM_H__
 #define __JPG_MEM_H__
@@ -18,55 +18,46 @@
 #include <linux/version.h>
 #include <plat/media.h>
 
-#ifdef CONFIG_CPU_S5PC100
-#define JPG_REG_BASE_ADDR    	(0xEE500000)
-#else //CONFIG_CPU_S5PC110
 #define JPG_REG_BASE_ADDR    	(0xFB600000)
-#endif
 
-#define jpg_data_base_addr	(UINT32)s3c_get_media_memory(S3C_MDEV_JPEG)
+#define jpg_data_base_addr	(UINT32)s3c_get_media_memory_bank(S3C_MDEV_JPEG, 0)
 
-#define MAX_JPG_WIDTH        3072//3264
-#define MAX_JPG_HEIGHT       2048//2448
-#define MIN_JPG_WIDTH        32
-#define MIN_JPG_HEIGHT       32
+#define MAX_JPG_WIDTH       	3072
+#define MAX_JPG_HEIGHT       	2048
+#define MAX_JPG_RESOLUTION	(MAX_JPG_WIDTH * MAX_JPG_HEIGHT)
 
 #define MAX_JPG_THUMBNAIL_WIDTH	 320
 #define MAX_JPG_THUMBNAIL_HEIGHT 240
+#define MAX_JPG_THUMBNAIL_RESOLUTION (MAX_JPG_THUMBNAIL_WIDTH * MAX_JPG_THUMBNAIL_HEIGHT)
 
 #define MAX_RGB_WIDTH        800
 #define MAX_RGB_HEIGHT       480
+#define MAX_RGB_RESOLUTION	(MAX_RGB_WIDTH * MAX_RGB_HEIGHT)
 
 /*******************************************************************************/
-// define JPG & image memory
-// memory area is 4k(PAGE_SIZE) aligned because of VirtualCopyEx()
-#define JPG_STREAM_BUF_SIZE        ((MAX_JPG_WIDTH * MAX_JPG_HEIGHT )/PAGE_SIZE + 1)*PAGE_SIZE
-#define JPG_STREAM_THUMB_BUF_SIZE  ((MAX_JPG_THUMBNAIL_WIDTH * MAX_JPG_THUMBNAIL_HEIGHT )/PAGE_SIZE + 1)*PAGE_SIZE
-#define JPG_FRAME_BUF_SIZE         ((MAX_JPG_WIDTH * MAX_JPG_HEIGHT * 3)/PAGE_SIZE + 1)*PAGE_SIZE
-#define JPG_FRAME_THUMB_BUF_SIZE   ((MAX_JPG_THUMBNAIL_WIDTH * MAX_JPG_THUMBNAIL_HEIGHT * 3)/PAGE_SIZE + 1)*PAGE_SIZE
-#define JPG_RGB_BUF_SIZE           ((MAX_RGB_WIDTH * MAX_RGB_HEIGHT*4)/PAGE_SIZE + 1)*PAGE_SIZE
+/* define JPG & image memory */
+/* memory area is 4k(PAGE_SIZE) aligned because of VirtualCopyEx() */
+#define JPG_STREAM_BUF_SIZE		\
+		(MAX_JPG_RESOLUTION / PAGE_SIZE + 1) * PAGE_SIZE
+#define JPG_STREAM_THUMB_BUF_SIZE 	\
+		(MAX_JPG_THUMBNAIL_RESOLUTION / PAGE_SIZE + 1) * PAGE_SIZE
+#define JPG_FRAME_BUF_SIZE		\
+		((MAX_JPG_RESOLUTION * 3) / PAGE_SIZE + 1) * PAGE_SIZE
+#define JPG_FRAME_THUMB_BUF_SIZE	\
+		((MAX_JPG_THUMBNAIL_RESOLUTION * 3) / PAGE_SIZE + 1) * PAGE_SIZE
+#define JPG_RGB_BUF_SIZE		\
+		((MAX_RGB_RESOLUTION * 4) / PAGE_SIZE + 1) * PAGE_SIZE
 
-#define JPG_TOTAL_BUF_SIZE			(JPG_STREAM_BUF_SIZE + JPG_STREAM_THUMB_BUF_SIZE \
-			      + JPG_FRAME_BUF_SIZE + JPG_FRAME_THUMB_BUF_SIZE + JPG_RGB_BUF_SIZE)
+#define JPG_TOTAL_BUF_SIZE	(JPG_STREAM_BUF_SIZE + \
+				JPG_STREAM_THUMB_BUF_SIZE + \
+				JPG_FRAME_BUF_SIZE + \
+				JPG_FRAME_THUMB_BUF_SIZE + \
+				JPG_RGB_BUF_SIZE)
 
-#define JPG_MAIN_START		0x00
+#define JPG_MAIN_STRART		0x00
 #define JPG_THUMB_START		JPG_STREAM_BUF_SIZE
 #define IMG_MAIN_START		(JPG_STREAM_BUF_SIZE + JPG_STREAM_THUMB_BUF_SIZE)
-#define IMG_THUMB_START		(JPG_STREAM_BUF_SIZE + JPG_STREAM_THUMB_BUF_SIZE + JPG_FRAME_BUF_SIZE)
-
-/*******************************************************************************/
-//define JPG & image memory in case of shared buffer for encoding
-
-#define SHARED_JPG_BUF_SIZE	SZ_1M
-#define JPG_THUMB_SIZE		((MAX_JPG_THUMBNAIL_WIDTH * MAX_JPG_THUMBNAIL_HEIGHT)/PAGE_SIZE + 1)*PAGE_SIZE
-#define RAW_THUMB_SIZE		((MAX_JPG_THUMBNAIL_WIDTH * MAX_JPG_THUMBNAIL_HEIGHT * 2)/PAGE_SIZE + 1)*PAGE_SIZE
-#define JPG_MAIN_SIZE		((SHARED_JPG_BUF_SIZE - JPG_THUMB_SIZE - RAW_THUMB_SIZE)/PAGE_SIZE - 1)*PAGE_SIZE
-
-#define SHARED_JPG_MAIN_START   0x00
-#define SHARED_JPG_THUMB_START	JPG_MAIN_SIZE
-#define SHARED_RAW_THUMB_START  (JPG_MAIN_SIZE + JPG_THUMB_SIZE)
-
-#define SHARED_JPG_TOTAL_BUF_SIZE (JPG_MAIN_SIZE + JPG_THUMB_SIZE + RAW_THUMB_SIZE)
+#define IMG_THUMB_START		(IMG_MAIN_START + JPG_FRAME_BUF_SIZE)
 
 /*******************************************************************************/
 #define COEF1_RGB_2_YUV         0x4d971e
@@ -79,17 +70,24 @@
 #define JPG_1BIT_MASK           1
 #define JPG_4BIT_MASK           0xF
 
-#define JPG_SMPL_MODE_MASK	0x07	// SubSampling_Mode Mask is JPGMOD Register [2:0] bits mask
+/* SubSampling_Mode Mask is JPGMOD Register [2:0] bits mask */
+#define JPG_SMPL_MODE_MASK	0x07	
 
-#define JPG_RESTART_INTRAVEL    2	// Restart Interval value in JPGDRI Register is 2
+/* Restart Interval value in JPGDRI Register is 2*/
+#define JPG_RESTART_INTRAVEL    2
 
-//#define JPG_JPEG_RATIO_BIT      24	// JPEG_RATIO is CLK_DIV0 Register 24th bit
-#define JPG_HCLK_JPEG_BIT       5	// HCLK_JPEG is CLK_GATE_D1_1 Register 5th bit
-#define JPG_SMPL_MODE_BIT       0	// SubSampling_Mode is JPGMOD Register 0th bit
-#define JPG_QUANT_TABLE1_BIT    8	// Quantization Table #1 is JPGQHNO Register 8th bit
-#define JPG_QUANT_TABLE2_BIT    10	// Quantization Table #2 is JPGQHNO Register 10th bit
-#define JPG_QUANT_TABLE3_BIT    12	// Quantization Table #3 is JPGQHNO Register 12th bit
-#define JPG_MODE_SEL_BIT        5	// Mode Sel is JPGCMOD Register 5th bit
+/* HCLK_JPEG is CLK_GATE_D1_1 Register 5th bit */
+#define JPG_HCLK_JPEG_BIT       5
+/* SubSampling_Mode is JPGMOD Register 0th bit */
+#define JPG_SMPL_MODE_BIT       0
+/* Quantization Table #1 is JPGQHNO Register 8th bit */
+#define JPG_QUANT_TABLE1_BIT    8
+/* Quantization Table #2 is JPGQHNO Register 10th bit */
+#define JPG_QUANT_TABLE2_BIT    10
+/* Quantization Table #3 is JPGQHNO Register 12th bit */
+#define JPG_QUANT_TABLE3_BIT    12
+/* Mode Sel is JPGCMOD Register 5th bit */
+#define JPG_MODE_SEL_BIT        5
 
 #define JPG_DECODE              (0x1 << 3)
 #define JPG_ENCODE              (0x0 << 3)

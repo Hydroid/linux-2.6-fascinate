@@ -12,7 +12,6 @@
 #include "driver.h"
 
 #include <linux/usb.h>
-#include <linux/slab.h>
 
 #include <sound/core.h>
 #include <sound/rawmidi.h>
@@ -319,13 +318,7 @@ static ssize_t midi_set_midi_mask_transmit(struct device *dev,
 {
 	struct usb_interface *interface = to_usb_interface(dev);
 	struct usb_line6 *line6 = usb_get_intfdata(interface);
-	unsigned long value;
-	int ret;
-
-	ret = strict_strtoul(buf, 10, &value);
-	if (ret)
-		return ret;
-
+	int value = simple_strtoul(buf, NULL, 10);
 	line6->line6midi->midi_mask_transmit = value;
 	return count;
 }
@@ -351,13 +344,7 @@ static ssize_t midi_set_midi_mask_receive(struct device *dev,
 {
 	struct usb_interface *interface = to_usb_interface(dev);
 	struct usb_line6 *line6 = usb_get_intfdata(interface);
-	unsigned long value;
-	int ret;
-
-	ret = strict_strtoul(buf, 10, &value);
-	if (ret)
-		return ret;
-
+	int value = simple_strtoul(buf, NULL, 10);
 	line6->line6midi->midi_mask_receive = value;
 	return count;
 }

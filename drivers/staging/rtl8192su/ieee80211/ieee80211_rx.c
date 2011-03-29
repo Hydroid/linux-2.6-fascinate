@@ -37,6 +37,7 @@
 #include <linux/slab.h>
 #include <linux/tcp.h>
 #include <linux/types.h>
+#include <linux/version.h>
 #include <linux/wireless.h>
 #include <linux/etherdevice.h>
 #include <asm/uaccess.h>
@@ -208,7 +209,7 @@ static int ieee80211_frag_cache_invalidate(struct ieee80211_device *ieee,
  *
  * Responsible for handling management control frames
  *
- * Called by ieee80211_rtl_rx */
+ * Called by ieee80211_rx */
 static inline int
 ieee80211_rx_frame_mgmt(struct ieee80211_device *ieee, struct sk_buff *skb,
 			struct ieee80211_rx_stats *rx_stats, u16 type,
@@ -289,7 +290,7 @@ static int ieee80211_is_eapol_frame(struct ieee80211_device *ieee,
 	return 0;
 }
 
-/* Called only as a tasklet (software IRQ), by ieee80211_rtl_rx */
+/* Called only as a tasklet (software IRQ), by ieee80211_rx */
 static inline int
 ieee80211_rx_frame_decrypt(struct ieee80211_device* ieee, struct sk_buff *skb,
 			   struct ieee80211_crypt_data *crypt)
@@ -314,8 +315,8 @@ ieee80211_rx_frame_decrypt(struct ieee80211_device* ieee, struct sk_buff *skb,
 	    strcmp(crypt->ops->name, "TKIP") == 0) {
 		if (net_ratelimit()) {
 			printk(KERN_DEBUG "%s: TKIP countermeasures: dropped "
-			       "received packet from %pM\n",
-			       ieee->dev->name, hdr->addr2);
+			       "received packet from " MAC_FMT "\n",
+			       ieee->dev->name, MAC_ARG(hdr->addr2));
 		}
 		return -1;
 	}
@@ -326,8 +327,8 @@ ieee80211_rx_frame_decrypt(struct ieee80211_device* ieee, struct sk_buff *skb,
 	atomic_dec(&crypt->refcnt);
 	if (res < 0) {
 		IEEE80211_DEBUG_DROP(
-			"decryption failed (SA=%pM"
-			") res=%d\n", hdr->addr2, res);
+			"decryption failed (SA=" MAC_FMT
+			") res=%d\n", MAC_ARG(hdr->addr2), res);
 		if (res == -2)
 			IEEE80211_DEBUG_DROP("Decryption failed ICV "
 					     "mismatch (key %d)\n",
@@ -360,12 +361,12 @@ ieee80211_rx_frame_decrypt_msdu(struct ieee80211_device* ieee, struct sk_buff *s
 	hdrlen = ieee80211_get_hdrlen(le16_to_cpu(hdr->frame_ctl));
 
 	atomic_inc(&crypt->refcnt);
-	res = crypt->ops->decrypt_msdu(skb, keyidx, hdrlen, crypt->priv,ieee);
+	res = crypt->ops->decrypt_msdu(skb, keyidx, hdrlen, crypt->priv);
 	atomic_dec(&crypt->refcnt);
 	if (res < 0) {
 		printk(KERN_DEBUG "%s: MSDU decryption/MIC verification failed"
-		       " (SA=%pM keyidx=%d)\n",
-		       ieee->dev->name, hdr->addr2, keyidx);
+		       " (SA=" MAC_FMT " keyidx=%d)\n",
+		       ieee->dev->name, MAC_ARG(hdr->addr2), keyidx);
 		return -1;
 	}
 
@@ -744,7 +745,7 @@ u8 parse_subframe(struct sk_buff *skb,
 		  struct ieee80211_rxb *rxb,u8* src,u8* dst)
 {
 	struct ieee80211_hdr_3addr  *hdr = (struct ieee80211_hdr_3addr* )skb->data;
-	u16		fc = le16_to_cpu(hdr->frame_control);
+	u16		fc = le16_to_cpu(hdr->frame_ctl);
 
 	u16		LLCOffset= sizeof(struct ieee80211_hdr_3addr);
 	u16		ChkLength;
@@ -756,7 +757,7 @@ u8 parse_subframe(struct sk_buff *skb,
 	struct sk_buff *sub_skb;
 	u8             *data_ptr;
 	/* just for debug purpose */
-	SeqNum = WLAN_GET_SEQ_SEQ(le16_to_cpu(hdr->seq_ctrl));
+	SeqNum = WLAN_GET_SEQ_SEQ(le16_to_cpu(hdr->seq_ctl));
 
 	if((IEEE80211_QOS_HAS_SEQ(fc))&&\
 			(((frameqos *)(skb->data + IEEE80211_3ADDR_LEN))->field.reserved)) {
@@ -858,7 +859,7 @@ u8 parse_subframe(struct sk_buff *skb,
 /* All received frames are sent to this function. @skb contains the frame in
  * IEEE 802.11 format, i.e., in the format it was sent over air.
  * This function is called only as a tasklet (software IRQ). */
-int ieee80211_rtl_rx(struct ieee80211_device *ieee, struct sk_buff *skb,
+int ieee80211_rx(struct ieee80211_device *ieee, struct sk_buff *skb,
 		 struct ieee80211_rx_stats *rx_stats)
 {
 	struct net_device *dev = ieee->dev;
@@ -939,8 +940,8 @@ int ieee80211_rtl_rx(struct ieee80211_device *ieee, struct sk_buff *skb,
 			 * frames silently instead of filling system log with
 			 * these reports. */
 			IEEE80211_DEBUG_DROP("Decryption failed (not set)"
-					     " (SA=%pM)\n",
-					     hdr->addr2);
+					     " (SA=" MAC_FMT ")\n",
+					     MAC_ARG(hdr->addr2));
 			ieee->ieee_stats.rx_discards_undecryptable++;
 			goto rx_dropped;
 		}
@@ -1143,8 +1144,8 @@ int ieee80211_rtl_rx(struct ieee80211_device *ieee, struct sk_buff *skb,
 		} else {
 			IEEE80211_DEBUG_DROP(
 				"encryption configured, but RX "
-				"frame not encrypted (SA=%pM)\n",
-				hdr->addr2);
+				"frame not encrypted (SA=" MAC_FMT ")\n",
+				MAC_ARG(hdr->addr2));
 			goto rx_dropped;
 		}
 	}
@@ -1163,9 +1164,9 @@ int ieee80211_rtl_rx(struct ieee80211_device *ieee, struct sk_buff *skb,
 	    !ieee80211_is_eapol_frame(ieee, skb, hdrlen)) {
 		IEEE80211_DEBUG_DROP(
 			"dropped unencrypted RX data "
-			"frame from %pM"
+			"frame from " MAC_FMT
 			" (drop_unencrypted=1)\n",
-			hdr->addr2);
+			MAC_ARG(hdr->addr2));
 		goto rx_dropped;
 	}
 /*
@@ -1191,7 +1192,7 @@ int ieee80211_rtl_rx(struct ieee80211_device *ieee, struct sk_buff *skb,
 	/* skb: hdr + (possible reassembled) full plaintext payload */
 	payload = skb->data + hdrlen;
 	//ethertype = (payload[6] << 8) | payload[7];
-	rxb = kmalloc(sizeof(struct ieee80211_rxb), GFP_ATOMIC);
+	rxb = (struct ieee80211_rxb*)kmalloc(sizeof(struct ieee80211_rxb),GFP_ATOMIC);
 	if(rxb == NULL)
 	{
 		IEEE80211_DEBUG(IEEE80211_DL_ERR,"%s(): kmalloc rxb error\n",__FUNCTION__);
@@ -2159,11 +2160,11 @@ static inline int ieee80211_network_init(
 	}
 
 	if (network->mode == 0) {
-		IEEE80211_DEBUG_SCAN("Filtered out '%s (%pM)' "
+		IEEE80211_DEBUG_SCAN("Filtered out '%s (" MAC_FMT ")' "
 				     "network.\n",
 				     escape_essid(network->ssid,
 						  network->ssid_len),
-				     network->bssid);
+				     MAC_ARG(network->bssid));
 		return 1;
 	}
 
@@ -2345,9 +2346,9 @@ static inline void ieee80211_process_probe_response(
 
 	memset(&network, 0, sizeof(struct ieee80211_network));
 	IEEE80211_DEBUG_SCAN(
-		"'%s' (%pM): %c%c%c%c %c%c%c%c-%c%c%c%c %c%c%c%c\n",
+		"'%s' (" MAC_FMT "): %c%c%c%c %c%c%c%c-%c%c%c%c %c%c%c%c\n",
 		escape_essid(info_element->data, info_element->len),
-		beacon->header.addr3,
+		MAC_ARG(beacon->header.addr3),
 		(beacon->capability & (1<<0xf)) ? '1' : '0',
 		(beacon->capability & (1<<0xe)) ? '1' : '0',
 		(beacon->capability & (1<<0xd)) ? '1' : '0',
@@ -2366,11 +2367,11 @@ static inline void ieee80211_process_probe_response(
 		(beacon->capability & (1<<0x0)) ? '1' : '0');
 
 	if (ieee80211_network_init(ieee, beacon, &network, stats)) {
-		IEEE80211_DEBUG_SCAN("Dropped '%s' (%pM) via %s.\n",
+		IEEE80211_DEBUG_SCAN("Dropped '%s' (" MAC_FMT ") via %s.\n",
 				     escape_essid(info_element->data,
 						  info_element->len),
-				     beacon->header.addr3,
-				     WLAN_FC_GET_STYPE(beacon->header.frame_control) ==
+				     MAC_ARG(beacon->header.addr3),
+				     WLAN_FC_GET_STYPE(beacon->header.frame_ctl) ==
 				     IEEE80211_STYPE_PROBE_RESP ?
 				     "PROBE RESPONSE" : "BEACON");
 		return;
@@ -2387,7 +2388,7 @@ static inline void ieee80211_process_probe_response(
 		return;
 	if(ieee->bGlobalDomain)
 	{
-		if (WLAN_FC_GET_STYPE(beacon->header.frame_control) == IEEE80211_STYPE_PROBE_RESP)
+		if (WLAN_FC_GET_STYPE(beacon->header.frame_ctl) == IEEE80211_STYPE_PROBE_RESP)
 		{
 			// Case 1: Country code
 			if(IS_COUNTRY_IE_VALID(ieee) )
@@ -2454,7 +2455,7 @@ static inline void ieee80211_process_probe_response(
 		else
 			ieee->current_network.buseprotection = false;
 		}
-		if(is_beacon(beacon->header.frame_control))
+		if(is_beacon(beacon->header.frame_ctl))
 		{
 			if(ieee->state == IEEE80211_LINKED)
 				ieee->LinkDetectInfo.NumRecvBcnInPeriod++;
@@ -2478,11 +2479,11 @@ static inline void ieee80211_process_probe_response(
 			/* If there are no more slots, expire the oldest */
 			list_del(&oldest->list);
 			target = oldest;
-			IEEE80211_DEBUG_SCAN("Expired '%s' (%pM) from "
+			IEEE80211_DEBUG_SCAN("Expired '%s' (" MAC_FMT ") from "
 					     "network list.\n",
 					     escape_essid(target->ssid,
 							  target->ssid_len),
-					     target->bssid);
+					     MAC_ARG(target->bssid));
 		} else {
 			/* Otherwise just pull from the free list */
 			target = list_entry(ieee->network_free_list.next,
@@ -2492,11 +2493,11 @@ static inline void ieee80211_process_probe_response(
 
 
 #ifdef CONFIG_IEEE80211_DEBUG
-		IEEE80211_DEBUG_SCAN("Adding '%s' (%pM) via %s.\n",
+		IEEE80211_DEBUG_SCAN("Adding '%s' (" MAC_FMT ") via %s.\n",
 				     escape_essid(network.ssid,
 						  network.ssid_len),
-				     network.bssid,
-				     WLAN_FC_GET_STYPE(beacon->header.frame_control) ==
+				     MAC_ARG(network.bssid),
+				     WLAN_FC_GET_STYPE(beacon->header.frame_ctl) ==
 				     IEEE80211_STYPE_PROBE_RESP ?
 				     "PROBE RESPONSE" : "BEACON");
 #endif
@@ -2505,11 +2506,11 @@ static inline void ieee80211_process_probe_response(
 		if(ieee->softmac_features & IEEE_SOFTMAC_ASSOCIATE)
 			ieee80211_softmac_new_net(ieee,&network);
 	} else {
-		IEEE80211_DEBUG_SCAN("Updating '%s' (%pM) via %s.\n",
+		IEEE80211_DEBUG_SCAN("Updating '%s' (" MAC_FMT ") via %s.\n",
 				     escape_essid(target->ssid,
 						  target->ssid_len),
-				     target->bssid,
-				     WLAN_FC_GET_STYPE(beacon->header.frame_control) ==
+				     MAC_ARG(target->bssid),
+				     WLAN_FC_GET_STYPE(beacon->header.frame_ctl) ==
 				     IEEE80211_STYPE_PROBE_RESP ?
 				     "PROBE RESPONSE" : "BEACON");
 
@@ -2519,7 +2520,7 @@ static inline void ieee80211_process_probe_response(
 		 */
 		renew = !time_after(target->last_scanned + ieee->scan_age, jiffies);
 		//YJ,add,080819,for hidden ap
-		if(is_beacon(beacon->header.frame_control) == 0)
+		if(is_beacon(beacon->header.frame_ctl) == 0)
 			network.flags = (~NETWORK_EMPTY_ESSID & network.flags)|(NETWORK_EMPTY_ESSID & target->flags);
 		//if(strncmp(network.ssid, "linksys-c",9) == 0)
 		//	printk("====>2 network.ssid=%s FLAG=%d target.ssid=%s FLAG=%d\n", network.ssid, network.flags, target->ssid, target->flags);
@@ -2535,7 +2536,7 @@ static inline void ieee80211_process_probe_response(
 	}
 
 	spin_unlock_irqrestore(&ieee->lock, flags);
-	if (is_beacon(beacon->header.frame_control)&&is_same_network(&ieee->current_network, &network, ieee)&&\
+	if (is_beacon(beacon->header.frame_ctl)&&is_same_network(&ieee->current_network, &network, ieee)&&\
 		(ieee->state == IEEE80211_LINKED)) {
 		if(ieee->handle_beacon != NULL) {
 			ieee->handle_beacon(ieee->dev,beacon,&ieee->current_network);

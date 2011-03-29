@@ -31,7 +31,6 @@
  *
  */
 #include <linux/highmem.h>
-#include <linux/gfp.h>
 
 #include "rds.h"
 

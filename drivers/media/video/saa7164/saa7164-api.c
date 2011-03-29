@@ -20,7 +20,6 @@
  */
 
 #include <linux/wait.h>
-#include <linux/slab.h>
 
 #include "saa7164.h"
 
@@ -524,7 +523,7 @@ int saa7164_api_i2c_write(struct saa7164_i2c *bus, u8 addr, u32 datalen,
 	}
 
 	reglen = saa7164_i2caddr_to_reglen(bus, addr);
-	if (reglen < 0) {
+	if (unitid < 0) {
 		printk(KERN_ERR
 			"%s() error, cannot translate regaddr to reglen\n",
 			__func__);

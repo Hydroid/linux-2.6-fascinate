@@ -15,7 +15,8 @@ obj-$(CONFIG_ACCEL_BMA020)	+= bma020_i2c.o \
 
 obj-$(CONFIG_ACCEL_SMB380)	+= smb_i2c.o \
                                smb380.o \
-	                           smb_acc.o
+	                           smb_acc.o \
+	                           smb380calib.o
 
-obj-$(CONFIG_ACCEL_KR3DH)	+= kr3dh_i2c.o	                           
+obj-$(CONFIG_ACCEL_KR3DH)       += kr3dh_i2c.o
 

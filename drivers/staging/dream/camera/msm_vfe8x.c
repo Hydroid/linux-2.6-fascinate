@@ -1,7 +1,6 @@
 /*
  * Copyright (C) 2008-2009 QUALCOMM Incorporated.
  */
-#include <linux/slab.h>
 #include <linux/uaccess.h>
 #include <linux/interrupt.h>
 #include <mach/irqs.h>
@@ -644,10 +643,17 @@ static int vfe_config(struct msm_vfe_cfg_cmd *cmd, void *data)
 		if (!axid)
 			return -EFAULT;
 
-		axio = memdup_user((void __user *)(vfecmd.value),
-				   sizeof(struct vfe_cmd_axi_output_config));
-		if (IS_ERR(axio))
-			return PTR_ERR(axio);
+		axio =
+			kmalloc(sizeof(struct vfe_cmd_axi_output_config),
+				GFP_ATOMIC);
+		if (!axio)
+			return -ENOMEM;
+
+		if (copy_from_user(axio, (void __user *)(vfecmd.value),
+			sizeof(struct vfe_cmd_axi_output_config))) {
+			kfree(axio);
+			return -EFAULT;
+		}
 
 		vfe_config_axi(OUTPUT_1, axid, axio);
 		vfe_axi_output_config(axio);
@@ -662,10 +668,17 @@ static int vfe_config(struct msm_vfe_cfg_cmd *cmd, void *data)
 		if (!axid)
 			return -EFAULT;
 
-		axio = memdup_user((void __user *)(vfecmd.value),
-				   sizeof(struct vfe_cmd_axi_output_config));
-		if (IS_ERR(axio))
-			return PTR_ERR(axio);
+		axio =
+			kmalloc(sizeof(struct vfe_cmd_axi_output_config),
+				GFP_ATOMIC);
+		if (!axio)
+			return -ENOMEM;
+
+		if (copy_from_user(axio, (void __user *)(vfecmd.value),
+				sizeof(struct vfe_cmd_axi_output_config))) {
+			kfree(axio);
+			return -EFAULT;
+		}
 
 		vfe_config_axi(OUTPUT_2, axid, axio);
 
@@ -680,10 +693,17 @@ static int vfe_config(struct msm_vfe_cfg_cmd *cmd, void *data)
 		if (!axid)
 			return -EFAULT;
 
-		axio = memdup_user((void __user *)(vfecmd.value),
-				   sizeof(struct vfe_cmd_axi_output_config));
-		if (IS_ERR(axio))
-			return PTR_ERR(axio);
+		axio =
+			kmalloc(sizeof(struct vfe_cmd_axi_output_config),
+				GFP_ATOMIC);
+		if (!axio)
+			return -ENOMEM;
+
+		if (copy_from_user(axio, (void __user *)(vfecmd.value),
+			sizeof(struct vfe_cmd_axi_output_config))) {
+			kfree(axio);
+			return -EFAULT;
+		}
 
 		vfe_config_axi(OUTPUT_1_AND_2,
 			axid, axio);

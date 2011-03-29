@@ -1,6 +1,6 @@
 /*
  * Video for Linux Two header file for samsung
- * 
+ *
  * Copyright (C) 2009, Dongsoo Nathaniel Kim<dongsoo45.kim@samsung.com>
  *
  * This header file contains several v4l2 APIs to be proposed to v4l2
@@ -17,11 +17,13 @@
 #define __LINUX_VIDEODEV2_SAMSUNG_H
 
 /* Values for 'capabilities' field */
-#define V4L2_CAP_OBJ_RECOGNITION	0x10000000	/* Object detection device */
-#define V4L2_CAP_STROBE			0x20000000	/* strobe control */
+/* Object detection device */
+#define V4L2_CAP_OBJ_RECOGNITION	0x10000000
+/* strobe control */
+#define V4L2_CAP_STROBE			0x20000000
 
 
-#define V4L2_CID_FOCUS_MODE			(V4L2_CID_CAMERA_CLASS_BASE+17)
+#define V4L2_CID_FOCUS_MODE		(V4L2_CID_CAMERA_CLASS_BASE+17)
 /* Focus Methods */
 enum v4l2_focus_mode {
 	V4L2_FOCUS_MODE_AUTO		= 0,
@@ -30,7 +32,7 @@ enum v4l2_focus_mode {
 	V4L2_FOCUS_MODE_LASTP		= 2,
 };
 
-#define V4L2_CID_ZOOM_MODE				(V4L2_CID_CAMERA_CLASS_BASE+18)
+#define V4L2_CID_ZOOM_MODE		(V4L2_CID_CAMERA_CLASS_BASE+18)
 /* Zoom Methods */
 enum v4l2_zoom_mode {
 	V4L2_ZOOM_MODE_CONTINUOUS	= 0,
@@ -42,10 +44,10 @@ enum v4l2_zoom_mode {
 /* Exposure Methods */
 #define V4L2_CID_PHOTOMETRY		(V4L2_CID_CAMERA_CLASS_BASE+19)
 enum v4l2_photometry_mode {
-	V4L2_PHOTOMETRY_MULTISEG	= 0, /* Multi Segment */
-	V4L2_PHOTOMETRY_CWA		= 1, /* Centre Weighted Average */
+	V4L2_PHOTOMETRY_MULTISEG	= 0, /*Multi Segment*/
+	V4L2_PHOTOMETRY_CWA		= 1, /*Centre Weighted Average*/
 	V4L2_PHOTOMETRY_SPOT		= 2,
-	V4L2_PHOTOMETRY_AFSPOT		= 3, /* Spot metering on focused point */
+	V4L2_PHOTOMETRY_AFSPOT		= 3, /*Spot metering on focused point*/
 	V4L2_PHOTOMETRY_LASTP		= V4L2_PHOTOMETRY_AFSPOT,
 };
 
@@ -71,16 +73,19 @@ enum v4l2_photometry_mode {
 #define V4L2_CID_PADDR_CB		(V4L2_CID_PRIVATE_BASE + 2)
 #define V4L2_CID_PADDR_CR		(V4L2_CID_PRIVATE_BASE + 3)
 #define V4L2_CID_PADDR_CBCR		(V4L2_CID_PRIVATE_BASE + 4)
+#define V4L2_CID_OVERLAY_AUTO		(V4L2_CID_PRIVATE_BASE + 5)
+#define V4L2_CID_OVERLAY_VADDR0		(V4L2_CID_PRIVATE_BASE + 6)
+#define V4L2_CID_OVERLAY_VADDR1		(V4L2_CID_PRIVATE_BASE + 7)
+#define V4L2_CID_OVERLAY_VADDR2		(V4L2_CID_PRIVATE_BASE + 8)
+#define V4L2_CID_OVLY_MODE		(V4L2_CID_PRIVATE_BASE + 9)
+#define V4L2_CID_DST_INFO		(V4L2_CID_PRIVATE_BASE + 10)
 #define V4L2_CID_IMAGE_EFFECT_FN	(V4L2_CID_PRIVATE_BASE + 16)
 #define V4L2_CID_IMAGE_EFFECT_APPLY	(V4L2_CID_PRIVATE_BASE + 17)
 #define V4L2_CID_IMAGE_EFFECT_CB	(V4L2_CID_PRIVATE_BASE + 18)
 #define V4L2_CID_IMAGE_EFFECT_CR	(V4L2_CID_PRIVATE_BASE + 19)
+#define V4L2_CID_RESERVED_MEM_BASE_ADDR	(V4L2_CID_PRIVATE_BASE + 20)
+#define V4L2_CID_FIMC_VERSION		(V4L2_CID_PRIVATE_BASE + 21)
 
-//added by jamie (2009.08.25)
-#define V4L2_CID_RESERVED_MEM_BASE_ADDR		(V4L2_CID_PRIVATE_BASE + 5)
-#define V4L2_CID_FIMC_VERSION				(V4L2_CID_PRIVATE_BASE + 6)
-
-/* Tushar - Code migrated from C100 */
 #define V4L2_CID_STREAM_PAUSE			(V4L2_CID_PRIVATE_BASE + 53)
 
 /* CID Extensions for camera sensor operations */
@@ -88,8 +93,8 @@ enum v4l2_photometry_mode {
 #define V4L2_CID_CAM_CAPTURE			(V4L2_CID_PRIVATE_BASE + 65)
 #define V4L2_CID_CAM_JPEG_MEMSIZE		(V4L2_CID_PRIVATE_BASE + 66)
 
-#define V4L2_CID_CAM_DATE_INFO_YEAR           	(V4L2_CID_PRIVATE_BASE + 20)
-#define V4L2_CID_CAM_DATE_INFO_MONTH           	(V4L2_CID_PRIVATE_BASE + 21)
+#define V4L2_CID_CAM_DATE_INFO_YEAR           	(V4L2_CID_PRIVATE_BASE + 14)
+#define V4L2_CID_CAM_DATE_INFO_MONTH           	(V4L2_CID_PRIVATE_BASE + 15)
 #define V4L2_CID_CAM_DATE_INFO_DATE           	(V4L2_CID_PRIVATE_BASE + 22)
 #define V4L2_CID_CAM_SENSOR_VER		           	(V4L2_CID_PRIVATE_BASE + 23)
 #define V4L2_CID_CAM_FW_MINOR_VER           	(V4L2_CID_PRIVATE_BASE + 24)
@@ -116,7 +121,7 @@ enum v4l2_photometry_mode {
 #define V4L2_CID_CAM_GAMMA_BG_HIGH	(V4L2_CID_PRIVATE_BASE + 45)
 #define V4L2_CID_CAM_DUMP_FW		(V4L2_CID_PRIVATE_BASE + 46)
 #define V4L2_CID_CAM_GET_DUMP_SIZE  (V4L2_CID_PRIVATE_BASE + 47)
-#define V4L2_CID_CAMERA_VT_MODE  	(V4L2_CID_PRIVATE_BASE + 48)
+#define V4L2_CID_CAMERA_VT_MODE			(V4L2_CID_PRIVATE_BASE + 48)
 #define V4L2_CID_CAMERA_VGA_BLUR  	(V4L2_CID_PRIVATE_BASE + 49)
 #define V4L2_CID_CAMERA_CAPTURE  	(V4L2_CID_PRIVATE_BASE + 50)
 
@@ -151,7 +156,7 @@ enum v4l2_scene_mode
 	SCENE_MODE_PARTY_INDOOR,
 	SCENE_MODE_BEACH_SNOW,
 	SCENE_MODE_SUNSET,
-	SCENE_MODE_DUSK_DAWN,
+	SCENE_MODE_DUST_DAWN,
 	SCENE_MODE_FALL_COLOR,
 	SCENE_MODE_FIREWORKS,
 	SCENE_MODE_TEXT,
@@ -166,23 +171,23 @@ enum v4l2_flash_mode
 	FLASH_MODE_OFF,
 	FLASH_MODE_AUTO,
 	FLASH_MODE_ON,
-	FLASH_MODE_TORCH_ON, 	//SecFeature.SPRINT by aswoogi
+	FLASH_MODE_TORCH_ON, //SecFeature.SPRINT by aswoogi
 	FLASH_MODE_TORCH_OFF,	//SecFeature.SPRINT by aswoogi
-	FLASH_MODE_BACKLIGHT_ON, //SecFeature.SPRINT by aswoogi	
+	FLASH_MODE_BACKLIGHT_ON,	//SecFeature.SPRINT by aswoogi	
 	FLASH_MODE_MAX,
 };
 
 #define V4L2_CID_CAMERA_BRIGHTNESS		(V4L2_CID_PRIVATE_BASE+72)
 enum v4l2_ev_mode {
-	EV_MINUS_4 = 0,
-	EV_MINUS_3,
-	EV_MINUS_2,
-	EV_MINUS_1,
-	EV_DEFAULT,
-	EV_PLUS_1,
-	EV_PLUS_2,
-	EV_PLUS_3,
-	EV_PLUS_4,
+	EV_MINUS_4	= -4,
+	EV_MINUS_3	= -3,
+	EV_MINUS_2	= -2,
+	EV_MINUS_1	= -1,
+	EV_DEFAULT	= 0,
+	EV_PLUS_1	= 1,
+	EV_PLUS_2	= 2,
+	EV_PLUS_3	= 3,
+	EV_PLUS_4	= 4,
 	EV_MAX,
 };
 
@@ -219,6 +224,7 @@ enum v4l2_iso_mode {
 	ISO_400,
 	ISO_800,
 	ISO_1600,
+	ISO_FIREWORKS,
 	ISO_SPORTS,	
 	ISO_NIGHT,
 	ISO_MOVIE,
@@ -310,6 +316,7 @@ enum v4l2_vintage_mode {
 #define V4L2_CID_CAMERA_GPS_TIMESTAMP	(V4L2_CID_CAMERA_CLASS_BASE + 32)//(V4L2_CID_PRIVATE_BASE+88)
 #define V4L2_CID_CAMERA_GPS_ALTITUDE		(V4L2_CID_CAMERA_CLASS_BASE + 33)//(V4L2_CID_PRIVATE_BASE+89)
 #define V4L2_CID_CAMERA_EXIF_TIME_INFO	(V4L2_CID_CAMERA_CLASS_BASE + 34)
+#define V4L2_CID_CAMERA_GPS_PROCESSINGMETHOD                     (V4L2_CID_CAMERA_CLASS_BASE+35)
 #define V4L2_CID_CAMERA_ZOOM				(V4L2_CID_PRIVATE_BASE+90)
 enum v4l2_zoom_level {
 	ZOOM_LEVEL_0 = 0,
@@ -461,18 +468,16 @@ enum v4l2_slow_ae_mode{
 #define V4L2_CID_CAMERA_CHECK_DATALINE						(V4L2_CID_PRIVATE_BASE+112)
 #define V4L2_CID_CAMERA_CHECK_DATALINE_STOP					(V4L2_CID_PRIVATE_BASE+113)
 
-
-#define V4L2_CID_CAMERA_CONTINUOUS_SHOT		(V4L2_CID_PRIVATE_BASE+114) //hjkang_DH19
-enum v4l2_continuous_shot {
-    CONTINUOUS_SHOT_OFF = 0,
-    CONTINUOUS_SHOT_ON,
-    CONTINUOUS_SHOT_MAX,
-};
-
 #endif
 
-/*      Pixel format         FOURCC                        	depth  Description  */
-#define V4L2_PIX_FMT_NV12T    v4l2_fourcc('T', 'V', '1', '2') /* 12  Y/CbCr 4:2:0 64x32 macroblocks */
+#if defined(CONFIG_ARIES_NTT)||defined(CONFIG_ARIES_VER_B2) // Modify NTTS1 || victory ansari
+#define V4L2_CID_CAMERA_AE_AWB_DISABLE_LOCK					(V4L2_CID_PRIVATE_BASE+114)
+#endif
+#define V4L2_CID_CAMERA_THUMBNAIL_NULL                                  (V4L2_CID_PRIVATE_BASE+115)
+
+/*      Pixel format FOURCC depth  Description  */
+/* 12  Y/CbCr 4:2:0 64x32 macroblocks */
+#define V4L2_PIX_FMT_NV12T    v4l2_fourcc('T', 'V', '1', '2')
 
 
 /*
@@ -500,29 +505,41 @@ enum v4l2_strobe_conf {
 	V4L2_STROBE_FRONT_CURTAIN	= 5,
 	V4L2_STROBE_REAR_CURTAIN	= 6,
 	/* Extra manual control presets */
-	V4L2_STROBE_PERMANENT		= 7,	/* keep turned on until turning off */
+	/* keep turned on until turning off */
+	V4L2_STROBE_PERMANENT		= 7,
 	V4L2_STROBE_EXTERNAL		= 8,
 };
 
 enum v4l2_strobe_status {
 	V4L2_STROBE_STATUS_OFF		= 0,
-	V4L2_STROBE_STATUS_BUSY		= 1, /* while processing configurations */
+	/* while processing configurations */
+	V4L2_STROBE_STATUS_BUSY		= 1,
 	V4L2_STROBE_STATUS_ERR		= 2,
 	V4L2_STROBE_STATUS_CHARGING	= 3,
 	V4L2_STROBE_STATUS_CHARGED	= 4,
 };
 
 /* capabilities field */
-#define V4L2_STROBE_CAP_NONE		0x0000	/* No strobe supported */
-#define V4L2_STROBE_CAP_OFF		0x0001	/* Always flash off mode */
-#define V4L2_STROBE_CAP_ON		0x0002	/* Always use flash light mode */
-#define V4L2_STROBE_CAP_AUTO		0x0004	/* Flashlight works automatic */
-#define V4L2_STROBE_CAP_REDEYE		0x0008	/* Red-eye reduction */
-#define V4L2_STROBE_CAP_SLOWSYNC	0x0010	/* Slow sync */
-#define V4L2_STROBE_CAP_FRONT_CURTAIN	0x0020	/* Front curtain */
-#define V4L2_STROBE_CAP_REAR_CURTAIN	0x0040	/* Rear curtain */
-#define V4L2_STROBE_CAP_PERMANENT	0x0080	/* keep turned on until turning off */
-#define V4L2_STROBE_CAP_EXTERNAL	0x0100	/* use external strobe */
+/* No strobe supported */
+#define V4L2_STROBE_CAP_NONE		0x0000
+/* Always flash off mode */
+#define V4L2_STROBE_CAP_OFF		0x0001
+/* Always use flash light mode */
+#define V4L2_STROBE_CAP_ON		0x0002
+/* Flashlight works automatic */
+#define V4L2_STROBE_CAP_AUTO		0x0004
+/* Red-eye reduction */
+#define V4L2_STROBE_CAP_REDEYE		0x0008
+/* Slow sync */
+#define V4L2_STROBE_CAP_SLOWSYNC	0x0010
+/* Front curtain */
+#define V4L2_STROBE_CAP_FRONT_CURTAIN	0x0020
+/* Rear curtain */
+#define V4L2_STROBE_CAP_REAR_CURTAIN	0x0040
+/* keep turned on until turning off */
+#define V4L2_STROBE_CAP_PERMANENT	0x0080
+/* use external strobe */
+#define V4L2_STROBE_CAP_EXTERNAL	0x0100
 
 /* Set mode and Get status */
 struct v4l2_strobe {
@@ -537,8 +554,8 @@ struct v4l2_strobe {
 	__u32	reserved[4];
 };
 
-#define VIDIOC_S_STROBE     _IOWR ('V', 83, struct v4l2_strobe)
-#define VIDIOC_G_STROBE     _IOR ('V', 84, struct v4l2_strobe)
+#define VIDIOC_S_STROBE     _IOWR('V', 83, struct v4l2_strobe)
+#define VIDIOC_G_STROBE     _IOR('V', 84, struct v4l2_strobe)
 
 /* Object recognition and collateral actions */
 enum v4l2_recog_mode {
@@ -590,7 +607,7 @@ struct v4l2_recognition {
 	__u32	reserved[4];
 };
 
-#define VIDIOC_S_RECOGNITION	_IOWR ('V', 85, struct v4l2_recognition)
-#define VIDIOC_G_RECOGNITION	_IOR ('V', 86, struct v4l2_recognition)
+#define VIDIOC_S_RECOGNITION	_IOWR('V', 85, struct v4l2_recognition)
+#define VIDIOC_G_RECOGNITION	_IOR('V', 86, struct v4l2_recognition)
 
 #endif /* __LINUX_VIDEODEV2_SAMSUNG_H */

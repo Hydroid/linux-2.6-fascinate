@@ -25,7 +25,7 @@
 // Cypress does not authorize its products for use as critical components in
 // life-support systems where a malfunction or failure may reasonably be
 // expected to result in significant injury to the user. The inclusion of
-// Cypressï¿½ product in a life-support systems application implies that the
+// Cypressï¿?product in a life-support systems application implies that the
 // manufacturer assumes all risk of such use and in doing so indemnifies
 // Cypress against all charges.
 //
@@ -371,7 +371,7 @@
 #include <linux/proc_fs.h>
 #include <linux/delay.h>
 #include <linux/input.h>
-#include <plat/regs-gpio.h>
+#include <mach/regs-gpio.h>
 #include <plat/gpio-cfg.h>
 #include <asm/gpio.h>
 #include <asm/uaccess.h>
@@ -858,12 +858,16 @@ int ISSP_main()
     }
     //INTFREE();    
 #endif /* RESET_MODE */
+
+#if 0 // issp_test_2010 block
     printk("fXRESInitializeTargetForISSP END\n");
 
     // Run the SiliconID Verification, and proceed according to result.
     printk("fVerifySiliconID START\n");
+#endif
+	
     //INTLOCK();
-    //fVerifySiliconID.. error
+    fVerifySiliconID(); // .. error // issp_test_20100709 unblock
     #if 0
     if (fIsError = fVerifySiliconID()) {
         ErrorTrap(fIsError);
@@ -873,10 +877,10 @@ int ISSP_main()
     
     //INTFREE();
     local_irq_restore(flags);
-    printk("fVerifySiliconID END\n");
+    //printk("fVerifySiliconID END\n"); // issp_test_2010 block
 
     // Bulk-Erase the Device.
-    printk("fEraseTarget START\n");    
+    //printk("fEraseTarget START\n"); // issp_test_2010 block
     //INTLOCK();
     local_irq_save(flags);
     if (fIsError = fEraseTarget()) {
@@ -885,21 +889,22 @@ int ISSP_main()
     }
     //INTFREE();
     local_irq_restore(flags);
-    printk("fEraseTarget END\n");
+    //printk("fEraseTarget END\n"); // issp_test_2010 block
 
     //==============================================================//
     // Program Flash blocks with predetermined data. In the final application
     // this data should come from the HEX output of PSoC Designer.
-    printk("Program Flash Blocks Start\n");
+    //printk("Program Flash Blocks Start\n");
     
     iChecksumData = 0;     // Calculte the device checksum as you go
     for (bBankCounter=0; bBankCounter<NUM_BANKS; bBankCounter++)		//PTJ: NUM_BANKS should be 1 for Krypton
     {
+    local_irq_save(flags);
         for (iBlockCounter=0; iBlockCounter<BLOCKS_PER_BANK; iBlockCounter++)
         {
-            printk("Program Loop : iBlockCounter %d \n",iBlockCounter);
+            //printk("Program Loop : iBlockCounter %d \n",iBlockCounter);
             //INTLOCK();
-            local_irq_save(flags);
+            // local_irq_save(flags);
 
         	//PTJ: READ-WRITE-SETUP used here to select SRAM Bank 1, and TSYNC Enable
 #ifdef CY8C20x66
@@ -930,11 +935,12 @@ int ISSP_main()
     		}
 #endif
             //INTFREE();
+            //local_irq_restore(flags);
+        }
             local_irq_restore(flags);
         }
-    }
 
-    printk("\r\n Program Flash Blocks End\n");
+    //printk("\r\n Program Flash Blocks End\n");
 
 #if 0 // verify check pass or check.
     printk("\r\n Verify Start",0,0,0);
@@ -993,7 +999,7 @@ int ISSP_main()
     //=======================================================//
     // Program security data into target PSoC. In the final application this
     // data should come from the HEX output of PSoC Designer.
-    printk("Program security data START\n");
+    //printk("Program security data START\n");
     //INTLOCK();
     local_irq_save(flags);
     for (bBankCounter=0; bBankCounter<NUM_BANKS; bBankCounter++)
@@ -1023,7 +1029,7 @@ int ISSP_main()
     //INTFREE();
     local_irq_restore(flags);
 
-    printk("Program security data END\n");
+    //printk("Program security data END\n");
 
     //==============================================================//
     //PTJ: Do READ-SECURITY after SECURE
@@ -1047,7 +1053,7 @@ int ISSP_main()
 #endif
     //INTFREE();
     local_irq_restore(flags);
-    printk("Load security data END\n");
+    //printk("Load security data END\n");
 #endif /* security end */
 
     //=======================================================//
@@ -1067,8 +1073,8 @@ int ISSP_main()
     //INTFREE();
     local_irq_restore(flags);
     
-    printk("Checksum : iChecksumTarget (0x%X)\n", (unsigned char)iChecksumTarget);
-    printk  ("Checksum : iChecksumData (0x%X)\n", (unsigned char)iChecksumData);
+    //printk("Checksum : iChecksumTarget (0x%X)\n", (unsigned char)iChecksumTarget);
+    //printk  ("Checksum : iChecksumData (0x%X)\n", (unsigned char)iChecksumData);
 
     if ((unsigned short)(iChecksumTarget&0xffff) != (unsigned short) (iChecksumData & 0xffff))
     {
@@ -1076,7 +1082,7 @@ int ISSP_main()
         return fIsError;
     }
 
-    printk("Doing Checksum END\n");
+    //printk("Doing Checksum END\n");
 
     // *** SUCCESS ***
     // At this point, the Target has been successfully Initialize, ID-Checked,
@@ -1086,7 +1092,7 @@ int ISSP_main()
     // You may want to restart Your Target PSoC Here.
     ReStartTarget(); //Touch IC Reset.
 
-    printk("ReStartTarget\n");
+    //printk("ReStartTarget\n");
 
     return 0;    
 }

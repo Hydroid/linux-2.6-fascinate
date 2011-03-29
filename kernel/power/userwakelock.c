@@ -27,7 +27,6 @@ enum {
 	DEBUG_LOOKUP	= BIT(4),
 };
 static int debug_mask = DEBUG_FAILURE;
-//static int debug_mask = DEBUG_FAILURE | DEBUG_NEW | DEBUG_ACCESS|DEBUG_LOOKUP; //ksoo
 module_param_named(debug_mask, debug_mask, int, S_IRUGO | S_IWUSR | S_IWGRP);
 
 static DEFINE_MUTEX(tree_lock);

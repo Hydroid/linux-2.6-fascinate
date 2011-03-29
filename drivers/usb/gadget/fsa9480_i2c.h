@@ -11,10 +11,7 @@
 
 
 /* enalbing debug massage related with FSA9480*/
-//#define FSA9480_DBG_ENABLE	1
-//#define FSA9480_DBG_ENABLE	0
-#undef FSA9480_DBG_ENABLE
-
+#define FSA9480_DBG_ENABLE
 
 #ifdef  FSA9480_DBG_ENABLE
 #define DEBUG_FSA9480(fmt,args...) printk(fmt, ##args)
@@ -65,8 +62,6 @@
 #define 	SW_OPEN					(0x1 << 4)
 
 //CR3 : Interrupt 1 Register
-#define		ATTACH					(0x1 << 0)
-#define		DETACH					(0x1 << 1)
 #define		KEY_PRESS				(0x1 << 2)
 #define		LONG_KEY_PRESS			(0x1 << 3)
 #define		LONG_KEY_RELEASE		(0x1 << 4)
@@ -185,9 +180,7 @@
 #define USBSTATUS_ADB					0x10
 #define USBSTATUS_DM					0x20
 #define USBSTATUS_ACM					0x30
-
-//#define VODA
-
+#define USBSTATUS_SAMSUNG_KIES_REAL	0x80
 
 
 
@@ -289,6 +282,14 @@ typedef enum
 	FSA9480_INT1_OVP_OCP_DIS= 	0x80
 }FSA9480_INT1_TYPE;
 
+
+#if 1 //20100520_inchul
+typedef enum
+{
+	FSA9480_INT2_RESERVED_ATTACH 	=	0x02
+}FSA9480_INT2_TYPE;
+#endif
+
 typedef enum
 {
 	USB_SW_AP,
@@ -325,7 +326,7 @@ typedef enum {
 typedef enum
 {
 	SEC_DOCK_NO_DEVICE					= 0x0,
-	SEC_DESK_DOCK_DEVICE			= 0x01 << 0,	
+	SEC_DESK_DOCK_DEVICE			= 0x01 << 0,
 	SEC_CAR_DOCK_DEVICE			= 0x01 << 1,
 }USB_DOCK_TYPE;
 #endif

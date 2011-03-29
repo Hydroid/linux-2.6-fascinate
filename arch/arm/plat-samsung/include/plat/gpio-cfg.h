@@ -25,11 +25,12 @@
 #define __PLAT_GPIO_CFG_H __FILE__
 
 typedef unsigned int __bitwise__ s3c_gpio_pull_t;
-typedef unsigned int __bitwise__ s5p_gpio_drvstr_t;
 
 /* forward declaration if gpio-core.h hasn't been included */
 struct s3c_gpio_chip;
-
+#if defined CONFIG_S5PV210_GARNETT_DELTA
+extern int s3c_gpio_int_flt(unsigned int pin, unsigned int config);
+#endif
 /**
  * struct s3c_gpio_cfg GPIO configuration
  * @cfg_eint: Configuration setting when used for external interrupt source
@@ -43,11 +44,6 @@ struct s3c_gpio_chip;
  * layouts. Provide an point to vector control routine and provide any
  * per-bank configuration information that other systems such as the
  * external interrupt code will need.
- *
- * @sa s3c_gpio_cfgpin
- * @sa s3c_gpio_getcfg
- * @sa s3c_gpio_setpull
- * @sa s3c_gpio_getpull
  */
 struct s3c_gpio_cfg {
 	unsigned int	cfg_eint;
@@ -56,10 +52,36 @@ struct s3c_gpio_cfg {
 	int		(*set_pull)(struct s3c_gpio_chip *chip, unsigned offs,
 				    s3c_gpio_pull_t pull);
 
+	int		(*set_pin)(struct s3c_gpio_chip *chip, unsigned offs,
+				    s3c_gpio_pull_t level);
+s3c_gpio_pull_t (*get_pin)(struct s3c_gpio_chip *chip, unsigned offs);
 	unsigned (*get_config)(struct s3c_gpio_chip *chip, unsigned offs);
 	int	 (*set_config)(struct s3c_gpio_chip *chip, unsigned offs,
 			       unsigned config);
 };
+
+/**
+ *  * s3c_gpio_setpin() - set the output of a gpio pin.
+ *   * @pin: The pin number.
+ *    * @level: The output level of the pin.
+ *     *
+ *      * This function sets the ooutput level for the
+ *       * specified pin. It will return 0 if successfull, or a negative error
+ *        * code if the pin cannot support the requested output/pin setting.
+ *        */
+extern int s3c_gpio_setpin(unsigned int pin, s3c_gpio_pull_t level);
+
+extern int s3c_gpio_set_drvstrength(unsigned int pin, unsigned int config);
+extern int s3c_gpio_set_slewrate(unsigned int pin, unsigned int config);
+
+/**
+ *  * s3c_gpio_getpin() - get the level of a gpio pin.
+ *   * @pin: The pin number.
+ *    *
+ *     * This function gets the level for the
+ *      * specified pin. It will return either 0 or 1
+ *       */
+extern s3c_gpio_pull_t s3c_gpio_getpin(unsigned int pin);
 
 #define S3C_GPIO_SPECIAL_MARK	(0xfffffff0)
 #define S3C_GPIO_SPECIAL(x)	(S3C_GPIO_SPECIAL_MARK | (x))
@@ -72,41 +94,33 @@ struct s3c_gpio_cfg {
 #define s3c_gpio_is_cfg_special(_cfg) \
 	(((_cfg) & S3C_GPIO_SPECIAL_MARK) == S3C_GPIO_SPECIAL_MARK)
 
+#define S3C_GPIO_DRVSTR_1X      (0)
+#define S3C_GPIO_DRVSTR_2X      (1)
+#define S3C_GPIO_DRVSTR_3X      (2)
+#define S3C_GPIO_DRVSTR_4X      (3)
+
+#define S3C_GPIO_SLEWRATE_FAST  (0)
+#define S3C_GPIO_SLEWRATE_SLOW  (1)
+
 /**
  * s3c_gpio_cfgpin() - Change the GPIO function of a pin.
  * @pin pin The pin number to configure.
- * @to to The configuration for the pin's function.
+ * @pin to The configuration for the pin's function.
  *
  * Configure which function is actually connected to the external
  * pin, such as an gpio input, output or some form of special function
  * connected to an internal peripheral block.
- *
- * The @to parameter can be one of the generic S3C_GPIO_INPUT, S3C_GPIO_OUTPUT
- * or S3C_GPIO_SFN() to indicate one of the possible values that the helper
- * will then generate the correct bit mask and shift for the configuration.
- *
- * If a bank of GPIOs all needs to be set to special-function 2, then
- * the following code will work:
- *
- *	for (gpio = start; gpio < end; gpio++)
- *		s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(2));
- *
- * The @to parameter can also be a specific value already shifted to the
- * correct position in the control register, although these are discouraged
- * in newer kernels and are only being kept for compatibility.
  */
 extern int s3c_gpio_cfgpin(unsigned int pin, unsigned int to);
 
-/**
- * s3c_gpio_getcfg - Read the current function for a GPIO pin
- * @pin: The pin to read the configuration value for.
- *
- * Read the configuration state of the given @pin, returning a value that
- * could be passed back to s3c_gpio_cfgpin().
- *
- * @sa s3c_gpio_cfgpin
- */
-extern unsigned s3c_gpio_getcfg(unsigned int pin);
+extern int s3c_gpio_slp_cfgpin(unsigned int pin, unsigned int to);
+extern s3c_gpio_pull_t s3c_gpio_get_slp_cfgpin(unsigned int pin);
+
+#define S3C_GPIO_SLP_OUT0       ((__force s3c_gpio_pull_t)0x00)
+#define S3C_GPIO_SLP_OUT1       ((__force s3c_gpio_pull_t)0x01)
+#define S3C_GPIO_SLP_INPUT      ((__force s3c_gpio_pull_t)0x02)
+#define S3C_GPIO_SLP_PREV       ((__force s3c_gpio_pull_t)0x03)
+
 
 /* Define values for the pull-{up,down} available for each gpio pin.
  *
@@ -127,8 +141,6 @@ extern unsigned s3c_gpio_getcfg(unsigned int pin);
  * This function sets the state of the pull-{up,down} resistor for the
  * specified pin. It will return 0 if successfull, or a negative error
  * code if the pin cannot support the requested pull setting.
- *
- * @pull is one of S3C_GPIO_PULL_NONE, S3C_GPIO_PULL_DOWN or S3C_GPIO_PULL_UP.
 */
 extern int s3c_gpio_setpull(unsigned int pin, s3c_gpio_pull_t pull);
 
@@ -139,34 +151,6 @@ extern int s3c_gpio_setpull(unsigned int pin, s3c_gpio_pull_t pull);
  * Read the pull resistor value for the specified pin.
 */
 extern s3c_gpio_pull_t s3c_gpio_getpull(unsigned int pin);
-
-/* Define values for the drvstr available for each gpio pin.
- *
- * These values control the value of the output signal driver strength,
- * configurable on most pins on the S5P series.
- */
-#define S5P_GPIO_DRVSTR_LV1	((__force s5p_gpio_drvstr_t)0x0)
-#define S5P_GPIO_DRVSTR_LV2	((__force s5p_gpio_drvstr_t)0x2)
-#define S5P_GPIO_DRVSTR_LV3	((__force s5p_gpio_drvstr_t)0x1)
-#define S5P_GPIO_DRVSTR_LV4	((__force s5p_gpio_drvstr_t)0x3)
-
-/**
- * s5c_gpio_get_drvstr() - get the driver streght value of a gpio pin
- * @pin: The pin number to get the settings for
- *
- * Read the driver streght value for the specified pin.
-*/
-extern s5p_gpio_drvstr_t s5p_gpio_get_drvstr(unsigned int pin);
-
-/**
- * s3c_gpio_set_drvstr() - set the driver streght value of a gpio pin
- * @pin: The pin number to configure the driver streght value
- * @drvstr: The new value of the driver strength
- *
- * This function sets the driver strength value for the specified pin.
- * It will return 0 if successfull, or a negative error code if the pin
- * cannot support the requested setting.
-*/
-extern int s5p_gpio_set_drvstr(unsigned int pin, s5p_gpio_drvstr_t drvstr);
+extern int s3c_gpio_slp_setpull_updown(unsigned int pin, s3c_gpio_pull_t pull);
 
 #endif /* __PLAT_GPIO_CFG_H */
