@@ -79,12 +79,14 @@ GTAGS
 \#*#
 
 # update files
-update/*.zip
-update/*.tar
-update/kernel_update/zImage
+update_*/*.zip
+update_*/*.tar
+update_*/kernel_update/zImage
 *.zip
 errlog.txt
 stdlog.txt
+arch/arm/boot/Image
+arch/arm/boot/zImage
 arch/arm/boot/compressed/vmlinux
 include/asm
 include/asm-arm/asm-offsets.h
