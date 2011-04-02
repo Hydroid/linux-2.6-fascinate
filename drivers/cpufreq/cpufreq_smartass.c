@@ -15,8 +15,8 @@
  * Author: Erasmux
  *
  * Based on the interactive governor By Mike Chan (mike@android.com)
- * which was adaptated to 2.6.29 kernel by Nadlabak (pavel@doshaska.net)                     
- * 
+ * which was adaptated to 2.6.29 kernel by Nadlabak (pavel@doshaska.net)
+ *
  * requires to add
  * EXPORT_SYMBOL_GPL(nr_running);
  * at the end of kernel/sched.c
@@ -73,20 +73,20 @@ static unsigned long debug_mask;
 /*
  * The minimum amount of time to spend at a frequency before we can ramp up.
  */
-#define DEFAULT_UP_RATE_US 24000;
+#define DEFAULT_UP_RATE_US 12000;
 static unsigned long up_rate_us;
 
 /*
  * The minimum amount of time to spend at a frequency before we can ramp down.
  */
-#define DEFAULT_DOWN_RATE_US 49000;
+#define DEFAULT_DOWN_RATE_US 24000;
 static unsigned long down_rate_us;
 
 /*
  * When ramping up frequency with no idle cycles jump to at least this frequency.
  * Zero disables. Set a very high value to jump to policy max freqeuncy.
  */
-#define DEFAULT_UP_MIN_FREQ 100000
+#define DEFAULT_UP_MIN_FREQ 0
 static unsigned int up_min_freq;
 
 /*
@@ -102,7 +102,7 @@ static unsigned int sleep_max_freq;
  * The frequency to set when waking up from sleep.
  * When sleep_max_freq=0 this will have no effect.
  */
-#define DEFAULT_SLEEP_WAKEUP_FREQ 400000
+#define DEFAULT_SLEEP_WAKEUP_FREQ 1000000
 static unsigned int sleep_wakeup_freq;
 
 /*
@@ -110,7 +110,7 @@ static unsigned int sleep_wakeup_freq;
  * go below this frequency.
  * Set awake_min_freq=0 to disable this behavior.
  */
-#define DEFAULT_AWAKE_MIN_FREQ 100000
+#define DEFAULT_AWAKE_MIN_FREQ 0
 static unsigned int awake_min_freq;
 
 /*
@@ -130,7 +130,7 @@ static unsigned int ramp_up_step;
  * Freqeuncy delta when ramping down.
  * zero disables and will calculate ramp down according to load heuristic.
  */
-#define DEFAULT_RAMP_DOWN_STEP 200000
+#define DEFAULT_RAMP_DOWN_STEP 0
 static unsigned int ramp_down_step;
 
 /*
@@ -142,7 +142,7 @@ static unsigned long max_cpu_load;
 /*
  * CPU freq will be decreased if measured load < min_cpu_load;
  */
-#define DEFAULT_MIN_CPU_LOAD 30
+#define DEFAULT_MIN_CPU_LOAD 25
 static unsigned long min_cpu_load;
 
 
@@ -220,17 +220,8 @@ static void cpufreq_smartass_timer(unsigned long data)
 
         this_smartass->cur_cpu_load = cpu_load;
 
-        // Scale up if load is above max or if there where no idle cycles since coming out of idle,
-        // or when we are above our max speed for a very long time (should only happend if entering sleep
-        // at high loads)
-        if ((cpu_load > max_cpu_load || delta_idle == 0) &&
-            !(policy->cur > this_smartass->max_speed &&
-              cputime64_sub(update_time, this_smartass->freq_change_time) > 100*down_rate_us)) {
-
-                if (policy->cur > this_smartass->max_speed) {
-                        reset_timer(data,this_smartass);
-                }
-
+        // Scale up if load is above max or if there where no idle cycles since coming out of idle.
+        if (cpu_load > max_cpu_load || delta_idle == 0) {
                 if (policy->cur == policy->max)
                         return;
 
@@ -648,7 +639,17 @@ static void smartass_suspend(int cpu, int suspend)
                 return;
 
         smartass_update_min_max(this_smartass,policy,suspend);
-        if (!suspend) { // resume at max speed:
+        if (suspend) {
+            if (policy->cur > this_smartass->max_speed) {
+                    new_freq = this_smartass->max_speed;
+
+                    if (debug_mask & SMARTASS_DEBUG_JUMPS)
+                            printk(KERN_INFO "SmartassS: suspending at %d\n",new_freq);
+
+                    __cpufreq_driver_target(policy, new_freq,
+                                            CPUFREQ_RELATION_H);
+            }
+        } else { // resume at max speed:
                 new_freq = validate_freq(this_smartass,sleep_wakeup_freq);
 
                 if (debug_mask & SMARTASS_DEBUG_JUMPS)
@@ -656,31 +657,19 @@ static void smartass_suspend(int cpu, int suspend)
 
                 __cpufreq_driver_target(policy, new_freq,
                                         CPUFREQ_RELATION_L);
-
-                if (policy->cur < this_smartass->max_speed && !timer_pending(&this_smartass->timer))
-                        reset_timer(smp_processor_id(),this_smartass);
-        } else {
-                // to avoid wakeup issues with quick sleep/wakeup don't change actual frequency when entering sleep
-                // to allow some time to settle down.
-                // we reset the timer, if eventually, even at full load the timer will lower the freqeuncy.
-                reset_timer(smp_processor_id(),this_smartass);
-
-                this_smartass->freq_change_time_in_idle =
-                        get_cpu_idle_time_us(cpu,&this_smartass->freq_change_time);
-
-                if (debug_mask & SMARTASS_DEBUG_JUMPS)
-                        printk(KERN_INFO "SmartassS: suspending at %d\n",policy->cur);
         }
 }
 
 static void smartass_early_suspend(struct early_suspend *handler) {
         int i;
+        suspended = 1;
         for_each_online_cpu(i)
                 smartass_suspend(i,1);
 }
 
 static void smartass_late_resume(struct early_suspend *handler) {
         int i;
+        suspended = 0;
         for_each_online_cpu(i)
                 smartass_suspend(i,0);
 }
@@ -688,7 +677,6 @@ static void smartass_late_resume(struct early_suspend *handler) {
 static struct early_suspend smartass_power_suspend = {
         .suspend = smartass_early_suspend,
         .resume = smartass_late_resume,
-	.level = EARLY_SUSPEND_LEVEL_DISABLE_FB + 1,
 };
 
 static int __init cpufreq_smartass_init(void)
@@ -730,7 +718,7 @@ static int __init cpufreq_smartass_init(void)
         }
 
         /* Scale up is high priority */
-        up_wq = create_rt_workqueue("ksmartass_up");
+        up_wq = create_workqueue("ksmartass_up");
         down_wq = create_workqueue("ksmartass_down");
 
         INIT_WORK(&freq_scale_work, cpufreq_smartass_freq_change_time_work);
@@ -756,5 +744,5 @@ static void __exit cpufreq_smartass_exit(void)
 module_exit(cpufreq_smartass_exit);
 
 MODULE_AUTHOR ("Erasmux");
-MODULE_DESCRIPTION ("'cpufreq_minmax' - A smart cpufreq governor optimized for the hero!");
+MODULE_DESCRIPTION ("'cpufreq_smartass' - A smart cpufreq governor!");
 MODULE_LICENSE ("GPL");
