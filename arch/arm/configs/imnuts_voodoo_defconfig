@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.32.9
-# Wed Mar 30 01:20:44 2011
+# Thu Mar 31 17:31:22 2011
 #
 CONFIG_ARM=y
 CONFIG_S5PV210_ATLAS=y
