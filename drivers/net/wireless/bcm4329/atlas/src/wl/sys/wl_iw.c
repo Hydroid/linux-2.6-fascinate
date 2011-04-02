@@ -104,7 +104,7 @@ static bool     fw_reload_iscall = FALSE;
 struct net_device *ap_net_dev = NULL;
 struct semaphore  ap_eth_sema;
 
-extern int hotspot_event_detect_complete(char *msg);
+//extern int hotspot_event_detect_complete(char *msg);
 
 
 
@@ -268,6 +268,7 @@ static void wl_iw_set_event_mask(struct net_device *dev);
 static int
 wl_iw_iscan(iscan_info_t *iscan, wlc_ssid_t *ssid, uint16 action);
 #endif 
+
 
 #ifdef FEATURE_HOTSPOT_EVENT
 
@@ -1243,7 +1244,6 @@ wl_iw_get_rssi(
 	return error;
 }
 
-#if 0
 int hotspot_event_detect_complete(char *msg)
 {
 	unsigned long flags;
@@ -1273,7 +1273,6 @@ int hotspot_event_detect_complete(char *msg)
 	printk("hotspot_event_detect_complete5\n");
 	return 0;
 }
-#endif
 
 int
 wl_iw_send_priv_event(
