@@ -68,6 +68,8 @@ static int pn_socket_create(struct net *net, struct socket *sock, int protocol)
 	int err;
 
 #if !defined (CONFIG_SAMSUNG_PHONE_SVNET) && !defined (CONFIG_SAMSUNG_PHONE_SVNET_MODULE)
+	if (!net_eq(net, &init_net))
+		return -EAFNOSUPPORT;	
 	if (!capable(CAP_SYS_ADMIN))
 		return -EPERM;
 #endif
@@ -355,6 +357,8 @@ static int phonet_rcv(struct sk_buff *skb, struct net_device *dev,
 	struct sockaddr_pn sa;
 	u16 len;
 
+	if (!net_eq(net, &init_net))
+		goto out;
 	/* check we have at least a full Phonet header */
 	if (!pskb_pull(skb, sizeof(struct phonethdr)))
 		goto out;
