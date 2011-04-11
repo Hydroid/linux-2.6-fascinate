@@ -35,7 +35,6 @@ cd update_"$CONFIG"
 zip -r -q kernel_update.zip .
 mv kernel_update.zip ../"$DATE"_imnuts_"$CONFIG".zip
 cd ..
-#cp "$DATE"_imnuts_"$CONFIG".zip /home/imnuts/Dropbox/Public/Kernels/"$DATE"_imnuts_"$CONFIG".zip
 echo -e "***** Successfully compiled: $CONFIG *****\n"
 
 if [ "$1" == "A" ]; then ./build_kernel.sh V; fi
