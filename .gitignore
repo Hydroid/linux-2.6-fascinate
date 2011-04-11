@@ -101,6 +101,8 @@ update_*/*.zip
 update_*/*.tar
 update_*/kernel_update/zImage
 *.zip
+
+# Auto-generated files
 errlog.txt
 stdlog.txt
 arch/arm/boot/Image
@@ -113,3 +115,10 @@ include/linux/bounds.h
 include/linux/compile.h
 include/linux/utsrelease.h
 usr/initramfs_data.img
+arch/arm/boot/compressed/vmlinux.lds
+drivers/char/consolemap_deftbl.c
+drivers/char/defkeymap.c
+kernel/config_data.h
+kernel/timeconst.h
+lib/crc32table.h
+lib/gen_crc32table
