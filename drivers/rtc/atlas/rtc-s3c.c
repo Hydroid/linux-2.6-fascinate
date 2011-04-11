@@ -703,11 +703,6 @@ static int __devinit s3c_rtc_probe(struct platform_device *pdev)
 
  	pr_debug("s3c2410_rtc: RTCCON=%02x\n",
 		 readw(s3c_rtc_base + S3C2410_RTCCON));
-#ifdef CONFIG_PM
-	s3c_rtc_setfreq(&pdev->dev, 0);
-#else
-	s3c_rtc_setfreq(&pdev->dev, 1);
-#endif
 
 	device_init_wakeup(&pdev->dev, 1);
 
@@ -735,6 +730,13 @@ static int __devinit s3c_rtc_probe(struct platform_device *pdev)
 	}
 
 	platform_set_drvdata(pdev, rtc);
+	
+#ifdef CONFIG_PM
+	s3c_rtc_setfreq(&pdev->dev, 0);
+#else
+	s3c_rtc_setfreq(&pdev->dev, 1);
+#endif
+	
 	return 0;
 
  err_nortc:
