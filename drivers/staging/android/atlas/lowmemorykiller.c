@@ -130,7 +130,7 @@ static int lowmem_shrink(int nr_to_scan, gfp_t gfp_mask)
 		global_page_state(NR_INACTIVE_ANON) +
 		global_page_state(NR_INACTIVE_FILE);
 
-	if (nr_to_scan <= 0) || min_adj == OOM_ADJUST_MAX + 1) {
+	if (nr_to_scan <= 0 || min_adj == OOM_ADJUST_MAX + 1) {
 		lowmem_print(5, "lowmem_shrink %d, %x, return %d\n",
 			     nr_to_scan, gfp_mask, rem);
 		return rem;
