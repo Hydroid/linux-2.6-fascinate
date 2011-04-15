@@ -1191,7 +1191,7 @@ static int do_read_cd(struct fsg_dev *fsg)
                 amount = min((loff_t) amount,
                                 curlun->file_length - file_offset);
                 partial_page = file_offset & (PAGE_CACHE_SIZE - 1);
-                if (partial_page 0)
+                if (partial_page > 0)
                         amount = min(amount, (unsigned int) PAGE_CACHE_SIZE -
                                         partial_page);
 
