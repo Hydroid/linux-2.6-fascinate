@@ -1039,7 +1039,7 @@ static void autorun_work(struct work_struct * autorun_work)
 
 #ifdef _SUPPORT_MAC_
 static void _lba_to_msf(u8 *buf, int lba)
-> {
+{
     lba += 150;
     buf[0] = (lba / 75) / 60;
     buf[1] = (lba / 75) % 60;
