@@ -84,7 +84,9 @@ endif
 ifeq ($(CONFIG_VIDEO_CE147_ATLAS),y)
 obj-$(CONFIG_VIDEO_CE147) += atlas/ce147.o
 endif
-
+ifeq ($(CONFIG_VIDEO_CE147_GARNETT),y)
+obj-$(CONFIG_VIDEO_CE147) += garnett/ce147.o
+endif
 ifeq ($(CONFIG_VIDEO_S5KA3DFX_VICTORY),y)
 obj-$(CONFIG_VIDEO_S5KA3DFX) += victory/s5ka3dfx.o
 endif

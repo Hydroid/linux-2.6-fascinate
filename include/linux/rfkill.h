@@ -5,6 +5,9 @@
  * Copyright (C) 2006 - 2007 Ivo van Doorn
  * Copyright (C) 2007 Dmitry Torokhov
  * Copyright 2009 Johannes Berg <johannes@sipsolutions.net>
+ * This program is free software; you can redistribute it and/or modify      
+ * it under the terms of the GNU General Public License version 2 as         
+ * published by the Free Software Foundation.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

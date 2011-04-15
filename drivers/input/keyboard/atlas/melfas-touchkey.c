@@ -28,6 +28,7 @@
 #include <linux/miscdevice.h>
 #include <asm/uaccess.h>
 #include <linux/earlysuspend.h>
+#include <asm/io.h>
 #if defined(CONFIG_MACH_S5PC110_ARIES)
 #include <mach/gpio.h>
 #elif defined(CONFIG_MACH_S5PC110_P1)
@@ -88,6 +89,9 @@ struct i2c_driver touchkey_i2c_driver = {
 	.id_table = melfas_touchkey_id,
 	.probe =i2c_touchkey_probe , 
 };
+
+static  void    __iomem         *gpio_pend_mask_mem;
+#define         INT_PEND_BASE   0xE0200A54
 
 struct i2c_touchkey_driver {
         struct i2c_client *client;
@@ -261,6 +265,10 @@ static void melfas_touchkey_early_suspend(struct early_suspend *h)
 static void melfas_touchkey_early_resume(struct early_suspend *h)
 {
 	init_hw();
+	//clear interrupt
+    	if(readl(gpio_pend_mask_mem)&(0x1<<1))
+        	writel(readl(gpio_pend_mask_mem)|(0x1<<1), gpio_pend_mask_mem);
+
 	enable_irq(IRQ_TOUCH_INT);
 }
 #endif	// End of CONFIG_HAS_EARLYSUSPEND
@@ -308,6 +316,7 @@ static int i2c_touchkey_probe(struct i2c_client *client,const struct i2c_device_
 	set_bit(touchkey_keycode[3], input_dev->keybit);
 	set_bit(touchkey_keycode[4], input_dev->keybit);
 
+	gpio_pend_mask_mem = ioremap(INT_PEND_BASE, 0x10);
 
 	err = input_register_device(input_dev);
 	if (err) {

@@ -33,6 +33,9 @@
  * Aries Rev02 board Temperature Table
  */
 
+#ifdef CONFIG_S5PV210_GARNETT_DELTAconst int temper_table[][2] =  {	/* ADC, Temperature (C) */	{ 620,		-70	},	{ 625,		-60	},	{ 630,		-50	},	{ 635,		-40	},	{ 640,		-30	},	{ 645,		-20	},	{ 650,		-10	},	{ 655,		0	},	{ 660,		10	},	{ 664,		20	},	{ 668,		30	},	{ 672,		40	},	{ 678,		50	},	{ 683,		60	},	{ 688,		70	},	{ 693,		80	},	{ 704,		90	},	{ 710,		100	},	{ 715,		110	},	{ 720,		120	},	{ 725,		130	},	{ 730,		140	},	{ 735,		150	},	{ 740,		160	},	{ 745,		170	},	{ 750,		180	},	{ 755,		190	},	{ 760,		200	},	{ 766,		210	},	{ 772,		220	},	{ 778,		230	},	{ 783,		240	},	{ 788,		250	},	{ 793,		260	},	{ 800,		270	},	{ 805,		280	},	{ 811,		290	},	{ 815,		300	},	{ 821,		310	},	{ 827,		320	},	{ 833,		330	},	{ 839,		340	},	{ 844,		350	},	{ 849,		360	},	{ 854,		370	},	{ 859,		380	},	{ 865,		390	},	{ 870,		400	},	{ 875,		410	},	{ 880,		420	},	{ 885,		430	},	{ 890,		440	},	{ 895,		450	},	{ 898,		460	},	{ 901,		470	},	{ 904,		480	},	{ 907,		490	},	{ 910,		500	},	{ 914,		510	},	{ 918,		520	},	{ 922,		530	},	{ 926,		540	},	{ 930,		550	},	{ 933,		560	},	{ 936,		570	},	{ 939,		580	},	{ 942,		590	},	{ 945,		600	},	{ 947,		610	},	{ 950,		620	},	{ 953,		630	},	{ 957,		640	},	{ 960,		650	},};#define TEMP_HIGH_BLOCK		919	#define TEMP_HIGH_RECOVER	891	#define TEMP_LOW_BLOCK		635	#define TEMP_LOW_RECOVER	650	
+#define TEMP_HIGH_BLOCK_LPM		919	#define TEMP_HIGH_RECOVER_LPM	891#define TEMP_LOW_BLOCK_LPM		635	#define TEMP_LOW_RECOVER_LPM	650	
+#else
 const int temper_table[][2] =  {
 	{ 151, 	-70 },
 	{ 153, 	-60 },
@@ -116,11 +119,7 @@ const int temper_table[][2] =  {
 #define TEMP_LOW_BLOCK		156	// (Fix: 20100630) 158
 #define TEMP_LOW_RECOVER	161
 
-#define TEMP_HIGH_BLOCK_LPM			234//223
-#define TEMP_HIGH_RECOVER_LPM		224//217
-#define TEMP_LOW_BLOCK_LPM			156//155	// 152
-#define TEMP_LOW_RECOVER_LPM		161//161	// 158
-
+#define TEMP_HIGH_BLOCK_LPM			223#define TEMP_HIGH_RECOVER_LPM		217#define TEMP_LOW_BLOCK_LPM			155	// 152#define TEMP_LOW_RECOVER_LPM		161	// 158#endif
 
 /*
  * Aries Rev02 board ADC channel
@@ -180,7 +179,8 @@ typedef enum s3c_adc_channel {
 #define BATT_VF_MAX	50	//30	// hanapark_Victory
 
 #ifdef __CHECK_CHG_CURRENT__
+#ifdef CONFIG_S5PV210_GARNETT_DELTA#define CURRENT_OF_FULL_CHG  80	#else
 #define CURRENT_OF_FULL_CHG  70	// hanapark_Atlas (Fix: 2010.05.26)
+#endif
 #define CHG_CURRENT_COUNT		20
 #endif
-

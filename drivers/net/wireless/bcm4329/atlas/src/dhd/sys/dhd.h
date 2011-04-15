@@ -95,8 +95,7 @@ enum dhd_prealloc_index {
 	DHD_PREALLOC_PROT = 0,
 	DHD_PREALLOC_RXBUF,
 	DHD_PREALLOC_DATABUF,
-	DHD_PREALLOC_OSL_BUF,
-	DHD_PREALLOC_WL_BUF
+	DHD_PREALLOC_OSL_BUF
 };
 #ifdef DHD_USE_STATIC_BUF
 extern void * dhd_os_prealloc(int section, unsigned long size);
@@ -450,7 +449,6 @@ typedef enum cust_gpio_modes {
 } cust_gpio_modes_t;
 extern int wl_iw_iscan_set_scan_broadcast_prep(struct net_device *dev, uint flag);
 extern int wl_iw_send_priv_event(struct net_device *dev, char *flag);
-extern int net_os_send_hang_message(struct net_device *dev);
 /*
  * Insmod parameters for debug/test
  */

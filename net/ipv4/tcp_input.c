@@ -73,7 +73,7 @@
 #include <net/netdma.h>
 
 int sysctl_tcp_timestamps __read_mostly = 0;
-int sysctl_tcp_window_scaling __read_mostly = 0; //1;
+int sysctl_tcp_window_scaling __read_mostly = 1;
 int sysctl_tcp_sack __read_mostly = 1;
 int sysctl_tcp_fack __read_mostly = 1;
 int sysctl_tcp_reordering __read_mostly = TCP_FASTRETRANS_THRESH;
@@ -5842,6 +5842,3 @@ EXPORT_SYMBOL(tcp_parse_md5sig_option);
 EXPORT_SYMBOL(tcp_rcv_established);
 EXPORT_SYMBOL(tcp_rcv_state_process);
 EXPORT_SYMBOL(tcp_initialize_rcv_mss);
-
-MODULE_LICENSE("GPL");
-MODULE_VERSION("1.0");

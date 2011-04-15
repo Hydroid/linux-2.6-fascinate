@@ -373,9 +373,11 @@ static int ums_cdfs_bind_config(struct usb_configuration *c)
 	int ret;
 
 	dev->cdev->desc.idProduct = __constant_cpu_to_le16(dev->product_id);
-	dev->cdev->desc.bDeviceClass = USB_CLASS_MASS_STORAGE;
-	dev->cdev->desc.bDeviceSubClass = 0x06;//US_SC_SCSI;
-	dev->cdev->desc.bDeviceProtocol = 0x50;//US_PR_BULK;
+//	dev->cdev->desc.bDeviceClass = USB_CLASS_MASS_STORAGE;
+//	dev->cdev->desc.bDeviceSubClass = 0x06;//US_SC_SCSI;
+//	dev->cdev->desc.bDeviceProtocol = 0x50;//US_PR_BULK;
+
+	dev->cdev->desc.bDeviceClass = USB_CLASS_PER_INTERFACE;	dev->cdev->desc.bDeviceSubClass = 0;	dev->cdev->desc.bDeviceProtocol = 0;
 
 	ret = mass_storage_function_config_changed(dev->cdev, c, dev->nluns);
 	if (ret) {

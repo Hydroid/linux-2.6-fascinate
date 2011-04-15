@@ -1088,7 +1088,9 @@ config VIDEO_CE147_VICTORY
         bool "Select supports CE147 SoC camera module for victory"
         depends on VIDEO_CE147
 
-
+config VIDEO_CE147_GARNETT
+        bool "Select supports CE147 SoC camera module for garnett"
+        depends on VIDEO_CE147
 
 config VIDEO_S5KA3DFX
         tristate "S5KA3DFX Camera Sensor"

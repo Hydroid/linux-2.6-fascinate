@@ -60,6 +60,7 @@ endif
 ifeq ($(CONFIG_S5PV210_ATLAS),y)
 obj-$(CONFIG_REGULATOR_MAX8998) += atlas/max8998_consumer.o
 endif
+obj-$(CONFIG_S5PV210_CRESPO_DELTA)				+= victory/crespo-panel.o
 
 # Device setup - ADCTS
 obj-$(CONFIG_S5PV210_ADCTS)		+= s5pc11x-adcts.o
@@ -75,7 +76,11 @@ ifeq ($(CONFIG_S5PV210_VICTORY),y)
 obj-y	+= victory/sec_jack.o
 endif
 ifeq ($(CONFIG_S5PV210_ATLAS),y)
+ifeq ($(CONFIG_S5PV210_GARNETT_DELTA),y)
+obj-y	+= atlas/sec_jack_garnett.o
+else
 obj-y	+= atlas/sec_jack.o
+endif
 endif
 
 obj-$(CONFIG_CPU_IDLE)		+= cpuidle.o idle2.o

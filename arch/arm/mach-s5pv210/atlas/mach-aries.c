@@ -2529,14 +2529,8 @@ void s3c_config_sleep_gpio(void)
 	s3c_gpio_setpull(S5PV210_GPH0(6), S3C_GPIO_PULL_NONE);
 	//s3c_gpio_setpin(S5PV210_GPH0(6), 0);
 #endif
-#if defined(CONFIG_S5PV210_GARNETT_DELTA)	
-	//s3c_gpio_cfgpin(S5PV210_GPH0(7), S3C_GPIO_INPUT);
-	//s3c_gpio_setpull(S5PV210_GPH0(7), S3C_GPIO_PULL_NONE);
-	//s3c_gpio_setpin(S5PV210_GPH0(0), 0);
-#else
         s3c_gpio_cfgpin(S5PV210_GPH0(7), S3C_GPIO_INPUT);
         s3c_gpio_setpull(S5PV210_GPH0(7), S3C_GPIO_PULL_UP);        
-#endif                   
 	s3c_gpio_cfgpin(S5PV210_GPH1(0), S3C_GPIO_OUTPUT);
         s3c_gpio_setpull(S5PV210_GPH1(0), S3C_GPIO_PULL_DOWN);
         s3c_gpio_setpin(S5PV210_GPH1(0), 0);
@@ -2558,15 +2552,9 @@ void s3c_config_sleep_gpio(void)
 	s3c_gpio_setpull(S5PV210_GPH1(3), S3C_GPIO_PULL_NONE);
 	//s3c_gpio_setpin(S5PV210_GPH1(3), 0);
 #endif
-#if defined(CONFIG_S5PV210_GARNETT_DELTA)
-	s3c_gpio_cfgpin(S5PV210_GPH1(4), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH1(4), S3C_GPIO_PULL_DOWN);
-	//s3c_gpio_setpin(S5PV210_GPH1(4), 0);
-#else 
 	s3c_gpio_cfgpin(S5PV210_GPH1(4), S3C_GPIO_OUTPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(4), S3C_GPIO_PULL_NONE);
 	s3c_gpio_setpin(S5PV210_GPH1(4), 0);
-#endif
 	s3c_gpio_cfgpin(S5PV210_GPH1(5), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH1(5), S3C_GPIO_PULL_DOWN);
 	//s3c_gpio_setpin(S5PV210_GPH1(5),0);
@@ -2610,14 +2598,8 @@ void s3c_config_sleep_gpio(void)
 	s3c_gpio_setpull(S5PV210_GPH2(5), S3C_GPIO_PULL_NONE);
 	//s3c_gpio_setpin(S5PV210_GPH2(5), 0);
 #endif
-#if defined(CONFIG_S5PV210_GARNETT_DELTA)
-	//s3c_gpio_cfgpin(S5PV210_GPH2(6), S3C_GPIO_INPUT);
-	//s3c_gpio_setpull(S5PV210_GPH2(6), S3C_GPIO_PULL_NONE);
-	//s3c_gpio_setpin(S5PV210_GPH2(6), 0);
-#else
         s3c_gpio_cfgpin(S5PV210_GPH2(6), S3C_GPIO_INPUT);
         s3c_gpio_setpull(S5PV210_GPH2(6), S3C_GPIO_PULL_UP);        
-#endif
 #if 0 // microusb
 	s3c_gpio_cfgpin(S5PV210_GPH2(7), S3C_GPIO_INPUT);
 	s3c_gpio_setpull(S5PV210_GPH2(7), S3C_GPIO_PULL_NONE);
@@ -2640,26 +2622,19 @@ void s3c_config_sleep_gpio(void)
 	s3c_gpio_setpull(S5PV210_GPH3(2), S3C_GPIO_PULL_UP);
 //	s3c_gpio_setpin(S5PV210_GPH3(2), 0);
 #endif
-#if defined(CONFIG_S5PV210_GARNETT_DELTA)
-	s3c_gpio_cfgpin(S5PV210_GPH3(3), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH3(3), S3C_GPIO_PULL_DOWN);
-//	s3c_gpio_setpin(S5PV210_GPH3(3), 0);
-#else
         s3c_gpio_cfgpin(S5PV210_GPH3(3), S3C_GPIO_INPUT);
         s3c_gpio_setpull(S5PV210_GPH3(3), S3C_GPIO_PULL_UP);
-#endif
-#if defined(CONFIG_S5PV210_GARNETT_DELTA)
-	s3c_gpio_cfgpin(S5PV210_GPH3(4), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_NONE);
+#if 1	// T_FLASH_DETECT -> add wakeup src.
+	//s3c_gpio_cfgpin(S5PV210_GPH3(4), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_UP);
 	//s3c_gpio_setpin(S5PV210_GPH3(4), 0);
-#else 
-#if 0	// T_FLASH_DETECT -> add wakeup src.
-	s3c_gpio_cfgpin(S5PV210_GPH3(4), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH3(4), S3C_GPIO_PULL_NONE);
-	//s3c_gpio_setpin(S5PV210_GPH3(4), 0);
-#endif
 #endif
 
+#if defined(CONFIG_S5PV210_GARNETT_DELTA)
+#else
+	s3c_gpio_cfgpin(S5PV210_GPH3(5), S3C_GPIO_INPUT);
+	s3c_gpio_setpull(S5PV210_GPH3(5), S3C_GPIO_PULL_DOWN);
+#endif
 
 #if 0 // ok key
 	s3c_gpio_cfgpin(S5PV210_GPH3(5), S3C_GPIO_INPUT);
@@ -3070,6 +3045,50 @@ static struct notifier_block arise_reboot_notifier = {
 	.notifier_call = arise_notifier_call,
 };
 
+#define DHD_SKB_HDRSIZE 		336
+#define DHD_SKB_1PAGE_BUFSIZE	((PAGE_SIZE*1)-DHD_SKB_HDRSIZE)
+#define DHD_SKB_2PAGE_BUFSIZE	((PAGE_SIZE*2)-DHD_SKB_HDRSIZE)
+#define DHD_SKB_4PAGE_BUFSIZE	((PAGE_SIZE*4)-DHD_SKB_HDRSIZE)
+
+#define WLAN_SKB_BUF_NUM	17
+
+struct sk_buff *wlan_static_skb[WLAN_SKB_BUF_NUM];
+EXPORT_SYMBOL(wlan_static_skb);
+
+
+int __init aries_init_wifi_mem(void)
+{
+	int i;
+	int j;
+
+	printk("aries_init_wifi_mem\n");
+	for (i = 0; i < 8; i++) {
+		wlan_static_skb[i] = dev_alloc_skb(DHD_SKB_1PAGE_BUFSIZE);
+		if (!wlan_static_skb[i])
+			goto err_skb_alloc;
+	}
+	
+	for (; i < 16; i++) {
+		wlan_static_skb[i] = dev_alloc_skb(DHD_SKB_2PAGE_BUFSIZE);
+		if (!wlan_static_skb[i])
+			goto err_skb_alloc;
+	}
+	
+	wlan_static_skb[i] = dev_alloc_skb(DHD_SKB_4PAGE_BUFSIZE);
+	if (!wlan_static_skb[i])
+		goto err_skb_alloc;
+
+	printk("aries_init_wifi_mem success\n");
+	return 0;
+
+ err_skb_alloc:
+	pr_err("Failed to skb_alloc for WLAN\n");
+	for (j = 0 ; j <WLAN_SKB_BUF_NUM ; j++)
+		dev_kfree_skb(wlan_static_skb[j]);
+
+	return -ENOMEM;
+}
+
 static void __init smdkc110_machine_init(void)
 {
 	/* Find out S5PC110 chip version */
@@ -3229,11 +3248,12 @@ static void __init smdkc110_machine_init(void)
 		gpio_direction_output(GPIO_MSENSE_nRST, 1);
 	}
 	gpio_free(GPIO_MSENSE_nRST);
-	
+
+	aries_init_wifi_mem();
+
 	#ifdef RECOVERY_SYSFS
         recovery_class_init();
-        #endif
-	//aries_init_wifi_mem();
+   #endif
 }
 
 #if defined(CONFIG_USB_SUPPORT) || defined(CONFIG_VIDEO_TV20)
@@ -3282,6 +3302,8 @@ static int ldo8_control(int module, bool onoff)
         if (!ldo8_onoff_state)
         {
             Set_MAX8998_PM_REG(ELDO8, 1);
+            msleep(1);
+            Set_MAX8998_PM_REG(ELDO3, 1);
             msleep(1);
         }
         printk(KERN_INFO "%s : turn ON LDO8 (cur_stat=%d, req=%d)\n",__func__,ldo8_onoff_state,module);

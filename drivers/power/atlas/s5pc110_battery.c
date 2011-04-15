@@ -243,7 +243,11 @@ static int get_usb_power_state(void)
 
 static inline int s3c_adc_get_adc_data_ex(int channel) {
 	if (channel == S3C_ADC_TEMPERATURE)
+#ifdef CONFIG_S5PV210_GARNETT_DELTA
+		return ((4096 - s3c_adc_get_adc_data(channel)) >> 2);	
+#else
 		return ((4096 - s3c_adc_get_adc_data(channel)) >> 4);	// hanapark_Atlas (8-bit ADC; 2010.05.10)
+#endif
 	else
 		return (s3c_adc_get_adc_data(channel) >> 2);
 }

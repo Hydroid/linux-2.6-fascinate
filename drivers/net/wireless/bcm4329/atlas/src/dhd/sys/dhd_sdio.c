@@ -1393,7 +1393,6 @@ dhd_bus_rxctl(struct dhd_bus *bus, uchar *msg, uint msglen)
 		         __FUNCTION__, rxlen, msglen));
 	} else if (timeleft == 0) {
 		DHD_ERROR(("%s: resumed on timeout\n", __FUNCTION__));
-		extern bool volatile dhd_mmc_suspend; /* dhd_linux.c */
 #if 0 /* #ifdef DHD_DEBUG */
 		dhd_os_sdlock(bus->dhd);
 		dhdsdio_checkdied(bus, NULL, 0);

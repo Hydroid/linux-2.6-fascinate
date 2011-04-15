@@ -49,12 +49,10 @@ typedef const struct si_pub  si_t;
 #include <dngl_stats.h>
 #include <dhd.h>
 #define WL_ERROR(x) printf x
-#define WL_DEBUG(x) printk x
 #define WL_TRACE(x) printf x
 #define WL_ASSOC(x) 
 #define WL_INFORM(x) 
 #define WL_WSEC(x) 
-#define WL_SCAN(x)
 
 #include <wl_iw.h>
 
@@ -7368,10 +7366,6 @@ wl_iw_event(struct net_device *dev, wl_event_msg_t *e, void* data)
 
 	
 	switch (event_type) {
-	case WLC_E_RELOAD:
-		WL_ERROR(("%s: Firmware ERROR %d\n", __FUNCTION__, status));
-		net_os_send_hang_message(dev);
-		return;
 #if defined(SOFTAP)
 	case WLC_E_PRUNE:
 		if (ap_cfg_running) {
@@ -7573,6 +7567,16 @@ wl_iw_event(struct net_device *dev, wl_event_msg_t *e, void* data)
 		WL_TRACE(("Event WLC_E_SCAN_COMPLETE\n"));
 #endif 
 	break;
+
+   case WLC_E_DEAUTH:
+#if defined(SOFTAP)
+            WL_SOFTAP(("STA left unexpectedly %d\n", event_type));
+            if (ap_cfg_running) {
+                wl_iw_send_priv_event(priv_dev, "STA_LEAVE");
+                return;
+            }
+#endif 
+   break;
 
 	default:
 		
