@@ -44,7 +44,7 @@ snd-soc-wm8994-objs := victory/wm8994.o victory/wm8994_aries.o
 endif
 ifeq ($(CONFIG_SND_SOC_WM8994_ATLAS),y)
 ifeq ($(CONFIG_SND_VOODOO),y)
-snd-soc-wm8994-objs := atlas/wm8994.o atlas/wm8994_aries.o atlas/wm8994_voodoo.o
+snd-soc-wm8994-objs := atlas/wm8994.o atlas/wm8994_aries.o wm8994_voodoo.o
 else
 snd-soc-wm8994-objs := atlas/wm8994.o atlas/wm8994_aries.o
 endif
