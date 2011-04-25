@@ -50,15 +50,6 @@ config SND_VOODOO_MODULE
 	help
 	  requires additionnal source
 	  
-config SND_VOODOO_HEADPHONE_STICK
-  bool "Headphone Jack: Do not use external phone speaker when headphones are plugged in"
-  depends on SND_VOODOO
-  default y
-  help
-    Adds to ability to prevent the Android from switching to the external speaker
-    to play alerts or ring tones when the headphone jack is in use. Perfect for hearing
-    alerts through the headphones or amp your phone is utilizing.
-
 config SND_VOODOO_DEBUG
 	bool "Codec development tools (unsafe and introduce sound skipping)"
 	depends on SND_VOODOO

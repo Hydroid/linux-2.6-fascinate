@@ -24,7 +24,7 @@
 #include <mach/regs-clock.h>
 #include <linux/delay.h>
 
-#include "../../codecs/atlas/wm8994.h"
+#include "../../codecs/wm8994.h"
 //#include "../codecs/wm8994_def.h"
 #include "../s3c-dma.h"
 #include "../s3c-pcmdev.h"

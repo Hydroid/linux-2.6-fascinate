@@ -627,23 +627,6 @@ static int wm8994_set_playback_path(struct snd_kcontrol *kcontrol,
 	// Get path value
 	int path_num = ucontrol->value.integer.value[0];
 
-#ifdef CONFIG_SND_VOODOO_HEADPHONE_STICK
-  unsigned int headset_status = get_headset_status();
-  enum playback_path path_current = wm8994->cur_path;
-
-  DEBUG_LOG("Sound Routing Change Request From %s To %s, headphone status %d \n", mc->texts[path_num], mc->texts[path_current], headset_status );
-
-  if (headphone_stick_check()) {
-    /* Check if a headjack is plugged in and if so do not switch to external speaker for mere audio playback */
-    if (headset_status == SEC_HEADSET_4_POLE_DEVICE || headset_status == SEC_HEADSET_3_POLE_DEVICE) {
-      if (path_num == SPK || path_num == RING_SPK || path_num == RING_DUAL) {
-        DEBUG_LOG("PLACEHOLDER: not routing to %s, headjack plugged in, re-routing to %s \n", mc->texts[path_num], mc->texts[HP]);
-        path_num = HP;
-      }
-    }
-  }
-#endif
-
 	//select the requested path from the array of function pointers
 	switch(path_num)
 	{
