@@ -89,8 +89,8 @@ static const unsigned int frequency_match_1GHZ[][4] = {
         {1000000, 1200, 1100, 0},
         {800000, 1150, 1100, 1},
         {400000, 950, 1100, 2},
-        {200000, 800, 1100, 4},
-        {100000, 800, 1000, 5},
+        {200000, 825, 1100, 4},
+        {100000, 825, 1000, 5},
 #else //just for dvs test
         {1000000, 1250, 1100, 0},
         {800000, 1250, 1100, 1},
@@ -160,7 +160,7 @@ const unsigned int (*dvs_volt_table[2])[3] = {
 
 static const unsigned int dvs_arm_voltage_set[][2] = {
 	{DVSARM1, 1200},
-	{DVSARM2, 1150},
+	{DVSARM2, 1250},
 	{DVSARM3, 950},
 	{DVSARM4, 825},
 	{DVSINT1, 1100},
