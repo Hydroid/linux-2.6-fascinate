@@ -27,7 +27,7 @@ make clean mrproper > /dev/null 2>&1
 rm -f update_"$CONFIG"/*.zip update_"$CONFIG"/kernel_update/zImage
 
 make ARCH=arm imnuts_defconfig 1>/dev/null 2>"$WORK"/errlog.txt
-make -j6 CROSS_COMPILE=/opt/toolchains/arm-2010q1/bin/arm-none-linux-gnueabi- ARCH=arm HOSTCFLAGS="-g -O3" 1>"$WORK"/stdlog.txt 2>>"$WORK"/errlog.txt
+make -j6 CROSS_COMPILE=/usr/bin/arm-linux-gnueabi- ARCH=arm HOSTCFLAGS="-g -O3" 1>"$WORK"/stdlog.txt 2>>"$WORK"/errlog.txt
 if [ $? != 0 ]; then
 		echo -e "FAIL!\n"
 		cd ..
