@@ -24,11 +24,11 @@
 /* FSA9480 Register definition                                                                                */
 /********************************************************************/
 /* DEVICE ID Register*/
-#define REGISTER_DEVICEID	        0x01     
+#define REGISTER_DEVICEID	        0x01
 /* CONTROL Register*/
-#define REGISTER_CONTROL	        0x02   
-#define REGISTER_INTERRUPT1	        0x03  
-#define REGISTER_INTERRUPT2	        0x04   
+#define REGISTER_CONTROL	        0x02
+#define REGISTER_INTERRUPT1	        0x03
+#define REGISTER_INTERRUPT2	        0x04
 #define REGISTER_INTERRUPTMASK1 	0x05
 #define REGISTER_INTERRUPTMASK2 	0x06
 #define REGISTER_ADC 	            0x07
@@ -44,11 +44,11 @@
 #define REGISTER_CARKITMASK1 	    0x11
 #define REGISTER_CARKITMASK2 	    0x12
 /* Manual SW1 Register*/
-#define REGISTER_MANUALSW1	        0x13                       
+#define REGISTER_MANUALSW1	        0x13
 /* Manual SW2 Register */
-#define REGISTER_MANUALSW2	        0x14                   
+#define REGISTER_MANUALSW2	        0x14
 /* Hidden Register*/
-#define HIDDEN_REGISTER_MANUAL_OVERRDES1	0x1B     
+#define HIDDEN_REGISTER_MANUAL_OVERRDES1	0x1B
 
 /*define IRQ INTB*/
 #define IRQ_FSA9480_INTB	IRQ_EINT(23)
@@ -180,7 +180,9 @@
 #define USBSTATUS_ADB					0x10
 #define USBSTATUS_DM					0x20
 #define USBSTATUS_ACM					0x30
-#define USBSTATUS_SAMSUNG_KIES_REAL	0x80
+#define USBSTATUS_SAMSUNG_KIES_REAL  	0x80
+
+
 
 
 
@@ -281,14 +283,6 @@ typedef enum
 	FSA9480_INT1_OCP_EN 	= 	0x40,
 	FSA9480_INT1_OVP_OCP_DIS= 	0x80
 }FSA9480_INT1_TYPE;
-
-
-#if 1 //20100520_inchul
-typedef enum
-{
-	FSA9480_INT2_RESERVED_ATTACH 	=	0x02
-}FSA9480_INT2_TYPE;
-#endif
 
 typedef enum
 {

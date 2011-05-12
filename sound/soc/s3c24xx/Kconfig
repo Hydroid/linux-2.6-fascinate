@@ -25,24 +25,12 @@ config SND_S3C2412_SOC_I2S
 config SND_S3C64XX_SOC_I2S
 	tristate 
 	select SND_S3C_I2SV2_SOC
-config SND_S3C64XX_SOC_I2S_VICTORY
-	depends on SND_S3C64XX_SOC_I2S
-	bool "select SND_S3C64XX_SOC_I2S for victory"
-config SND_S3C64XX_SOC_I2S_ATLAS
-	depends on SND_S3C64XX_SOC_I2S
-	bool "select SND_S3C64XX_SOC_I2S for atlas"
 
 config SND_C110_PCM
 	tristate "PCM-wm8994 device"
 	depends on SND_S3C64XX_SOC_I2S
 	select SND_S3C_SOC_PCM
  	select SND_SOC_WM8994_PCM 
-config SND_C110_PCM_VICTORY
-	depends on SND_C110_PCM
-	bool "PCM-wm8994 device for victory"
-config SND_C110_PCM_ATLAS
-	depends on SND_C110_PCM
-	bool "PCM-wm8994 device for atlas"
 
 config SND_S3C64XX_SOC_WM8580
 	tristate
@@ -103,20 +91,12 @@ config  SND_ARIES_WM8994
 	select SND_SOC_WM8994
 	select SND_S3C64XX_SOC_I2S
  
-config SND_ARIES_WM8994_VICTORY
-	bool "SoC I2S Audio support for WM8994-I2S on UNIVERSAL for victory"
-	depends on SND_ARIES_WM8994
-config SND_ARIES_WM8994_ATLAS
-	bool "SoC I2S Audio support for WM8994-I2S on UNIVERSAL for atlas"
-	depends on SND_ARIES_WM8994
-	
 config	SND_ARIES_WM8994_MASTER
 	bool "WM8994 master"
 	depends on SND_ARIES_SOC_WM8994
 	default n
 	help
 	  Say Y if you want to run SoC as I2S-Slave and CODEC as I2S-Master.
-
 
 config SND_SMDK_WM8580
 	tristate "SoC I2S Audio support for WM8580 on SMDK"

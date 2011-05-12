@@ -98,8 +98,6 @@ void kernel_sec_clear_cable_attach(void)
 }
 EXPORT_SYMBOL(kernel_sec_clear_cable_attach);
 
-
-
 void kernel_sec_set_cp_upload(void)
 {
 	unsigned int send_mail, wait_count;
@@ -137,8 +135,6 @@ void kernel_sec_set_cp_ack(void)   //is set by dpram - dpram_irq_handler
 	received_cp_ack = 1;
 }
 EXPORT_SYMBOL(kernel_sec_set_cp_ack);
-
-
 
 void kernel_sec_set_upload_magic_number(void)
 {
@@ -279,16 +275,6 @@ EXPORT_SYMBOL(kernel_sec_set_build_info);
 void kernel_sec_init(void)
 {
        // set the onedram mailbox virtual address
-#if defined CONFIG_S5PV210_VICTORY	
-	dpram_base = ioremap_nocache(0x30000000 + 0x05000000 + 0xFFF800, 0x60); //DPRAM_START_ADDRESS_PHYS + DPRAM_SHARED_BANK + DPRAM_SMP 
-	
-	if (dpram_base == NULL) {
-		printk(KERN_EMERG"failed ioremap\n");
-	}
-	onedram_sem = dpram_base ; 
-	onedram_mailboxAB = dpram_base + 0x20;
-	onedram_mailboxBA = dpram_base + 0x40;
-#elif defined CONFIG_S5PV210_ATLAS
 	dpram_base = ioremap_nocache(0x30000000 + 0x05000000, 0x01000000); //DPRAM_START_ADDRESS_PHYS + DPRAM_SHARED_BANK, DPRAM_SHARED_BANK_SIZE
 	if (dpram_base == NULL) {
 		printk(KERN_EMERG"failed ioremap\n");
@@ -296,7 +282,6 @@ void kernel_sec_init(void)
 	onedram_sem = dpram_base + 0xFFF800; 
 	onedram_mailboxAB = dpram_base +0xFFF800 + 0x20;
 	onedram_mailboxBA = dpram_base+0xFFF800 + 0x40;
-#endif
 	kernel_sec_get_debug_level_from_boot();
 	kernel_sec_set_upload_magic_number();
 	kernel_sec_set_upload_cause(UPLOAD_CAUSE_INIT);	

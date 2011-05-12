@@ -30,7 +30,7 @@
 #include <plat/gpio-cfg.h>
 #include <plat/regs-dsim.h>
 
-#include <mach/atlas/gpio-aries.h>
+#include <mach/gpio-aries.h>
 #include <mach/dsim.h>
 #include <mach/mipi_ddi.h>
 #include <linux/regulator/consumer.h>

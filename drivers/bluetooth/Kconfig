@@ -200,11 +200,5 @@ config BT_HID
 	default m
 	help
 	  say M to compile it as module.
-if BT_HID
-config BT_HID_VICTORY
-	depends on BT_HID
-	bool "Bluetooth HID (Human interface device) driver for victory"
-	default y
-endif 	  
 endmenu
 

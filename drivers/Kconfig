@@ -132,6 +132,4 @@ source "drivers/onedram_svn/Kconfig"
 source "drivers/sensor/Kconfig"
 
 source "drivers/samsung/Kconfig"
-
-source "drivers/level/Kconfig"
 endmenu

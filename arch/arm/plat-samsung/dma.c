@@ -18,11 +18,7 @@ struct s3c2410_dma_buf;
 #include <linux/errno.h>
 
 #include <mach/dma.h>
-#if defined CONFIG_S5PV210_VICTORY
-#include <mach/victory/irqs.h>
-#elif defined CONFIG_S5PV210_ATLAS
-#include <mach/atlas/irqs.h>
-#endif
+#include <mach/irqs.h>
 /* dma channel state information */
 struct s3c2410_dma_chan s3c2410_chans[S3C_DMA_CHANNELS];
 struct s3c2410_dma_chan *s3c_dma_chan_map[DMACH_MAX];

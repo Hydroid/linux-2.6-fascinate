@@ -25,35 +25,12 @@ config ARM
 	  manufactured, but legacy ARM-based PC hardware remains popular in
 	  Europe.  There is an ARM Linux project with a web page at
 	  <http://www.arm.linux.org.uk/>.
-choice
-        prompt "Setup Product Type for S5PV210"
-        default S5PV210_VICTORY
 
-config S5PV210_ATLAS
-        bool "select Atlas-Product"
-        help
-        Select ATLAS Product
-config S5PV210_VICTORY
-        bool "select Victory-Product"
-        help
-        Select VICTORY Product
-endchoice
-
-#if S5PV210_ATLAS
 config S5PV210_GARNETT_DELTA
-	depends on S5PV210_ATLAS
+	depends on ARCH_S5PV210
         bool "select Garnett Delta"
         help
 		Enables to include the Garnett product delta
-#endif
-
-#if S5PV210_VICTORY
-config S5PV210_CRESPO_DELTA
-	depends on S5PV210_VICTORY
-        bool "select crespo Delta"
-        help
-		Enables to include the crespo product delta
-#endif
 
 config HAVE_PWM
 	bool

@@ -21,7 +21,7 @@
 
 #include <linux/list.h>
 #include "mfc_interface.h"
-#include "victory/mfc_opr.h"
+#include "mfc_opr.h"
 
 #define MFC_MAX_PORT_NUM       2
 

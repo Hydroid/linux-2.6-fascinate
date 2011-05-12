@@ -167,7 +167,6 @@ static int samsung_gpiolib_4bit2_output(struct gpio_chip *chip,
 	return 0;
 }
 
-
 int s3c_gpio_slp_cfgpin(unsigned int pin, unsigned int config)
 {
         struct s3c_gpio_chip *chip = s3c_gpiolib_getchip(pin);
@@ -204,9 +203,7 @@ int s3c_gpio_slp_cfgpin(unsigned int pin, unsigned int config)
         local_irq_restore(flags);
         return 0;
 }
-#if defined CONFIG_S5PV210_VICTORY
-EXPORT_SYMBOL(s3c_gpio_slp_cfgpin);
-#endif
+
 s3c_gpio_pull_t s3c_gpio_get_slp_cfgpin(unsigned int pin)
 {
         struct s3c_gpio_chip *chip = s3c_gpiolib_getchip(pin);
@@ -238,7 +235,6 @@ s3c_gpio_pull_t s3c_gpio_get_slp_cfgpin(unsigned int pin)
 
         return (__force s3c_gpio_pull_t)con;
 }
-
 
 int s3c_gpio_slp_setpull_updown(unsigned int pin, unsigned int config)
 {
@@ -276,8 +272,8 @@ int s3c_gpio_slp_setpull_updown(unsigned int pin, unsigned int config)
 
 	return 0;
 }
-EXPORT_SYMBOL(s3c_gpio_slp_setpull_updown);
 
+EXPORT_SYMBOL(s3c_gpio_slp_setpull_updown);
 
 int s3c_gpio_set_drvstrength(unsigned int pin, unsigned int config)
 {
@@ -354,22 +350,6 @@ int s3c_gpio_set_slewrate(unsigned int pin, unsigned int config)
 
 	return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 void __init samsung_gpiolib_add_4bit(struct s3c_gpio_chip *chip)
 {

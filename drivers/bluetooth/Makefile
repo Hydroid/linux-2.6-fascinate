@@ -29,6 +29,3 @@ hci_uart-objs				:= $(hci_uart-y)
 
 obj-$(CONFIG_BT_HID)           += bthid/
 
-#obj-$(CONFIG_BT_HID_VICTORY)		+= bthid/
-#obj-$(CONFIG_BT_HID_ATLAS)            += bthid/
-

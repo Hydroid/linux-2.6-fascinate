@@ -54,9 +54,7 @@ struct platform_device s3c_device_hsmmc0 = {
 		.platform_data		= &s3c_hsmmc0_def_platdata,
 	},
 };
-#if defined CONFIG_S5PV210_VICTORY
-EXPORT_SYMBOL(s3c_device_hsmmc0);	// Yongha for Victory WiMAX 20100208
-#endif
+
 void s3c_sdhci0_set_platdata(struct s3c_sdhci_platdata *pd)
 {
 	struct s3c_sdhci_platdata *set = &s3c_hsmmc0_def_platdata;

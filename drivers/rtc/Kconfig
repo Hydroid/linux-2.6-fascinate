@@ -617,16 +617,6 @@ config RTC_DRV_S3C
 	  This driver can also be build as a module. If so, the module
 	  will be called rtc-s3c.
 
-config  RTC_DRV_S3C_ATLAS
-        bool "Select RTC (Realtime Clock) driver for atlas"
-        depends on RTC_DRV_S3C
-
-config  RTC_DRV_S3C_VICTORY
-        bool "Select RTC (Realtime Clock) driver for victory"
-        depends on RTC_DRV_S3C
-
-
-
 config RTC_DRV_EP93XX
 	tristate "Cirrus Logic EP93XX"
 	depends on ARCH_EP93XX

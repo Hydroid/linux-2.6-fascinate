@@ -23,11 +23,8 @@
 #define S3C_KEYIFCOL		S3C_KEYPADREG(0x08)
 #define S3C_KEYIFROW		S3C_KEYPADREG(0x0C)
 #define S3C_KEYIFFC		S3C_KEYPADREG(0x10)
-#if defined CONFIG_S5PV210_VICTORY
-#define KEYCOL_DMASK            (0xffff)
-#elif defined CONFIG_S5PV210_ATLAS
 #define KEYCOL_DMASK            (0xff)
-#elif defined CONFIG_S5PV210_GARNETT_DELTA
+#if defined CONFIG_S5PV210_GARNETT_DELTA
 #define KEYCOL_DMASK            (0xffff)
 #endif
 #if defined(CONFIG_KEYPAD_S3C_MSM)

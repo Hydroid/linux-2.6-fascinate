@@ -15,11 +15,7 @@
 #include <linux/string.h>
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>
-#if defined CONFIG_S5PV210_VICTORY
-#include <mach/victory/irqs.h>
-#elif defined CONFIG_S5PV210_ATLAS
-#include <mach/atlas/irqs.h>
-#endif
+#include <mach/irqs.h>
 #include <mach/map.h>
 
 #include <plat/devs.h>

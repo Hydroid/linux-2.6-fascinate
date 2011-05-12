@@ -163,12 +163,6 @@ int s3c_gpio_setcfg_s3c24xx_banka(struct s3c_gpio_chip *chip,
 		cfg <<= shift;
 	}
 
-#if defined CONFIG_S5PV210_VICTORY //UART_CHANGE
-    if((cfg&0xfffffff0) == 0) {
-		cfg &= 0xf;
-		cfg <<= shift;
-    }
-#endif
 	con = __raw_readl(reg);
 	con &= ~(0x1 << shift);
 	con |= cfg;
@@ -191,13 +185,6 @@ int s3c_gpio_setcfg_s3c24xx(struct s3c_gpio_chip *chip,
 
 		cfg <<= shift;
 	}
-
-#if defined CONFIG_S5PV210_VICTORY //UART_CHANGE
-	    if((cfg&0xfffffff0) == 0) {
-			cfg &= 0xf;
-			cfg <<= shift;
-	    }
-#endif
 
 	con = __raw_readl(reg);
 	con &= ~(0x3 << shift);
@@ -223,13 +210,6 @@ int s3c_gpio_setcfg_s3c64xx_4bit(struct s3c_gpio_chip *chip,
 		cfg &= 0xf;
 		cfg <<= shift;
 	}
-
-#if defined CONFIG_S5PV210_VICTORY //UART_CHANGE
-	    if((cfg&0xfffffff0) == 0) {
-			cfg &= 0xf;
-			cfg <<= shift;
-	    }
-#endif
 
 	con = __raw_readl(reg);
 	con &= ~(0xf << shift);
@@ -291,5 +271,3 @@ s3c_gpio_pull_t s3c_gpio_getpin_updown(struct s3c_gpio_chip *chip,
 	lvl &= (1 << off);
 	return lvl ? 1 : 0;
 }
-
-

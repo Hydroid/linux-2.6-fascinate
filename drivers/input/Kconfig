@@ -25,18 +25,6 @@ config INPUT
 
 if INPUT
 
-config INPUT_ATLAS
-        depends on INPUT
-        tristate "Atlas Generic input layer (needed for keyboard, mouse, ...)"
-        help
-        Atlas Product
-
-config INPUT_VICTORY
-        depends on INPUT
-        bool "Victory Generic input layer (needed for keyboard, mouse, ...)"
-        help
-        Victory Product
-
 config INPUT_FF_MEMLESS
 	tristate "Support for memoryless force-feedback devices"
 	default n

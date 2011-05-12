@@ -15,14 +15,6 @@ config LEDS_CLASS
 	  This option enables the led sysfs class in /sys/class/leds.  You'll
 	  need this to do anything useful with LEDs.  If unsure, say N.
 
-config LEDS_CLASS_VICTORY
-        depends on LEDS_CLASS
-        bool "select the led sysfs class in /sys/class/leds for victory"
-config LEDS_CLASS_ATLAS
-        depends on LEDS_CLASS
-        bool "select the led sysfs class in /sys/class/leds for atlas"
-
-
 comment "LED drivers"
 
 config LEDS_ATMEL_PWM
@@ -136,17 +128,6 @@ config LEDS_GPIO
 	  and they must be connected to the GPIO lines.  The LEDs must be
 	  defined as platform devices and/or OpenFirmware platform devices.
 	  The code to use these bindings can be selected below.
-
-config LEDS_GPIO_VICTORY
-        depends on LEDS_GPIO
-        bool "select the support for the LEDs connected to GPIO output for victory"
-
-config LEDS_GPIO_ATLAS
-        depends on LEDS_GPIO
-        bool "select the support for the LEDs connected to GPIO output for atlas"
-
-
-
 
 config LEDS_GPIO_PLATFORM
 	bool "Platform device bindings for GPIO LEDs"
@@ -275,16 +256,6 @@ config LEDS_TRIGGER_TIMER
 
 	  If unsure, say Y.
 
-config LEDS_TRIGGER_TIMER_VICTORY
-        depends on LEDS_TRIGGER_TIMER
-        bool "select the LEDs to be controlled by a programmable timer for victory"
-config LEDS_TRIGGER_TIMER_ATLAS
-        depends on LEDS_TRIGGER_TIMER
-        bool "select the LEDs to be controlled by a programmable timer for atlas"
-
-
-
-
 config LEDS_TRIGGER_IDE_DISK
 	bool "LED IDE Disk Trigger"
 	depends on LEDS_TRIGGERS && IDE_GD_ATA
@@ -329,15 +300,6 @@ config LEDS_TRIGGER_DEFAULT_ON
 	help
 	  This allows LEDs to be initialised in the ON state.
 	  If unsure, say Y.
-
-config LEDS_TRIGGER_DEFAULT_ON_VICTORY
-        depends on LEDS_TRIGGER_DEFAULT_ON
-        bool "select the LEDs to be initialised in the ON state for victory"
-config LEDS_TRIGGER_DEFAULT_ON_ATLAS
-        depends on LEDS_TRIGGER_DEFAULT_ON
-        bool "select the LEDs to be initialised in the ON state for atlas"
-
-
 
 config LEDS_TRIGGER_SLEEP
 	tristate "LED Sleep Mode Trigger"

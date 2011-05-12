@@ -58,12 +58,7 @@ static int fb_notifier_callback(struct notifier_block *self,
 
 static int lcd_register_fb(struct lcd_device *ld)
 {
-
-#ifdef CONFIG_S5PV210_VICTORY
-	memset(&ld->fb_notif, 0, sizeof(&ld->fb_notif));
-#elif CONFIG_S5PV210_ATLAS
 	memset(&ld->fb_notif, 0, sizeof(ld->fb_notif));
-#endif
 	ld->fb_notif.notifier_call = fb_notifier_callback;
 	return fb_register_client(&ld->fb_notif);
 }

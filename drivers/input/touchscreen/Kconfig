@@ -42,18 +42,6 @@ config TOUCHSCREEN_QT602240
           To compile this driver as a module, choose M here: the
           module will be called melfas_ts.
 if TOUCHSCREEN_QT602240
-config TOUCHSCREEN_QT602240_ATLAS
-        depends on TOUCHSCREEN_QT602240
-        tristate "Atlas QT602240 tochscreen"
-        help
-        Atlas Product
-
-config TOUCHSCREEN_QT602240_VICTORY
-        depends on TOUCHSCREEN_QT602240
-        bool "Victory QT602240 tochscreen"
-        help
-        Victory Product
-
 config TOUCHSCREEN_QT602240_GARNETT
         depends on TOUCHSCREEN_QT602240
         bool "QT602240 tochscreen support in Garnett"

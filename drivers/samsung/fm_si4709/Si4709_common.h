@@ -4,11 +4,7 @@
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <mach/gpio.h>
-#if defined CONFIG_S5PV210_VICTORY
-#include <mach/victory/gpio-aries.h>
-#elif defined CONFIG_S5PV210_ATLAS
-#include <mach/atlas/gpio-aries.h>
-#endif
+#include <mach/gpio-aries.h>
 //#define Si4709_DEBUG
 
 #define error(fmt,arg...) printk(KERN_CRIT fmt "\n",## arg)

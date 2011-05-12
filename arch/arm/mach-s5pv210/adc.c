@@ -59,11 +59,7 @@
 
 #include <mach/regs-adc.h>
 #include <mach/adc.h>
-#if defined CONFIG_S5PV210_VICTORY
-#include <mach/victory/irqs.h>
-#elif defined CONFIG_S5PV210_ATLAS
-#include <mach/atlas/irqs.h>
-#endif
+#include <mach/irqs.h>
 #define ADC_MINOR 	131
 #define ADC_INPUT_PIN   _IOW('S', 0x0c, unsigned long)
 

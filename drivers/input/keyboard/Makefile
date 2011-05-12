@@ -40,18 +40,13 @@ obj-$(CONFIG_KEYBOARD_W90P910)		+= w90p910_keypad.o
 
 ifeq ($(CONFIG_ARIES_VER_B2),y) #froyo_merge_check
 
-obj-$(CONFIG_KEYPAD_S3C_ATLAS)                += atlas/
-obj-$(CONFIG_KEYPAD_S3C_VICTORY)                += victory/
-obj-$(CONFIG_KEYPAD_MELFAS_TOUCH_ATLAS)                += atlas/
-obj-$(CONFIG_KEYPAD_MELFAS_TOUCH_VICTORY)                += victory/
-
-else
 obj-$(CONFIG_KEYPAD_S3C)                += s3c-keypad.o
-obj-$(CONFIG_KEYPAD_MELFAS_TOUCH)                += melfas-touchkey.o
-obj-$(CONFIG_KEYPAD_MELFAS_TOUCH)                += melfas_download.o
+obj-$(CONFIG_KEYPAD_MELFAS_TOUCH)       += melfas-touchkey.o
+obj-$(CONFIG_KEYPAD_MELFAS_TOUCH)       += melfas_download.o
 
 endif
-obj-$(CONFIG_KEYPAD_CYPRESS_TOUCH)                += cypress/cypress-touchkey.o
-obj-$(CONFIG_KEYPAD_CYPRESS_TOUCH)                += cypress/issp_driver_routines.o
-obj-$(CONFIG_KEYPAD_CYPRESS_TOUCH)                += cypress/issp_main.o
-obj-$(CONFIG_KEYPAD_CYPRESS_TOUCH)                += cypress/issp_routines.o
+
+obj-$(CONFIG_KEYPAD_CYPRESS_TOUCH)      += cypress/cypress-touchkey.o
+obj-$(CONFIG_KEYPAD_CYPRESS_TOUCH)      += cypress/issp_driver_routines.o
+obj-$(CONFIG_KEYPAD_CYPRESS_TOUCH)      += cypress/issp_main.o
+obj-$(CONFIG_KEYPAD_CYPRESS_TOUCH)      += cypress/issp_routines.o

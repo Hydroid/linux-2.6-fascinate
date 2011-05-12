@@ -24,7 +24,7 @@
 
 #include <mach/dsim.h>
 #include <mach/mipi_ddi.h>
-#include <mach/atlas/max8998_function.h>
+#include <mach/max8998_function.h>
 #include <linux/regulator/max8998.h>
 
 

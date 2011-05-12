@@ -37,11 +37,7 @@
 #include <plat/regs-adc.h>
 #include <mach/adcts.h>
 #include <mach/ts.h>
-#if defined CONFIG_S5PV210_VICTORY
-#include <mach/victory/irqs.h>
-#elif defined CONFIG_S5PV210_ATLAS
-#include <mach/atlas/irqs.h>
-#endif
+#include <mach/irqs.h>
 //#define S3C_ADCTS_DEBUG
 
 #define WAIT4INT_OFF(x)  (((x)<<8) | \

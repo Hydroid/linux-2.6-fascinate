@@ -47,12 +47,10 @@ obj-$(CONFIG_TOUCHSCREEN_S3C)           += s3c-ts.o
 
 ifeq ($(CONFIG_ARIES_VER_B2),y)
 #obj-y	+= qt602240.o 
-obj-$(CONFIG_TOUCHSCREEN_QT602240_ATLAS)     += atlas/
-obj-$(CONFIG_TOUCHSCREEN_QT602240_VICTORY)     += victory/
 obj-$(CONFIG_TOUCHSCREEN_QT602240_GARNETT)     += garnett/qt602240.o
 else
 obj-y		+= melfas_m900_ts.o  # victory.boot for instinctq lcd module
 endif
 # obj-$(CONFIG_TOUCHSCREEN_MELFAS_FIRMWARE_UPDATE)	+= melfas_download.o #victory.boot for instinctq lcd module
-# obj-$(CONFIG_TOUCHSCREEN_QT602240)      += qt602240.o
-obj-$(CONFIG_TOUCHSCREEN_QT602240_P1)      += qt602240_p1.o
+obj-$(CONFIG_TOUCHSCREEN_QT602240)      += qt602240.o
+obj-$(CONFIG_TOUCHSCREEN_QT602240_P1)   += qt602240_p1.o

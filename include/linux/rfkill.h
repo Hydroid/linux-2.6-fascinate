@@ -24,15 +24,6 @@
 
 #include <linux/types.h>
 
-#if defined CONFIG_S5PV210_VICTORY
-enum rfkill_state {
-        RFKILL_STATE_SOFT_BLOCKED = 0,  /* Radio output blocked */
-        RFKILL_STATE_UNBLOCKED    = 1,  /* Radio output allowed */
-        RFKILL_STATE_HARD_BLOCKED = 2,  /* Output blocked, non-overrideable */
-        RFKILL_STATE_MAX,               /* marker for last valid state */
-};
-int rfkill_force_state(struct rfkill *rfkill, enum rfkill_state state);
-#endif
 /* define userspace visible states */
 #define RFKILL_STATE_SOFT_BLOCKED	0
 #define RFKILL_STATE_UNBLOCKED		1
@@ -120,7 +111,7 @@ enum rfkill_user_states {
 	RFKILL_USER_STATE_HARD_BLOCKED	= RFKILL_STATE_HARD_BLOCKED,
 };
 
-#if CONFIG_S5PV210_ATLAS		 
+#if CONFIG_ARCH_S5PV210		 
 #undef RFKILL_STATE_SOFT_BLOCKED
 #undef RFKILL_STATE_UNBLOCKED
 #undef RFKILL_STATE_HARD_BLOCKED

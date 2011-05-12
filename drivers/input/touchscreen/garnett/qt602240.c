@@ -23,7 +23,7 @@
 #include <mach/gpio.h>
 #include <linux/jiffies.h>
 #include "qt602240.h"
-#include <mach/atlas/max8998_function.h>
+#include <mach/max8998_function.h>
 
 //#undef CONFIG_CPU_FREQ
 
@@ -31,7 +31,7 @@
 #include <mach/cpu-freq-v210.h>
 #endif
 
-#include <mach/atlas/gpio-aries.h>
+#include <mach/gpio-aries.h>
 
 struct i2c_driver qt602240_i2c_driver;
 

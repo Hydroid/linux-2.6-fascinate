@@ -78,17 +78,9 @@ obj-$(CONFIG_VIDEO_S5K6AA)		+= s5k6aa.o
 obj-$(CONFIG_VIDEO_ISX005)	+= isx005.o
 obj-$(CONFIG_VIDEO_S5K6AAFX)	+= s5k6aafx.o
 
-ifeq ($(CONFIG_VIDEO_CE147_VICTORY),y)
-obj-$(CONFIG_VIDEO_CE147) += victory/ce147.o
-endif
-ifeq ($(CONFIG_VIDEO_CE147_ATLAS),y)
-obj-$(CONFIG_VIDEO_CE147) += atlas/ce147.o
-endif
+obj-$(CONFIG_VIDEO_CE147) += ce147.o
 ifeq ($(CONFIG_VIDEO_CE147_GARNETT),y)
 obj-$(CONFIG_VIDEO_CE147) += garnett/ce147.o
-endif
-ifeq ($(CONFIG_VIDEO_S5KA3DFX_VICTORY),y)
-obj-$(CONFIG_VIDEO_S5KA3DFX) += victory/s5ka3dfx.o
 endif
 
 obj-$(CONFIG_SOC_CAMERA_MT9M001)	+= mt9m001.o

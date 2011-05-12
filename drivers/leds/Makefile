@@ -2,12 +2,7 @@
 # LED Core
 obj-$(CONFIG_NEW_LEDS)			+= led-core.o
 
-ifeq ($(CONFIG_LEDS_CLASS_VICTORY),y)
-obj-$(CONFIG_LEDS_CLASS)		+= victory/led-class.o
-endif
-ifeq ($(CONFIG_LEDS_CLASS_ATLAS),y)
-obj-$(CONFIG_LEDS_CLASS)		+= atlas/led-class.o
-endif
+obj-$(CONFIG_LEDS_CLASS)		+= led-class.o
 
 obj-$(CONFIG_LEDS_TRIGGERS)		+= led-triggers.o
 
@@ -27,12 +22,7 @@ obj-$(CONFIG_LEDS_COBALT_RAQ)		+= leds-cobalt-raq.o
 obj-$(CONFIG_LEDS_SUNFIRE)		+= leds-sunfire.o
 obj-$(CONFIG_LEDS_PCA9532)		+= leds-pca9532.o
 
-ifeq ($(CONFIG_LEDS_GPIO_VICTORY),y)
-obj-$(CONFIG_LEDS_GPIO)			+= victory/leds-gpio.o
-endif
-ifeq ($(CONFIG_LEDS_GPIO_ATLAS),y)
-obj-$(CONFIG_LEDS_GPIO)			+= atlas/leds-gpio.o
-endif
+obj-$(CONFIG_LEDS_GPIO)			+= leds-gpio.o
 
 obj-$(CONFIG_LEDS_LP3944)		+= leds-lp3944.o
 obj-$(CONFIG_LEDS_CLEVO_MAIL)		+= leds-clevo-mail.o
@@ -48,23 +38,13 @@ obj-$(CONFIG_LEDS_PWM)			+= leds-pwm.o
 obj-$(CONFIG_LEDS_DAC124S085)		+= leds-dac124s085.o
 
 # LED Triggers
-ifeq ($(CONFIG_LEDS_TRIGGER_TIMER_VICTORY),y)
-obj-$(CONFIG_LEDS_TRIGGER_TIMER)	+= victory/ledtrig-timer.o
-endif
-ifeq ($(CONFIG_LEDS_TRIGGER_TIMER_ATLAS),y)
-obj-$(CONFIG_LEDS_TRIGGER_TIMER)	+= atlas/ledtrig-timer.o
-endif
+obj-$(CONFIG_LEDS_TRIGGER_TIMER)	+= ledtrig-timer.o
 
 obj-$(CONFIG_LEDS_TRIGGER_IDE_DISK)	+= ledtrig-ide-disk.o
 obj-$(CONFIG_LEDS_TRIGGER_HEARTBEAT)	+= ledtrig-heartbeat.o
 obj-$(CONFIG_LEDS_TRIGGER_BACKLIGHT)	+= ledtrig-backlight.o
 obj-$(CONFIG_LEDS_TRIGGER_GPIO)		+= ledtrig-gpio.o
 
-ifeq ($(CONFIG_LEDS_TRIGGER_DEFAULT_ON_VICTORY),y)
-obj-$(CONFIG_LEDS_TRIGGER_DEFAULT_ON)	+= victory/ledtrig-default-on.o
-endif
-ifeq ($(CONFIG_LEDS_TRIGGER_DEFAULT_ON_ATLAS),y)
-obj-$(CONFIG_LEDS_TRIGGER_DEFAULT_ON)	+= atlas/ledtrig-default-on.o
-endif
+obj-$(CONFIG_LEDS_TRIGGER_DEFAULT_ON)	+= ledtrig-default-on.o
 
 obj-$(CONFIG_LEDS_TRIGGER_SLEEP)	+= ledtrig-sleep.o

@@ -170,9 +170,7 @@ NORET_TYPE void panic(const char * fmt, ...)
 		kernel_sec_set_upload_cause(UPLOAD_CAUSE_USER_FAULT);
 	else{
 		kernel_sec_set_upload_cause(UPLOAD_CAUSE_KERNEL_PANIC);
-#if defined CONFIG_S5PV210_ATLAS
 		kernel_sec_set_upload_magic_number();
-#endif	
 	}
 	kernel_sec_hw_reset(false);
 #endif		
