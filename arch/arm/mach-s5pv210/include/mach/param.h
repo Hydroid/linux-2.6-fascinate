@@ -6,37 +6,37 @@
 #ifndef ASM_MACH_PARAM_H
 #define ASM_MACH_PARAM_H
 
-#define PARAM_MAGIC			0x72726624
+#define PARAM_MAGIC		0x72726624
 #define PARAM_VERSION		0x13	/* Rev 1.3 */
 #define PARAM_STRING_SIZE	1024	/* 1024 Characters */
 #if defined CONFIG_S5PV210_GARNETT_DELTA
-#define MAX_PARAM			21
+#define MAX_PARAM		21
 #else
-#define MAX_PARAM			20
+#define MAX_PARAM		20
 #endif
 #define MAX_STRING_PARAM	5
 
 /* Default Parameter Values */
 
 #define SERIAL_SPEED		7		/* Baudrate */
-#define LCD_LEVEL			0x061	/* Backlight Level */
-#define BOOT_DELAY			0		/* Boot Wait Time */
+#define LCD_LEVEL		0x061		/* Backlight Level */
+#define BOOT_DELAY		0		/* Boot Wait Time */
 #define LOAD_RAMDISK		0		/* Enable Ramdisk Loading */
-#define SWITCH_SEL			1		/* Switch Setting (UART[1], USB[0]) */
+#define SWITCH_SEL		1		/* Switch Setting (UART[1], USB[0]) */
 #define PHONE_DEBUG_ON		0		/* Enable Phone Debug Mode */
-#define LCD_DIM_LEVEL		0x011	/* Backlight Dimming Level */
+#define LCD_DIM_LEVEL		0x011		/* Backlight Dimming Level */
 #define LCD_DIM_TIME		0
-#define MELODY_MODE			0		/* Melody Mode */
-#define REBOOT_MODE			0		/* Reboot Mode */
-#define NATION_SEL			0		/* Language Configuration */
+#define MELODY_MODE		0		/* Melody Mode */
+#define REBOOT_MODE		0		/* Reboot Mode */
+#define NATION_SEL		0		/* Language Configuration */
 #define LANGUAGE_SEL		0
 #define SET_DEFAULT_PARAM	0		/* Set Param to Default */
 #define VERSION_LINE		"I8315XXIE00"	/* Set Image Info */
 #define COMMAND_LINE		"console=ttySAC2,115200"
 #define	BOOT_VERSION		" version=Sbl(1.0.0) "
 #if defined CONFIG_S5PV210_GARNETT_DELTA
-#define GRIP_DUTY           0  /* set default grip duty data param */
-#define TOOL_LAUNCHER_STATE 1       /* ready */
+#define GRIP_DUTY		0		/* set default grip duty data param */
+#define TOOL_LAUNCHER_STATE	1		/* ready */
 #endif
 typedef enum {
 	__SERIAL_SPEED,
@@ -53,11 +53,7 @@ typedef enum {
 	__LANGUAGE_SEL,
 	__SET_DEFAULT_PARAM,
 	__PARAM_INT_13,	/* Reserved. */
-#ifdef CONFIG_S5PV210_VICTORY
-	__PARAM_INT_14,	/* Reserved. */
-#elif defined CONFIG_S5PV210_ATLAS
 	__TOOL_LAUNCHER_STATE, // 0: disabled 1: ready 2: done.
-#endif
 #if defined CONFIG_S5PV210_GARNETT_DELTA
 	__GRIP_DUTY,
 #endif

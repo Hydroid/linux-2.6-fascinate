@@ -224,11 +224,7 @@ enum s5p_gpio_number {
 #include <asm-generic/gpio.h>
 
 #ifdef CONFIG_MACH_S5PC110_ARIES
-#if defined CONFIG_S5PV210_VICTORY
-#include "victory/gpio-aries.h"
-#elif defined CONFIG_S5PV210_ATLAS
-#include "atlas/gpio-aries.h"
-#endif
+#include "gpio-aries.h"
 #endif	/* CONFIG_MACH_ARIES */
 
 #endif /* __ASM_ARCH_GPIO_H */

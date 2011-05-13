@@ -521,7 +521,7 @@ find_block:
 		region = phys_to_virt(PFN_PHYS(bdata->node_min_pfn) +
 				start_off);
 
-#if ((CONFIG_S5PV210_ATLAS || CONFIG_S5PV210_VICTORY) || (CONFIG_S5PV210_GARNETT_DELTA))
+#if ((CONFIG_ARCH_S5PV210) || (CONFIG_S5PV210_GARNETT_DELTA))
 		/* FIXME:
                  * avoiding the frame buffer data reset, set by the bootloader
                  */

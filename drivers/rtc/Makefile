@@ -72,14 +72,7 @@ obj-$(CONFIG_RTC_DRV_RS5C372)	+= rtc-rs5c372.o
 obj-$(CONFIG_RTC_DRV_RX8025)	+= rtc-rx8025.o
 obj-$(CONFIG_RTC_DRV_RX8581)	+= rtc-rx8581.o
 obj-$(CONFIG_RTC_DRV_S35390A)	+= rtc-s35390a.o
-
-ifeq ($(CONFIG_RTC_DRV_S3C_VICTORY),y)
-obj-$(CONFIG_RTC_DRV_S3C)	+= victory/rtc-max8998.o victory/rtc-s3c.o
-endif
-ifeq ($(CONFIG_RTC_DRV_S3C_ATLAS),y)
-obj-$(CONFIG_RTC_DRV_S3C)	+= atlas/rtc-max8998.o atlas/rtc-s3c.o
-endif
-
+obj-$(CONFIG_RTC_DRV_S3C)	+= rtc-max8998.o rtc-s3c.o
 obj-$(CONFIG_RTC_DRV_SA1100)	+= rtc-sa1100.o
 obj-$(CONFIG_RTC_DRV_SH)	+= rtc-sh.o
 obj-$(CONFIG_RTC_DRV_STARFIRE)	+= rtc-starfire.o

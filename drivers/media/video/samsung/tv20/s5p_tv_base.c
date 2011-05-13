@@ -40,11 +40,7 @@
 #include <asm/uaccess.h>
 
 #include <linux/earlysuspend.h>
-#if defined CONFIG_S5PV210_VICTORY
-#include <mach/victory/max8998_function.h>
-#elif defined CONFIG_S5PV210_ATLAS
-#include <mach/atlas/max8998_function.h>
-#endif
+#include <mach/max8998_function.h>
 #if 0
 #include <plat/s5pc11x-dvfs.h>
 #endif
@@ -1093,11 +1089,7 @@ static int __devinit s5p_tv_probe(struct platform_device *pdev)
 #ifdef CONFIG_HDMI_HPD
     s5ptv_status.hpd_status= s5p_hpd_get_state();
 #else
-#if defined CONFIG_S5PV210_VICTORY
-    s5ptv_status.hpd_status= 1;
-#elif defined CONFIG_S5PV210_ATLAS
     s5ptv_status.hpd_status= 0;
-#endif
 #endif    
 #endif
 	dev_info(&pdev->dev, "hpd status is cable %s\n", 

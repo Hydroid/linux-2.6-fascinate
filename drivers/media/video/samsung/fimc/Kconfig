@@ -6,14 +6,6 @@ config VIDEO_FIMC
 	help
 	  This is a video4linux driver for Samsung FIMC device.
 
-config  VIDEO_FIMC_ATLAS
-        bool "Select Samsung Camera Interface (FIMC) driver for atlas"
-        depends on VIDEO_FIMC
-config VIDEO_FIMC_VICTORY
-        bool "Select Samsung Camera Interface (FIMC) driver for victory"
-        depends on VIDEO_FIMC
-
-
 choice
 depends on VIDEO_FIMC
 prompt "Select CSC Range config"

@@ -1,10 +1,6 @@
 #ifndef __ASM_ARM_IRQ_H
 #define __ASM_ARM_IRQ_H
-#if defined CONFIG_S5PV210_VICTORY
-#include <mach/victory/irqs.h>
-#elif defined CONFIG_S5PV210_ATLAS
-#include <mach/atlas/irqs.h>
-#endif
+#include <mach/irqs.h>
 #ifndef irq_canonicalize
 #define irq_canonicalize(i)	(i)
 #endif

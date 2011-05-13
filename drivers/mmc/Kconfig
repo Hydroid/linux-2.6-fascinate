@@ -18,29 +18,11 @@ config MMC_DEBUG
 	help
 	  This is an option for use by developers; most people should
 	  say N here.  This enables MMC core and driver debugging.
-config MMC_VICTORY
-	bool "MMC/SD/SDIO card support for victory"
-	depends on MMC
-config MMC_ATLAS
-	bool "MMC/SD/SDIO card support for atlas"
-	depends on MMC
 if MMC
-if MMC_VICTORY
+source "drivers/mmc/core/Kconfig"
 
-source "drivers/mmc/victory/core/Kconfig"
+source "drivers/mmc/card/Kconfig"
 
-source "drivers/mmc/victory/card/Kconfig"
+source "drivers/mmc/host/Kconfig"
 
-source "drivers/mmc/victory/host/Kconfig"
-
-endif # MMC_VICTORY
-if MMC_ATLAS
-
-source "drivers/mmc/atlas/core/Kconfig"
-
-source "drivers/mmc/atlas/card/Kconfig"
-
-source "drivers/mmc/atlas/host/Kconfig"
-
-endif # MMC_ATLAS
 endif

@@ -53,9 +53,6 @@ struct platform_device s3c_device_hsmmc3 = {
 		.platform_data		= &s3c_hsmmc3_def_platdata,
 	},
 };
-#if defined CONFIG_S5PV210_VICTORY
-EXPORT_SYMBOL(s3c_device_hsmmc3);
-#endif
 
 void s3c_sdhci3_set_platdata(struct s3c_sdhci_platdata *pd)
 {

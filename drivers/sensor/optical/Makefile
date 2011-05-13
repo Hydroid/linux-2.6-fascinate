@@ -6,11 +6,4 @@
 ##############################################################################
 
 
-obj-$(CONFIG_OPTICAL_GP2A_ATLAS)                += atlas/gp2a.o
-obj-$(CONFIG_OPTICAL_GP2A_VICTORY)              += victory/gp2a.o
-
-
-
-				  
-				  
-
+obj-$(CONFIG_OPTICAL_GP2A)	+= gp2a.o

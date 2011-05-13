@@ -3,12 +3,6 @@ config BROADCOM_WIFI
 	tristate "Broadcom WiFi Driver"
 	---help---
 		Select this option to build Broadcom wlan driver
-config BROADCOM_WIFI_VICTORY
-	bool "Broadcom WiFi Driver for victory"
-	depends on BROADCOM_WIFI
-config BROADCOM_WIFI_ATLAS
-	bool "Broadcom WiFi Driver for atlas"
-	depends on BROADCOM_WIFI
 
 config BROADCOM_WIFI_RESERVED_MEM
     bool "Samsung Multimedia Devices"

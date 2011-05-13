@@ -40,9 +40,6 @@
 
 #ifdef CONFIG_KERNEL_DEBUG_SEC
 #include <linux/kernel_sec_common.h>
-#ifdef CONFIG_S5PV210_VICTORY
-struct pt_regs kernel_sec_core_ureg_dump;
-#endif
 #endif
 
 static const char *processor_modes[] = {
@@ -314,12 +311,6 @@ void __show_regs(struct pt_regs *regs)
 	printk("r3 : %08lx  r2 : %08lx  r1 : %08lx  r0 : %08lx\n",
 		regs->ARM_r3, regs->ARM_r2,
 		regs->ARM_r1, regs->ARM_r0);
-#ifdef CONFIG_S5PV210_VICTORY
-#ifdef CONFIG_KERNEL_DEBUG_SEC
-	// Overwrite SVC context which the error just occurs from regs (tkHWANG).
-	memcpy((void*)&kernel_sec_core_ureg_dump, (void*)(regs), sizeof(kernel_sec_core_ureg_dump));
-#endif		
-#endif	
 	flags = regs->ARM_cpsr;
 	buf[0] = flags & PSR_N_BIT ? 'N' : 'n';
 	buf[1] = flags & PSR_Z_BIT ? 'Z' : 'z';

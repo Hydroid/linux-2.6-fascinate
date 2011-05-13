@@ -77,11 +77,7 @@
 #if defined(CONFIG_PM)
 #include <plat/pm.h>
 #endif
-#if defined CONFIG_S5PV210_VICTORY
-#include <mach/victory/max8998_function.h>
-#elif defined CONFIG_S5PV210_ATLAS
-#include <mach/atlas/max8998_function.h>
-#endif
+#include <mach/max8998_function.h>
 #include <linux/input.h>
 #include <linux/gpio_keys.h>
 

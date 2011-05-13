@@ -18,7 +18,7 @@
 #include <plat/gpio-cfg.h> 
 #include <plat/map-base.h>
 #include <mach/regs-clock.h>
-#include <mach/atlas/gpio-aries.h>
+#include <mach/gpio-aries.h>
 #include "wm8994.h"
 #include <mach/sec_jack.h>
 #ifdef CONFIG_SND_VOODOO

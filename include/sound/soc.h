@@ -511,9 +511,6 @@ struct snd_soc_card {
 struct snd_soc_device {
 	struct device *dev;
 	struct snd_soc_card *card;
-#if defined CONFIG_S5PV210_VICTORY
-	struct snd_soc_codec *codec;	//chk froyo upgrade: looks like we missed in first update
-#endif
 	struct snd_soc_codec_device *codec_dev;
 	void *codec_data;
 };

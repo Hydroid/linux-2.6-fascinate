@@ -127,11 +127,7 @@ extern void tcp_time_wait(struct sock *sk, int state, int timeo);
 #endif
 #define TCP_RTO_MAX	((unsigned)(120*HZ))
 #define TCP_RTO_MIN	((unsigned)(HZ/5))
-#if defined CONFIG_S5PV210_VICTORY
-#define TCP_TIMEOUT_INIT ((unsigned)(1*HZ))	/* RFC 1122 initial RTO value	*/
-#elif defined CONFIG_S5PV210_ATLAS
 #define TCP_TIMEOUT_INIT ((unsigned)(3*HZ))	/* RFC 1122 initial RTO value	*/
-#endif
 #define TCP_RESOURCE_PROBE_INTERVAL ((unsigned)(HZ/2U)) /* Maximal interval between probes
 					                 * for local resources.
 					                 */

@@ -10,15 +10,6 @@ menuconfig SAMSUNG_PHONE_TTY
 
 if SAMSUNG_PHONE_TTY
 
-config  SAMSUNG_PHONE_TTY_ATLAS
-        tristate "Select Samsung Phone Interface - TTY for atlas"
-        depends on SAMSUNG_PHONE_TTY
-
-config  SAMSUNG_PHONE_TTY_VICTORY
-        tristate "Select Samsung Phone Interface - TTY for victory"
-        depends on SAMSUNG_PHONE_TTY
-
-
 choice
 	prompt "Phone image read by file"
 	depends on SAMSUNG_PHONE_TTY
@@ -48,7 +39,6 @@ config ONEDRAM_HWREV
 	default y
 	help
 		HW Revision
-
 
 config ONEDRAM_TX_RETRY
 	int "tx retry when fail"

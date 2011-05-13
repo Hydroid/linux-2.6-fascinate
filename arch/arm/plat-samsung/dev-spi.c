@@ -18,11 +18,7 @@
 #include <plat/spi.h>
 #include <plat/devs.h>
 #include <plat/cpu.h>
-#if defined CONFIG_S5PV210_VICTORY
-#include <mach/victory/irqs.h>
-#elif defined CONFIG_S5PV210_ATLAS
-#include <mach/atlas/irqs.h>
-#endif
+#include <mach/irqs.h>
 #if 0
 #define dbg_printk(x...)	printk(x)
 #else

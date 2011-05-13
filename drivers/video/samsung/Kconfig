@@ -13,15 +13,6 @@ config FB_S3C
 	---help---
 	  This enables support for Samsung Display Controller (FIMD)
 
-config  FB_S3C_ATLAS
-        bool "Select Framebuffer support in atlas"
-        depends on FB_S3C
-
-config  FB_S3C_VICTORY
-        bool "Select framebuffer support in victory"
-        depends on FB_S3C
-
-
 config FB_S3C_SPLASH_SCREEN
         bool "SPLASH_SCREEN on LCD"
         depends on FB_S3C
@@ -103,15 +94,6 @@ config VOODOO_COLOR_GAMMA_22_ONLY
 	---help---
 	  This enables Voodoo color gamma curve optimization in videos
 
-config  FB_S3C_TL2796_ATLAS
-        bool "Select codec for atlas"
-        depends on FB_S3C_TL2796
-
-config  FB_S3C_TL2796_VICTORY
-        bool "Select codec for victory"
-        depends on FB_S3C_TL2796
-
-
 config FB_S3C_HT101HD1
 	bool "HT101HD1"
 	depends on MACH_SMDKV210
@@ -124,7 +106,7 @@ config VIDEO_SAMSUNG_MEMSIZE_FIMD
 	depends on FB_S3C
 	default "3072"
 
-if S5PV210_ATLAS || S5PV210_VICTORY
+if ARCH_S5PV210
 
 config VIDEO_FB_PHY_ADDR
 	hex "Frame Buffer address used by bootloader"

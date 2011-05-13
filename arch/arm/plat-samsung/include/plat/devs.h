@@ -97,9 +97,6 @@ extern struct platform_device s3c_device_ac97;
 #endif
 
 extern struct platform_device s5p_device_rtc;
-#if defined CONFIG_S5PV210_VICTORY
-extern struct platform_device s5p_trs_detect;
-#endif
 extern struct platform_device s5p_device_dm9000;
 extern struct platform_device s5p_device_tvout;
 extern struct platform_device s5p_device_cec;

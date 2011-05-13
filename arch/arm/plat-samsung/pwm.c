@@ -18,11 +18,7 @@
 #include <linux/clk.h>
 #include <linux/io.h>
 #include <linux/pwm.h>
-#if defined CONFIG_S5PV210_VICTORY
-#include <mach/victory/irqs.h>
-#elif defined CONFIG_S5PV210_ATLAS
-#include <mach/atlas/irqs.h>
-#endif
+#include <mach/irqs.h>
 #include <mach/map.h>
 #include <mach/gpio.h>
 #include <mach/gpio-bank.h>
@@ -91,15 +87,9 @@ struct s3c_pwm_pdata pwm_data[] = {
 		.gpio_name  = "GPD",
 		.gpio_set_value = S5PV210_GPD_0_0_TOUT_0,
 	}, {
-#if defined CONFIG_S5PV210_VICTORY
-		.gpio_no    = 0,
-		.gpio_name  = NULL,
-		.gpio_set_value = 0,
-#elif defined CONFIG_S5PV210_ATLAS
 		.gpio_no    = S5PV210_GPD0(1),
                 .gpio_name      = "GPD",
                 .gpio_set_value = S5PV210_GPD_0_1_TOUT_1,
-#endif
 	}, {
 		.gpio_no    = S5PV210_GPD0(2),
 		.gpio_name      = "GPD",

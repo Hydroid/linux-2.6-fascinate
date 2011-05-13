@@ -199,22 +199,6 @@ config KEYPAD_S3C
 	  To compile this driver as a module, choose M here: the
 	  module will be called s3c-keypad.
 
-if KEYPAD_S3C
-
-config KEYPAD_S3C_ATLAS
-        depends on KEYPAD_S3C
-        tristate "Atlas S3C Keypad"
-        help
-        Atlas Product
-
-config KEYPAD_S3C_VICTORY
-        depends on KEYPAD_S3C
-        bool "Victory S3C Keypad"
-        help
-        Victory Product
-endif
-
-
 config S3C_KEYPAD_DEBUG
 	bool "Print debug messages for S3C keypad"
 	depends on KEYPAD_S3C
@@ -491,23 +475,6 @@ config KEYPAD_MELFAS_TOUCH
 
           To compile this driver as a module, choose M here: the
           module will be called melfas-touchkey.
-
-if KEYPAD_MELFAS_TOUCH
-
-config KEYPAD_MELFAS_TOUCH_ATLAS
-        depends on KEYPAD_MELFAS_TOUCH
-        tristate "Atlas Melfas touch keypad support"
-        help
-        Atlas Product
-
-config KEYPAD_MELFAS_TOUCH_VICTORY
-        depends on KEYPAD_MELFAS_TOUCH
-        bool "Victory Melfas touch keypad support"
-        help
-        Victory Product
-endif
-
-
 
 config KEYPAD_CYPRESS_TOUCH
 	tristate "Cypress touch keypad support"

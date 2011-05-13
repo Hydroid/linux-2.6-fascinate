@@ -55,11 +55,7 @@ void s3c_fimc0_cfg_gpio(struct platform_device *pdev)
 		s3c_gpio_setpull(S5PV210_GPJ0(i), S3C_GPIO_PULL_NONE);
 	}
 	/* CAM B port(b0011) : PCLK, VSYNC, HREF, FIELD, CLCKOUT */
-#if defined CONFIG_S5PV210_VICTORY
-	for (i=0; i < 5; i++) {
-#elif defined CONFIG_S5PV210_ATLAS
 	for (i=0; i < 4; i++) {
-#endif
 		s3c_gpio_cfgpin(S5PV210_GPJ1(i), S3C_GPIO_SFN(3));
 		s3c_gpio_setpull(S5PV210_GPJ1(i), S3C_GPIO_PULL_NONE);
 	}

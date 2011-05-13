@@ -21,7 +21,7 @@
 #include <linux/major.h>
 #include <linux/device.h>
 #include <linux/wakelock.h>
-#include "victory/input-compat.h"
+#include "input-compat.h"
 
 struct evdev {
 	int exist;

@@ -45,11 +45,7 @@
 #define PWM_DUTY_MAX    579 /* 13MHz / (579 + 1) = 22.4kHz */
 
 #define FREQ_COUNT		87084/2	/*89284*/
-#if defined CONFIG_S5PV210_VICTORY
-#define PWM_DEVICE	2
-#elif defined CONFIG_S5PV210_ATLAS
 #define PWM_DEVICE	1
-#endif
 
 struct pwm_device	*Immvib_pwm;
 

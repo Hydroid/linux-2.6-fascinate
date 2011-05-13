@@ -226,13 +226,4 @@ config CPU_FREQ_GOV_CONSERVATIVE
 
 	  If in doubt, say N.
 
-config CPU_FREQ_GOV_CONSERVATIVE_VICTORY
-        depends on CPU_FREQ_GOV_CONSERVATIVE
-        bool "select CPU_FREQ_GOV_CONSERVATIVE for victory"
-
-config CPU_FREQ_GOV_CONSERVATIVE_ATLAS
-        depends on CPU_FREQ_GOV_CONSERVATIVE
-        bool "select CPU_FREQ_GOV_CONSERVATIVE for atlas"
-
-
 endif	# CPU_FREQ

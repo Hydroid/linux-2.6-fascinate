@@ -497,11 +497,7 @@ int s5p_setup_lpaudio(unsigned int mode)
 		device->state_count = 1;
 		/* Wait for interrupt state */
 		device->states[0].enter = s5p_enter_idle_bm;
-		#ifdef CONFIG_S5PV210_VICTORY
-		device->states[0].exit_latency = 300;	/* uS */
-		#elif defined CONFIG_S5PV210_ATLAS
 		device->states[0].exit_latency = 30;	/* uS */
-		#endif
 		device->states[0].target_residency = 5000;
 		device->states[0].flags = CPUIDLE_FLAG_TIME_VALID |
 						CPUIDLE_FLAG_CHECK_BM;

@@ -1,18 +1,3 @@
-menu "Core Netfilter Configuration"
-	depends on NET && INET && NETFILTER
-choice 
-	depends on NET && INET && NETFILTER
-	prompt "Select netfilter features for victory"
-	default NETFILTER_FEATURE_VICTORY
-config  NETFILTER_FEATURE_VICTORY
-	bool "netfilter features for victory"
-	help
-		select netfilter features for victory
-config NETFILTER_FEATURE_ATLAS
-        bool "netfilter features for atlas"
-	help
-	 select netfilter features for atlas 
-endchoice
 config NETFILTER_NETLINK
 	tristate
 
@@ -943,7 +928,5 @@ config NETFILTER_XT_MATCH_OSF
 	  To compile it as a module, choose M here.  If unsure, say N.
 
 endif # NETFILTER_XTABLES
-
-endmenu
 
 source "net/netfilter/ipvs/Kconfig"

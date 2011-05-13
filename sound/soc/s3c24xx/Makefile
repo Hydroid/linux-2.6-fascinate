@@ -5,26 +5,14 @@ snd-soc-s3c-dma-wrapper-objs := s3c-dma-wrapper.o
 snd-soc-s3c24xx-i2s-objs := s3c24xx-i2s.o
 snd-soc-s3c2412-i2s-objs := s3c2412-i2s.o
 
-ifeq ($(CONFIG_SND_S3C64XX_SOC_I2S_VICTORY),y)
-snd-soc-s3c64xx-i2s-objs := victory/s3c64xx-i2s.o
-snd-soc-s3c-idma-objs := victory/s3c-idma.o
-snd-soc-s5p-i2s_sec-objs := victory/s5p-i2s_sec.o
-endif
-ifeq ($(CONFIG_SND_S3C64XX_SOC_I2S_ATLAS),y)
-snd-soc-s3c64xx-i2s-objs := atlas/s3c64xx-i2s.o
-snd-soc-s5p-i2s_sec-objs := atlas/s5p-i2s_sec.o
-snd-soc-s3c-idma-objs := atlas/s3c-idma.o
-endif
+snd-soc-s3c64xx-i2s-objs := s3c64xx-i2s.o
+snd-soc-s5p-i2s_sec-objs := s5p-i2s_sec.o
+snd-soc-s3c-idma-objs := s3c-idma.o
 
 snd-soc-s3c2443-ac97-objs := s3c2443-ac97.o
 snd-soc-s3c-i2s-v2-objs := s3c-i2s-v2.o
 snd-soc-s3c-ac97-objs := s3c-ac97.o
-ifeq ($(CONFIG_SND_C110_PCM_VICTORY),y)
-snd-soc-s5pc1xx-pcm-wm8994-objs := victory/s5pc1xx-pcm-wm8994.o
-endif
-ifeq ($(CONFIG_SND_C110_PCM_ATLAS),y)
-snd-soc-s5pc1xx-pcm-wm8994-objs := atlas/s5pc1xx-pcm-wm8994.o
-endif
+snd-soc-s5pc1xx-pcm-wm8994-objs := s5pc1xx-pcm-wm8994.o
 
 obj-$(CONFIG_SND_S3C24XX_SOC) += snd-soc-s3c24xx.o
 obj-$(CONFIG_SND_S3C64XX_SOC_I2S) += snd-soc-s3c-idma.o
@@ -57,12 +45,7 @@ snd-soc-s3c24xx-simtec-hermes-objs := s3c24xx_simtec_hermes.o
 snd-soc-s3c24xx-simtec-tlv320aic23-objs := s3c24xx_simtec_tlv320aic23.o
 snd-soc-smdkv2xx-wm8580-pcm-objs := smdkv2xx_wm8580pcm.o
 snd-soc-smdk-wm9713-objs := smdk_wm9713.o
-ifeq ($(CONFIG_SND_ARIES_WM8994_VICTORY),y)
-snd-soc-aries-wm8994-objs := victory/aries-wm8994.o
-endif
-ifeq ($(CONFIG_SND_ARIES_WM8994_ATLAS),y)
-snd-soc-aries-wm8994-objs := atlas/aries-wm8994.o
-endif
+snd-soc-aries-wm8994-objs := aries-wm8994.o
 
 obj-$(CONFIG_SND_S3C24XX_SOC_JIVE_WM8750) += snd-soc-jive-wm8750.o
 obj-$(CONFIG_SND_S3C24XX_SOC_NEO1973_WM8753) += snd-soc-neo1973-wm8753.o

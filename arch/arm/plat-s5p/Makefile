@@ -16,12 +16,7 @@ obj-y				+= dev-uart.o
 obj-y				+= cpu.o
 obj-y				+= clock.o
 obj-y				+= irq.o
-ifeq ($(CONFIG_S5PV210_VICTORY),y)
-obj-y                           += victory/devs.o
-endif
-ifeq ($(CONFIG_S5PV210_ATLAS),y)
-obj-y                           += atlas/devs.o
-endif
+obj-y                           += devs.o
 
 obj-y				+= bootmem.o
 obj-y				+= setup-i2c0.o

@@ -9,13 +9,8 @@ obj-$(CONFIG_CPU_FREQ_GOV_POWERSAVE)	+= cpufreq_powersave.o
 obj-$(CONFIG_CPU_FREQ_GOV_USERSPACE)	+= cpufreq_userspace.o
 obj-$(CONFIG_CPU_FREQ_GOV_ONDEMAND)	+= cpufreq_ondemand.o
 
-ifeq ($(CONFIG_CPU_FREQ_GOV_CONSERVATIVE_VICTORY),y)
-obj-$(CONFIG_CPU_FREQ_GOV_CONSERVATIVE)	+= victory/cpufreq_conservative.o
-endif 
-ifeq ($(CONFIG_CPU_FREQ_GOV_CONSERVATIVE_ATLAS),y)
-obj-$(CONFIG_CPU_FREQ_GOV_CONSERVATIVE)	+= atlas/cpufreq_conservative.o
-endif 
-obj-$(CONFIG_CPU_FREQ_GOV_SMARTASS)  += cpufreq_smartass.o
+obj-$(CONFIG_CPU_FREQ_GOV_CONSERVATIVE)	+= cpufreq_conservative.o
+obj-$(CONFIG_CPU_FREQ_GOV_SMARTASS)	+= cpufreq_smartass.o
 obj-$(CONFIG_CPU_FREQ_GOV_INTERACTIVE)  += cpufreq_interactive.o
 
 # CPUfreq cross-arch helpers

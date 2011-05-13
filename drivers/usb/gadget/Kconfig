@@ -455,12 +455,6 @@ config USB_CI13XXX
 	depends on USB_GADGET_CI13XXX
 	default USB_GADGET
 	select USB_GADGET_SELECTED
-config USB_CI13XXX_ATLAS
-	depends on USB_CI13XXX
-	bool "select USB_CI13XXX for atlas"
-config USB_CI13XXX_VICTORY
-	depends on USB_CI13XXX
-	bool "select USB_CI13XXX for victory"
 	
 config USB_GADGET_NET2280
 	boolean "NetChip 228x"
@@ -577,12 +571,6 @@ config USB_S3C_OTGD
            Say "y" to link the driver statically, or "m" to build a
            dynamically linked module called "s3c-udc-otg-hs" and force all
            gadget drivers to also be dynamically linked.
-config USB_S3C_OTGD_VICTORY
-	depends on USB_S3C_OTGD
-	bool "S3C high speed(2.0, dual-speed) USB OTG device for victory"
-config USB_S3C_OTGD_ATLAS
-	depends on USB_S3C_OTGD
-	bool "S3C high speed(2.0, dual-speed) USB OTG device for atlas"
 choice
 	prompt "S3C OTGD transfer mode"
 	depends on USB_S3C_OTGD
@@ -848,14 +836,6 @@ config USB_ANDROID
 	  The Android gadget driver supports multiple USB functions.
 	  The functions can be configured via a board file and may be
 	  enabled and disabled dynamically.
-if USB_ANDROID
-config USB_ANDROID_VICTORY
-	depends on USB_ANDROID
-	bool "Android Gadget for victory"
-config USB_ANDROID_ATLAS
-	depends on USB_ANDROID
-	bool "Android Gadget for atlas"
-endif
 config USB_ANDROID_ACM
 	boolean "Android gadget ACM serial function"
 	depends on USB_ANDROID

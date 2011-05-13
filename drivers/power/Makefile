@@ -15,12 +15,7 @@ endif
 obj-$(CONFIG_POWER_SUPPLY)	+= power_supply.o
 
 obj-$(CONFIG_PDA_POWER)		+= pda_power.o
-ifeq ($(CONFIG_BATTERY_S5PC110_ATLAS),y)     
-obj-$(CONFIG_BATTERY_S5PC110) += atlas/s5pc110_battery.o atlas/fuel_gauge.o maxim_dallas.o
-endif
-ifeq ($(CONFIG_BATTERY_S5PC110_VICTORY),y)   
-obj-$(CONFIG_BATTERY_S5PC110) += victory/s5pc110_battery.o victory/fuel_gauge.o
-endif
+obj-$(CONFIG_BATTERY_S5PC110)	+= s5pc110_battery.o fuel_gauge.o maxim_dallas.o
 obj-$(CONFIG_BATTERY_S3C)	+= s3c_fake_battery.o
 obj-$(CONFIG_BATTERY_S5PC110_P1)	+= s5pc110_battery_p1.o
 obj-$(CONFIG_APM_POWER)		+= apm_power.o

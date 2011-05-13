@@ -29,11 +29,7 @@
 #include <linux/init.h>
 #include <asm/io.h>
 #include <asm/page.h>
-#if defined CONFIG_S5PV210_VICTORY
-#include <mach/victory/irqs.h>
-#elif defined CONFIG_S5PV210_ATLAS
-#include <mach/atlas/irqs.h>
-#endif
+#include <mach/irqs.h>
 #include <linux/semaphore.h>
 #include <mach/map.h>
 #include <mach/pd.h>

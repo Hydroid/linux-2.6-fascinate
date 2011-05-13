@@ -34,25 +34,6 @@ menuconfig BATTERY_S5PC110
 	help
 	  Say Y to enable support for batteries with s5pc110 chip.	  
 
-if BATTERY_S5PC110
-
-config BATTERY_S5PC110_ATLAS
-        tristate "Atlas Battery driver (S5PC110)"
-        depends on BATTERY_S5PC110
-        help
-          Say Y to enable support for batteries with s5pc110 chip.
-
-
-
-config BATTERY_S5PC110_VICTORY
-        tristate "Victory Battery driver (S5PC110)"
-        depends on BATTERY_S5PC110
-        help
-          Say Y to enable support for batteries with s5pc110 chip.
-endif
-
-
-
 config BATTERY_S5PC110_P1
 	tristate "Battery driver for P1(S5PC110)"
 	depends on ARCH_S5PV210  && MACH_S5PC110_P1
