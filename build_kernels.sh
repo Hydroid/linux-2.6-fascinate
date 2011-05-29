@@ -8,7 +8,7 @@ echo -e "***                                         ***"
 echo -e "***      Building Stock Voltage Kernel      ***"
 echo -e "***                                         ***"
 echo -e "***********************************************"
-cp -f arch/arm/mach-s5pv210/atlas/max8998_consumer.0 arch/arm/mach-s5pv210/atlas/max8998_consumer.c
+cp -f arch/arm/mach-s5pv210/max8998_consumer.0 arch/arm/mach-s5pv210/max8998_consumer.c
 
 # Build Kernels
 ./build_kernel.sh A
@@ -26,7 +26,7 @@ echo -e "***                                         ***"
 echo -e "***     Building -50mV Undervolt Kernel     ***"
 echo -e "***                                         ***"
 echo -e "***********************************************"
-cp -f arch/arm/mach-s5pv210/atlas/max8998_consumer.50 arch/arm/mach-s5pv210/atlas/max8998_consumer.c
+cp -f arch/arm/mach-s5pv210/max8998_consumer.50 arch/arm/mach-s5pv210/max8998_consumer.c
 
 # Build Kernels
 ./build_kernel.sh A
@@ -44,7 +44,7 @@ echo -e "***                                         ***"
 echo -e "***    Building -100mV Undervolt Kernel     ***"
 echo -e "***                                         ***"
 echo -e "***********************************************"
-cp -f arch/arm/mach-s5pv210/atlas/max8998_consumer.100 arch/arm/mach-s5pv210/atlas/max8998_consumer.c
+cp -f arch/arm/mach-s5pv210/max8998_consumer.100 arch/arm/mach-s5pv210/max8998_consumer.c
 
 # Build Kernels
 ./build_kernel.sh A
