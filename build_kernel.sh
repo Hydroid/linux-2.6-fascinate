@@ -41,7 +41,7 @@ fi
 cp arch/arm/boot/zImage update_"$CONFIG"/kernel_update/zImage
 cd update_"$CONFIG"
 zip -r -q kernel_update.zip .
-mv kernel_update.zip ../"$DATE"_imnuts_"$CONFIG".zip
+mv kernel_update.zip ../"$DATE"_fascinate_"$CONFIG".zip
 cd ../../
 mv .git fascinate_initramfs/
 cd $WORK
