@@ -33,6 +33,8 @@
 #include <mach/cpu-freq-v210.h>
 #endif
 
+#define DEBUG_LOG_ENABLE 0
+
 #include <mach/gpio-aries.h>
 
 struct i2c_driver qt602240_i2c_driver;
@@ -3141,7 +3143,11 @@ void  get_message(struct work_struct * p)
 				fingerInfo[id].size_id= (id<<8)|size;
 				fingerInfo[id].pressure= 0;
 				bChangeUpDn= 1;
+#if DEBUG_LOG_ENABLE
 				printk(KERN_DEBUG "[TSP]### Finger[%d] Up (%d,%d) - touch num is (%d)  status=0x%02x\n", id, fingerInfo[id].x, fingerInfo[id].y , --qt_touch_num_state[id], quantum_msg[1]);
+#else
+				printk(KERN_DEBUG "[TSP]### Finger Up \n");
+#endif
 			}
 			else if ( (quantum_msg[1] & 0x80) && (quantum_msg[1] & 0x40) )	// Detect & Press
 			{
@@ -3164,7 +3170,11 @@ void  get_message(struct work_struct * p)
 				fingerInfo[id].x= (int16_t)x;
 				fingerInfo[id].y= (int16_t)y;
 				bChangeUpDn= 1;
+#if DEBUG_LOG_ENABLE
 				printk(KERN_DEBUG "[TSP]### Finger[%d] Down (%d,%d) - touch num is (%d)   status=0x%02x\n", id, fingerInfo[id].x, fingerInfo[id].y , ++qt_touch_num_state[id], quantum_msg[1] );
+#else
+				printk(KERN_DEBUG "[TSP]### Finger Down \n");
+#endif
 			}
 			else if ( (quantum_msg[1] & 0x80) && (quantum_msg[1] & 0x10) )	// Detect & Move
 			{
@@ -3175,7 +3185,9 @@ void  get_message(struct work_struct * p)
 			#endif
 				fingerInfo[id].x= (int16_t)x;
 				fingerInfo[id].y= (int16_t)y;
-	//			printk("##### Finger[%d] Move (%d,%d)!\n", id, fingerInfo[id].x, fingerInfo[id].y );
+#if DEBUG_LOG_ENABLE
+				printk("##### Finger[%d] Move (%d,%d)!\n", id, fingerInfo[id].x, fingerInfo[id].y );
+#endif
 			}
 #else
 			if( ((quantum_msg[1] & 0x80) == 0x80 ) && ((quantum_msg[1] & 0x40) == 0x40) )    // case 11000000 -> DETECT & PRESS
@@ -3261,7 +3273,7 @@ void  get_message(struct work_struct * p)
 				else if( fingerInfo[i].pressure > 0 ) one_touch_input_flag++;//hugh 0312
 			}
 			input_sync(qt602240->input_dev);
-			pr_err("[Touch]pressed = %d, X = %d, Y = %d\n",fingerInfo[0].pressure,fingerInfo[0].x,fingerInfo[0].y);
+		//	pr_err("[Touch]pressed = %d, X = %d, Y = %d\n",fingerInfo[0].pressure,fingerInfo[0].x,fingerInfo[0].y);
 		//	printk("\n");
 		//	printk("##### Multi-Touch Event[%d] Done!\n", amplitude );
 		}

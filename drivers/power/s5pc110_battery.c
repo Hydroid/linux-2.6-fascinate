@@ -1475,20 +1475,25 @@ static unsigned int s3c_bat_check_v_f(void)
 #ifdef __VZW_AUTH_CHECK__
 	int retval = 0;
 	static int jig_status = 0;
-
-	if (FSA9480_Get_JIG_OnOff_Status() == 1)
-	{
-		if (jig_status == 0)
-			printk(KERN_EMERG "%s: JIG cable inserted \n", __func__);
-		jig_status = 1;
-		s3c_set_bat_health(POWER_SUPPLY_HEALTH_GOOD);
-		return 1;
-	}
-	else if (jig_status == 1) // hanapark_DH18
-	{
+	static int jig_auth_backup = 0;
+	
+	if (FSA9480_Get_JIG_OnOff_Status() == 1) {
+		/* Ignore battery auth when jig cable is inserted... (factory requirement) */
+		if (jig_status == 0) {
+			jig_status = 1;
+			jig_auth_backup = s3c_get_bat_health();
+			s3c_set_bat_health(POWER_SUPPLY_HEALTH_GOOD); /* Force good */
+			force_update = 1;
+			pr_info("%s: force good (jig cable inserted)\n", __func__);
+		}
+		return 1;	/* Skip battery auth */
+	} else if (jig_status == 1) {
+		/* Jig cable is removed. Restore battery auth status... (factory requirement) */
 		jig_status = 0;
-		batt_auth_full_check = 0; // retry
-		printk(KERN_EMERG "%s: JIG cable removed \n", __func__);
+		s3c_set_bat_health(jig_auth_backup);	/* Restore */
+		jig_auth_backup = s3c_get_bat_health();
+		force_update = 1;
+		pr_info("%s: restore batt health (%d: jig cable removed)\n", __func__, jig_auth_backup);
 	}
 
 	if (batt_auth_full_check == 0)

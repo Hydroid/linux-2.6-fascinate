@@ -36,6 +36,7 @@
 #include "s3c-keypad.h"
 
 #define USE_PERF_LEVEL_KEYPAD 1 
+#define DEBUG_LOG_ENABLE 0
 #undef S3C_KEYPAD_DEBUG 
 //#define S3C_KEYPAD_DEBUG 
 
@@ -183,7 +184,11 @@ static void keypad_timer_handler(unsigned long data)
 		while (press_mask) {
 			if (press_mask & 1) {
 				input_report_key(dev,pdata->keycodes[i],1);
+#if DEBUG_LOG_ENABLE
 				DPRINTK("\nkey Pressed  : key %d map %d\n",i, pdata->keycodes[i]);
+#else
+				DPRINTK("\nkey Pressed\n");
+#endif
 						}
 			press_mask >>= 1;
 			i++;
@@ -194,8 +199,11 @@ static void keypad_timer_handler(unsigned long data)
 		while (release_mask) {
 			if (release_mask & 1) {
 				input_report_key(dev,pdata->keycodes[i],0);
+#if DEBUG_LOG_ENABLE
 				DPRINTK("\nkey Released : %d  map %d\n",i,pdata->keycodes[i]);
-
+#else
+				DPRINTK("\nkey Released\n");
+#endif
             }
 			release_mask >>= 1;
 			i++;
@@ -263,8 +271,9 @@ static irqreturn_t s3c_keygpio_isr(int irq, void *dev_id)
 	INPUT_REPORT_KEY(dev, 26, key_status ? 0 : 1);
 
 	prev_key_status = key_status;
+#if DEBUG_LOG_ENABLE
 	printk(KERN_DEBUG "s3c_keygpio_isr pwr key_status =%d,\n", key_status);
-
+#endif
 	return IRQ_HANDLED;
 }
 
@@ -278,9 +287,9 @@ static irqreturn_t s3c_keygpio_vol_up_isr(int irq, void *dev_id)
 	key_status = (readl(S5PV210_GPH3DAT)) & ((1 << 3));
 	
 	INPUT_REPORT_KEY(dev, 42, key_status ? 0 : 1);
-
+#if DEBUG_LOG_ENABLE
        printk(KERN_DEBUG "s3c_keygpio_vol_up_isr key_status =%d,\n", key_status);
-       
+#endif
         return IRQ_HANDLED;
 }
 
@@ -294,9 +303,9 @@ static irqreturn_t s3c_keygpio_vol_up26_isr(int irq, void *dev_id)
 	key_status = (readl(S5PV210_GPH3DAT)) & ((1 << 2));
 	
 	INPUT_REPORT_KEY(dev, 42, key_status ? 0 : 1);
-
+#if DEBUG_LOG_ENABLE
        printk(KERN_DEBUG "s3c_keygpio_vol_up26_isr key_status =%d,\n", key_status);
-       
+#endif
         return IRQ_HANDLED;
 }
 
@@ -309,9 +318,9 @@ static irqreturn_t s3c_keygpio_vol_down_isr(int irq, void *dev_id)
 	key_status = (readl(S5PV210_GPH3DAT)) & (1 << 1);
 	
 	INPUT_REPORT_KEY(dev, 58, key_status ? 0 : 1);
-
+#if DEBUG_LOG_ENABLE
 	printk(KERN_DEBUG "s3c_keygpio_vol_down_isr key_status =%d,\n", key_status);
-	
+#endif
         return IRQ_HANDLED;
 }
 
@@ -348,8 +357,9 @@ static irqreturn_t s3c_keygpio_ok_isr(int irq, void *dev_id)
 		TSP_forced_release_forOKkey();
 	
 	prev_key_status = key_status;
+#if DEBUG_LOG_ENABLE
         printk(KERN_DEBUG "s3c_keygpio_ok_isr key_status =%d,\n", key_status);
-        
+#endif
         return IRQ_HANDLED;
 }
 
@@ -379,7 +389,9 @@ static int s3c_keygpio_isr_setup(void *pdev)
 	     ret = request_irq(IRQ_EINT(25), s3c_keygpio_vol_down_isr, IRQF_SAMPLE_RANDOM,
 		"key vol down", (void *) pdev);
 	     if (ret) {
+#if DEBUG_LOG_ENABLE
 		printk("request_irq failed (IRQ_KEYPAD (key vol down)) !!!\n");
+#endif
 		ret = -EIO;
 		  return ret;
 	     }
@@ -390,7 +402,9 @@ static int s3c_keygpio_isr_setup(void *pdev)
 	     ret = request_irq(IRQ_EINT(27), s3c_keygpio_vol_up_isr, IRQF_SAMPLE_RANDOM,
 			"key vol up", (void *) pdev);
 	     if (ret) {
+#if DEBUG_LOG_ENABLE
 			printk("request_irq failed (IRQ_KEYPAD (key vol up)) !!!\n");
+#endif
 		ret = -EIO;
 		  return ret;
 	    }
@@ -403,7 +417,9 @@ static int s3c_keygpio_isr_setup(void *pdev)
 		        ret = request_irq(IRQ_EINT(27), s3c_keygpio_vol_up_isr, IRQF_SAMPLE_RANDOM,
 		                "key vol up", (void *) pdev);
 		        if (ret) {
+#if DEBUG_LOG_ENABLE
 		                printk("request_irq failed (IRQ_KEYPAD (key vol up)) !!!\n");
+#endif
 		                ret = -EIO;
 				  return ret;
 		        }
@@ -501,12 +517,16 @@ static ssize_t keyshort_test(struct device *dev, struct device_attribute *attr, 
     if(/*!gpio_get_value(GPIO_KBR0) || !gpio_get_value(GPIO_KBR1) || !gpio_get_value(GPIO_KBR2) || */ mask)
 	{
 		count = sprintf(buf,"PRESS\n");
+#if DEBUG_LOG_ENABLE
               printk("keyshort_test: PRESS\n",mask);
+#endif
 	}
 	else
 	{
 		count = sprintf(buf,"RELEASE\n");
+#if DEBUG_LOG_ENABLE
               printk("keyshort_test: RELEASE \n");
+#endif
 	}	
 
 	return count;
