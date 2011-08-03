@@ -63,12 +63,14 @@ extern void s3c_config_sleep_gpio(void);
 
 //#define DBG(fmt...) printk(fmt)
 #define DBG(fmt...)
+#define EINTPEND1_BIT_ONEDRAM 0x08
 
 /* Debug code:
  *
  * This code supports debug output to the low level UARTs for use on
  * resume before the console layer is available.
 */
+static bool s3c_pm_check_pending_interrupt(void);
 
 #ifdef CONFIG_SAMSUNG_PM_DEBUG
 extern void printascii(const char *);
@@ -409,6 +411,31 @@ void (*pm_cpu_sleep)(void);
 
 #define any_allowed(mask, allow) (((mask) & (allow)) != (allow))
 
+static bool s3c_pm_check_pending_interrupt(void)
+{
+	bool ret=true;
+       unsigned int s5pc11x_pm_wakeup_eint1_pend=0;
+        
+	s5pc11x_pm_wakeup_eint1_pend =__raw_readl(S5PV210_EINT1PEND);
+	//s5pc11x_pm_wakeup_eint2_pend =__raw_readl(S5PV210_EINT2PEND);
+
+	if(s5pc11x_pm_wakeup_eint1_pend) {	
+		if(s5pc11x_pm_wakeup_eint1_pend & EINTPEND1_BIT_ONEDRAM) {
+			printk(KERN_DEBUG "%s: cp interrupt pending.\n", __func__);
+			ret=false;
+		}
+	}
+#if 0
+	if(s5pc11x_pm_wakeup_eint2_pend) {
+		if(s5pc11x_pm_wakeup_eint2_pend & EINTPEND2_BIT_MICROUSB) {
+			printk(KERN_DEBUG "%s: micro usb interrupt pending.\n", __func__);
+			ret=false;
+		}
+	}
+#endif
+	return ret;
+}
+
 extern short gp2a_get_proximity_enable(void); 
 
 /* s3c_pm_enter
@@ -429,6 +456,11 @@ static int s3c_pm_enter(suspend_state_t state)
 	unsigned int gpio;
 	
 	/* ensure the debug is initialised (if enabled) */
+	if(s3c_pm_check_pending_interrupt() ==false)
+	{
+		printk(KERN_ERR "interrupt pending. wakeup!!(1)\n", __func__);	
+		return -EINVAL;
+	}
 
 	s3c_pm_debug_init();
 
@@ -463,10 +495,12 @@ static int s3c_pm_enter(suspend_state_t state)
 	/* set flag for sleep mode idle2 flag is also reserved */
 	__raw_writel(SLEEP_MODE, S5P_INFORM1);
 
+#if 0
 	// 20110113 - dukho.kim : control power of moviNAND at PM and add 700ms delay for stabilization of moviNAND.
 	gpio = readl(S5PV210_GPJ2DAT);
 	writel(gpio & (~0x80), S5PV210_GPJ2DAT);
 	mdelay(700);
+#endif
 
 	S3C_PMDBG("s3c_sleep_save_phys=0x%08lx\n", s3c_sleep_save_phys);
 

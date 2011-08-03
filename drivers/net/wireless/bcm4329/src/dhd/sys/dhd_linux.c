@@ -354,7 +354,7 @@ uint dhd_roam = 1;
 #endif
 */
 
-uint dhd_roam = 0;
+uint dhd_roam = 1;
 
 /* Control radio state */
 uint dhd_radio_up = 1;
@@ -1757,9 +1757,8 @@ dhd_ioctl_entry(struct net_device *net, struct ifreq *ifr, int cmd)
 
 	WAKE_UNLOCK(&dhd->pub, WAKE_LOCK_IOCTL);
 	WAKE_LOCK_DESTROY(&dhd->pub, WAKE_LOCK_IOCTL);
-	if ((bcmerror == -ETIMEDOUT) {
+	if (bcmerror == -ETIMEDOUT) {
 		DHD_ERROR(("%s: Event RELOAD send up\n", __FUNCTION__));
-		net_os_send_hang_message(net);
 		wl_iw_send_priv_event(net, "RELOAD");
 	}
 done:
